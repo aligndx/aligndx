@@ -12,34 +12,36 @@ import (
 func init() {
 	m.Register(func(db dbx.Builder) error {
 		jsonData := `{
-			"id": "dh74cjo7zy653i8",
-			"created": "2024-06-22 01:36:21.236Z",
-			"updated": "2024-06-22 01:36:21.236Z",
+			"id": "pte4fn5mi541cxc",
+			"created": "2024-06-22 02:30:57.231Z",
+			"updated": "2024-06-22 02:30:57.231Z",
 			"name": "submissions",
 			"type": "base",
 			"system": false,
 			"schema": [
 				{
 					"system": false,
-					"id": "g0ojvm45",
-					"name": "name",
-					"type": "text",
+					"id": "0wubcnrf",
+					"name": "user",
+					"type": "relation",
 					"required": true,
-					"presentable": false,
+					"presentable": true,
 					"unique": false,
 					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
+						"collectionId": "_pb_users_auth_",
+						"cascadeDelete": true,
+						"minSelect": null,
+						"maxSelect": null,
+						"displayFields": null
 					}
 				},
 				{
 					"system": false,
-					"id": "h5f2nzzx",
+					"id": "vpnjppyi",
 					"name": "workflow",
 					"type": "relation",
 					"required": true,
-					"presentable": false,
+					"presentable": true,
 					"unique": false,
 					"options": {
 						"collectionId": "g0ueed9jy9c6atp",
@@ -51,39 +53,36 @@ func init() {
 				},
 				{
 					"system": false,
-					"id": "as4b88du",
-					"name": "user",
-					"type": "relation",
+					"id": "pvth3huo",
+					"name": "name",
+					"type": "text",
 					"required": true,
-					"presentable": false,
+					"presentable": true,
 					"unique": false,
 					"options": {
-						"collectionId": "_pb_users_auth_",
-						"cascadeDelete": false,
-						"minSelect": null,
-						"maxSelect": 1,
-						"displayFields": null
+						"min": null,
+						"max": null,
+						"pattern": ""
 					}
 				},
 				{
 					"system": false,
-					"id": "leoltmpo",
-					"name": "completed",
-					"type": "date",
-					"required": true,
-					"presentable": false,
-					"unique": false,
-					"options": {
-						"min": "",
-						"max": ""
-					}
-				},
-				{
-					"system": false,
-					"id": "ooglskr0",
-					"name": "metadata",
+					"id": "3ccrmnff",
+					"name": "inputs",
 					"type": "json",
 					"required": true,
+					"presentable": false,
+					"unique": false,
+					"options": {
+						"maxSize": 2000000
+					}
+				},
+				{
+					"system": false,
+					"id": "wkfhej3k",
+					"name": "metadata",
+					"type": "json",
+					"required": false,
 					"presentable": false,
 					"unique": false,
 					"options": {
@@ -109,7 +108,7 @@ func init() {
 	}, func(db dbx.Builder) error {
 		dao := daos.New(db);
 
-		collection, err := dao.FindCollectionByNameOrId("dh74cjo7zy653i8")
+		collection, err := dao.FindCollectionByNameOrId("pte4fn5mi541cxc")
 		if err != nil {
 			return err
 		}
