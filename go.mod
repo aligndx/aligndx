@@ -9,6 +9,7 @@ require (
 	github.com/nats-io/nats.go v1.36.0
 	github.com/pocketbase/dbx v1.10.1
 	github.com/pocketbase/pocketbase v0.22.14
+	github.com/rs/zerolog v1.33.0
 )
 
 require (
