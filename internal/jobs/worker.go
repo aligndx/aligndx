@@ -3,8 +3,6 @@ package jobs
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,19 +15,19 @@ func processJob(msg *nats.Msg) {
 	var job Job
 	err := json.Unmarshal(msg.Data, &job)
 	if err != nil {
-		log.Printf("Error unmarshaling job data: %v", err)
+		log.Error("Error unmarshaling job data", map[string]interface{}{"error": err})
 		return
 	}
 
 	// Placeholder for conditions to check before launching the job
 	if true { // Replace with actual conditions
 		job.Status = "running"
-		fmt.Printf("Job %s is running\n", job.JobID)
+		log.Info("Job is running", map[string]interface{}{"job_id": job.JobID})
 
 		// Simulate job processing
 		time.Sleep(2 * time.Second) // Simulate processing time
 		job.Status = "completed"
-		fmt.Printf("Job %s completed\n", job.JobID)
+		log.Info("Job completed", map[string]interface{}{"job_id": job.JobID})
 	}
 
 	// Acknowledge the message to JetStream
@@ -41,10 +39,10 @@ func StartWorker() {
 
 	sub, err := js.QueueSubscribe("jobs.*", "job_workers", processJob, nats.Durable("job_worker_durable"), nats.ManualAck())
 	if err != nil {
-		log.Fatalf("Error subscribing to jobs: %v", err)
+		log.Fatal("Error subscribing to jobs", map[string]interface{}{"error": err})
 	}
 
-	fmt.Println("Worker started and waiting for jobs...")
+	log.Info("Worker started and waiting for jobs...", nil)
 
 	// Handle shutdown signals
 	ctx, cancel := context.WithCancel(context.Background())
@@ -61,15 +59,15 @@ func handleShutdown(cancel context.CancelFunc, sub *nats.Subscription) {
 
 	// Unsubscribe from the NATS subscription
 	if err := sub.Unsubscribe(); err != nil {
-		log.Printf("Error unsubscribing: %v", err)
+		log.Error("Error unsubscribing", map[string]interface{}{"error": err})
 	}
 
 	// Close the NATS connection
 	if err := sub.Drain(); err != nil {
-		log.Printf("Error draining subscription: %v", err)
+		log.Error("Error draining subscription", map[string]interface{}{"error": err})
 	}
 
-	fmt.Println("Shutdown complete.")
+	log.Info("Shutdown complete", nil)
 }
 
 func waitForShutdown(ctx context.Context) {
@@ -80,9 +78,9 @@ func waitForShutdown(ctx context.Context) {
 	// Block until a signal is received or context is cancelled
 	select {
 	case sig := <-sigChan:
-		fmt.Printf("Received signal: %v, initiating shutdown...\n", sig)
+		log.Info("Received signal, initiating shutdown...", map[string]interface{}{"signal": sig})
 	case <-ctx.Done():
 	}
 
-	fmt.Println("Worker shutting down...")
+	log.Info("Worker shutting down...", nil)
 }

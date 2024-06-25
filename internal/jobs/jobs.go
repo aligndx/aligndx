@@ -3,10 +3,10 @@ package jobs
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/aligndx/aligndx/internal/config"
+	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/nats-io/nats.go"
 )
 
@@ -26,6 +26,7 @@ var (
 	js   nats.JetStreamContext
 	once sync.Once
 	err  error
+	log  *logger.LoggerWrapper
 )
 
 func initJetStream() {
@@ -33,12 +34,12 @@ func initJetStream() {
 		cfg := config.GetConfig()
 		nc, err = nats.Connect(cfg.Nats.URL)
 		if err != nil {
-			log.Fatalf("Error connecting to NATS: %v", err)
+			log.Fatal("Error connecting to NATS", map[string]interface{}{"error": err})
 		}
 
 		js, err = nc.JetStream()
 		if err != nil {
-			log.Fatalf("Error creating JetStream context: %v", err)
+			log.Fatal("Error creating JetStream context", map[string]interface{}{"error": err})
 		}
 
 		_, err = js.AddStream(&nats.StreamConfig{
@@ -46,7 +47,7 @@ func initJetStream() {
 			Subjects: []string{"jobs.*"},
 		})
 		if err != nil {
-			log.Fatalf("Error creating stream: %v", err)
+			log.Fatal("Error creating stream", map[string]interface{}{"error": err})
 		}
 	})
 }
@@ -68,70 +69,63 @@ func queueJob(jobID string, jobInputs map[string]interface{}, jobSchema string) 
 
 	jobData, err := json.Marshal(job)
 	if err != nil {
-		log.Fatalf("Error marshaling job data: %v", err)
+		log.Fatal("Error marshaling job data", map[string]interface{}{"error": err})
 	}
 
 	_, err = js.Publish(fmt.Sprintf("jobs.%s", jobID), jobData)
 	if err != nil {
-		log.Fatalf("Error publishing job: %v", err)
+		log.Fatal("Error publishing job", map[string]interface{}{"error": err})
 	}
 
-	fmt.Printf("Job %s queued\n", jobID)
+	log.Info("Job queued", map[string]interface{}{"job_id": jobID})
 }
 
 func getJobInfo(jobID string) {
 	js := getJetStream()
 
-	// Use the correct subject to fetch the specific job message
 	subject := fmt.Sprintf("jobs.%s", jobID)
 
-	// Fetch the last message for the given subject
 	msg, err := js.GetLastMsg(streamName, subject)
 	if err != nil {
-		log.Fatalf("Error fetching job message: %v", err)
+		log.Fatal("Error fetching job message", map[string]interface{}{"error": err})
 	}
 
 	var job Job
 	err = json.Unmarshal(msg.Data, &job)
 	if err != nil {
-		log.Fatalf("Error unmarshaling job data: %v", err)
+		log.Fatal("Error unmarshaling job data", map[string]interface{}{"error": err})
 	}
 
-	fmt.Printf("Job Info: %+v\n", job)
+	log.Info("Job Info", map[string]interface{}{"job": job})
 }
 
 func cancelJob(jobID string) {
 	js := getJetStream()
 
-	// Use the correct subject to fetch the specific job message
 	subject := fmt.Sprintf("jobs.%s", jobID)
 
-	// Fetch the last message for the given subject
 	msg, err := js.GetLastMsg(streamName, subject)
 	if err != nil {
-		log.Fatalf("Error fetching job message: %v", err)
+		log.Fatal("Error fetching job message", map[string]interface{}{"error": err})
 	}
 
 	var job Job
 	err = json.Unmarshal(msg.Data, &job)
 	if err != nil {
-		log.Fatalf("Error unmarshaling job data: %v", err)
+		log.Fatal("Error unmarshaling job data", map[string]interface{}{"error": err})
 	}
 
-	// Update the job status to cancelled
 	job.Status = "cancelled"
 
-	// Marshal the updated job data
 	jobData, err := json.Marshal(job)
 	if err != nil {
-		log.Fatalf("Error marshaling job data: %v", err)
+		log.Fatal("Error marshaling job data", map[string]interface{}{"error": err})
 	}
 
-	// Publish the updated job message back to the JetStream
 	_, err = js.Publish(subject, jobData)
 	if err != nil {
-		log.Fatalf("Error publishing job: %v", err)
+		log.Fatal("Error publishing job", map[string]interface{}{"error": err})
 	}
 
-	fmt.Printf("Job %s cancelled\n", jobID)
+	log.Info("Job cancelled", map[string]interface{}{"job_id": jobID})
 }

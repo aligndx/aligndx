@@ -1,18 +1,24 @@
 package main
 
 import (
-	"log"
+	"context"
 	"os"
 	"strings"
 
+	"github.com/aligndx/aligndx/internal/logger"
 	_ "github.com/aligndx/aligndx/internal/migrations"
-
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 )
 
+var log *logger.LoggerWrapper
+
 func main() {
+	// Initialize the LoggerWrapper with the "zerolog" type
+	ctx := context.Background()
+	log = logger.NewLoggerWrapper("zerolog", ctx)
+
 	app := pocketbase.New()
 
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
@@ -20,9 +26,11 @@ func main() {
 	app.OnRecordAfterCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
 		// Extract the submission inputs
 		// Submit a background job
-		// log.Println(e.HttpContext)
-		// log.Println(e.Record)
-		// log.Println(e.UploadedFiles)
+		log.Info("Submission received", map[string]interface{}{
+			"http_context":   e.HttpContext,
+			"record":         e.Record,
+			"uploaded_files": e.UploadedFiles,
+		})
 		return nil
 	})
 
@@ -32,7 +40,8 @@ func main() {
 		Dir:         "./internal/migrations", // path to migration files
 		Automigrate: isGoRun,
 	})
+
 	if err := app.Start(); err != nil {
-		log.Fatal(err)
+		log.Fatal("Error starting the application", map[string]interface{}{"error": err})
 	}
 }
