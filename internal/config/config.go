@@ -1,10 +1,10 @@
 package config
 
 import (
-	"log"
 	"strings"
 	"sync"
 
+	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/joho/godotenv"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/v2"
@@ -50,6 +50,7 @@ type S3Config struct {
 var (
 	cfg  *Config
 	once sync.Once
+	log  *logger.LoggerWrapper
 )
 
 // NewConfig creates a new Config instance with default values
@@ -85,7 +86,7 @@ func NewConfig() *Config {
 func loadConfig() (*Config, error) {
 	// Load .env file if present
 	if err := godotenv.Load(); err != nil {
-		log.Printf("No .env file found, relying on environment variables. Error: %v", err)
+		log.Warn("No .env file found, relying on environment variables", map[string]interface{}{"error": err})
 	}
 
 	k := koanf.New(".")
@@ -109,7 +110,7 @@ func GetConfig() *Config {
 		var err error
 		cfg, err = loadConfig()
 		if err != nil {
-			log.Fatalf("Could not load config: %v", err)
+			log.Fatal("Could not load config", map[string]interface{}{"error": err})
 		}
 	})
 	return cfg

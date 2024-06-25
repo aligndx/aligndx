@@ -7,48 +7,69 @@ import (
 	"runtime"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/pkgerrors"
 )
 
 type ZeroLogger struct {
 	logger zerolog.Logger
 	ctx    context.Context
+	pretty bool
 }
 
-func NewZeroLogger(loggerType string, ctx context.Context) *ZeroLogger {
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+func NewZeroLogger(loggerType string, ctx context.Context, pretty bool) *ZeroLogger {
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	var logger zerolog.Logger
 
-	return &ZeroLogger{logger: logger, ctx: ctx}
+	if pretty {
+		output := zerolog.ConsoleWriter{Out: os.Stdout}
+		logger = zerolog.New(output).With().Timestamp().Logger()
+	} else {
+		logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
+	}
+
+	return &ZeroLogger{logger: logger, ctx: ctx, pretty: pretty}
+}
+func (l *ZeroLogger) Debug(msg string, fields ...map[string]interface{}) {
+	l.logWithFields(zerolog.DebugLevel, msg, fields...)
 }
 
-func (l *ZeroLogger) Debug(msg string, fields map[string]interface{}) {
-	l.logWithFields(zerolog.DebugLevel, msg, fields)
+func (l *ZeroLogger) Info(msg string, fields ...map[string]interface{}) {
+	l.logWithFields(zerolog.InfoLevel, msg, fields...)
 }
 
-func (l *ZeroLogger) Info(msg string, fields map[string]interface{}) {
-	l.logWithFields(zerolog.InfoLevel, msg, fields)
+func (l *ZeroLogger) Warn(msg string, fields ...map[string]interface{}) {
+	l.logWithFields(zerolog.WarnLevel, msg, fields...)
 }
 
-func (l *ZeroLogger) Warn(msg string, fields map[string]interface{}) {
-	l.logWithFields(zerolog.WarnLevel, msg, fields)
+func (l *ZeroLogger) Error(msg string, fields ...map[string]interface{}) {
+	l.logWithFields(zerolog.ErrorLevel, msg, fields...)
 }
 
-func (l *ZeroLogger) Error(msg string, fields map[string]interface{}) {
-	l.logWithFields(zerolog.ErrorLevel, msg, fields)
+func (l *ZeroLogger) Fatal(msg string, fields ...map[string]interface{}) {
+	l.logWithFields(zerolog.FatalLevel, msg, fields...)
 }
 
-func (l *ZeroLogger) Fatal(msg string, fields map[string]interface{}) {
-	l.logWithFields(zerolog.FatalLevel, msg, fields)
-}
+func (l *ZeroLogger) logWithFields(level zerolog.Level, msg string, fields ...map[string]interface{}) {
+	eventFields := make(map[string]interface{})
 
-func (l *ZeroLogger) logWithFields(level zerolog.Level, msg string, fields map[string]interface{}) {
-	// Capture the caller information
-	_, file, line, ok := runtime.Caller(2) // Adjust the caller depth to skip the wrapper
-	if ok {
-		fields["caller"] = fmt.Sprintf("%s:%d", file, line)
+	// Capture the caller information if the level is Debug, Error, or Fatal
+	if level == zerolog.DebugLevel || level == zerolog.ErrorLevel || level == zerolog.FatalLevel {
+		_, file, line, ok := runtime.Caller(3) // Adjust the caller depth to skip the wrapper
+		if ok {
+			eventFields["caller"] = fmt.Sprintf("%s:%d", file, line)
+		}
+	}
+
+	if len(fields) > 0 {
+		for _, fieldMap := range fields {
+			for k, v := range fieldMap {
+				eventFields[k] = v
+			}
+		}
 	}
 
 	event := l.logger.WithLevel(level)
-	for k, v := range fields {
+	for k, v := range eventFields {
 		switch value := v.(type) {
 		case string:
 			event = event.Str(k, value)

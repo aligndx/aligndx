@@ -14,13 +14,16 @@ import (
 
 var log *logger.LoggerWrapper
 
-func main() {
-	// Initialize the LoggerWrapper with the "zerolog" type
+func init() {
 	ctx := context.Background()
 	log = logger.NewLoggerWrapper("zerolog", ctx)
+}
+
+func main() {
 
 	app := pocketbase.New()
 
+	log.Info("App started")
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 
 	app.OnRecordAfterCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
