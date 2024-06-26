@@ -3,39 +3,25 @@ package jobs
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
 	"github.com/nats-io/nats.go"
 )
 
-func processJob(msg *nats.Msg) {
-	var job Job
-	err := json.Unmarshal(msg.Data, &job)
-	if err != nil {
-		log.Error("Error unmarshaling job data", map[string]interface{}{"error": err})
-		return
-	}
-
-	// Placeholder for conditions to check before launching the job
-	if true { // Replace with actual conditions
-		job.Status = "running"
-		log.Info("Job is running", map[string]interface{}{"job_id": job.JobID})
-
-		// Simulate job processing
-		time.Sleep(2 * time.Second) // Simulate processing time
-		job.Status = "completed"
-		log.Info("Job completed", map[string]interface{}{"job_id": job.JobID})
-	}
-
-	// Acknowledge the message to JetStream
-	msg.Ack()
-}
+var cli *client.Client
 
 func StartWorker() {
 	js := getJetStream()
+	var err error
+	cli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Fatal("Error creating client", map[string]interface{}{"error": err})
+	}
 
 	sub, err := js.QueueSubscribe("jobs.*", "job_workers", processJob, nats.Durable("job_worker_durable"), nats.ManualAck())
 	if err != nil {
@@ -52,6 +38,44 @@ func StartWorker() {
 
 	// Wait for shutdown signal
 	waitForShutdown(ctx)
+}
+
+func processJob(msg *nats.Msg) {
+	var job Job
+	err := json.Unmarshal(msg.Data, &job)
+	if err != nil {
+		log.Error("Error unmarshaling job data", map[string]interface{}{"error": err})
+		return
+	}
+
+	if job.Status != "running" {
+		job.Status = "running"
+		log.Info("Job is running", map[string]interface{}{"job_id": job.JobID})
+
+		runCommand := []string{"run", string(job.Status)}
+		launchJob(cli, runCommand)
+
+	}
+
+	// Acknowledge the message to JetStream
+	msg.Ack()
+}
+
+func launchJob(cli *client.Client, cmd []string) {
+	ctx := context.Background()
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: "nextflow/nextflow",
+		Cmd:   cmd,
+	}, nil, nil, nil, "")
+	if err != nil {
+		log.Fatal("Could not construct the container", map[string]interface{}{"error": err})
+	}
+
+	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		log.Fatal("Could not start the container", map[string]interface{}{"error": err})
+	}
+
+	fmt.Printf("Started container %s\n", resp.ID)
 }
 
 func handleShutdown(cancel context.CancelFunc, sub *nats.Subscription) {
