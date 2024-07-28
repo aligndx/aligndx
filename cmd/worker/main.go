@@ -9,11 +9,8 @@ import (
 
 var log *logger.LoggerWrapper
 
-func init() {
+func main() {
 	ctx := context.Background()
 	log = logger.NewLoggerWrapper("zerolog", ctx)
-}
-
-func main() {
 	jobs.StartWorker()
 }

@@ -2,13 +2,14 @@ package config
 
 import (
 	"strings"
-	"sync"
 
 	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/joho/godotenv"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/v2"
 	"github.com/nats-io/nats.go"
+	"github.com/pocketbase/pocketbase"
+	s "github.com/pocketbase/pocketbase/models/settings"
 )
 
 // Config struct holds configuration values
@@ -21,37 +22,43 @@ type Config struct {
 
 // NatsConfig settings
 type NatsConfig struct {
-	InMemory bool   `koanf:"in_memory"`
+	InMemory bool   `koanf:"in.memory"`
 	URL      string `koanf:"url"`
 }
 
 type DbConfig struct {
-	MigrationsDir string `koanf:"migrations_dir"`
+	MigrationsDir string `koanf:"migrations.dir"`
 }
 
 type SMTPConfig struct {
-	Enabled  bool   `koanf:"smtp_enabled"`
-	Host     string `koanf:"smtp_host"`
-	Port     int    `koanf:"smtp_port"`
-	Password string `koanf:"smtp_password"`
-	Tls      bool   `koanf:"smtp_tls_enabled"`
+	Enabled  bool   `koanf:"enabled"`
+	Host     string `koanf:"host"`
+	Port     int    `koanf:"port"`
+	Password string `koanf:"password"`
+	Tls      bool   `koanf:"tlsenabled"`
 }
 
 type S3Config struct {
-	Enabled        bool   `koanf:"s3_enabled"`
-	Bucket         string `koanf:"s3_bucket"`
-	AccessKey      string `koanf:"aws_access_key"`
-	Secret         string `koanf:"aws_secret"`
-	Endpoint       string `koanf:"aws_endpoint"`
-	Region         string `koanf:"aws_region"`
+	Enabled        bool   `koanf:"enabled"`
+	Bucket         string `koanf:"bucket"`
+	AccessKey      string `koanf:"accesskey"`
+	Secret         string `koanf:"secret"`
+	Endpoint       string `koanf:"endpoint"`
+	Region         string `koanf:"region"`
 	ForcePathStyle bool   `koanf:"pathStyle"`
 }
 
-var (
-	cfg  *Config
-	once sync.Once
-	log  *logger.LoggerWrapper
-)
+type ConfigService struct {
+	logger *logger.LoggerWrapper
+	config *Config
+}
+
+func NewConfigService(logger *logger.LoggerWrapper) *ConfigService {
+	return &ConfigService{
+		logger: logger,
+		config: NewConfig(),
+	}
+}
 
 // NewConfig creates a new Config instance with default values
 func NewConfig() *Config {
@@ -61,7 +68,7 @@ func NewConfig() *Config {
 			URL:      nats.DefaultURL,
 		},
 		DB: DbConfig{
-			MigrationsDir: "migrations",
+			MigrationsDir: "internal/migrations",
 		},
 		SMTP: SMTPConfig{
 			Enabled:  false,
@@ -82,11 +89,11 @@ func NewConfig() *Config {
 	}
 }
 
-// LoadConfig loads configuration from environment variables or a .env file
-func loadConfig() (*Config, error) {
+// loadConfig loads configuration from environment variables or a .env file
+func (cs *ConfigService) LoadConfig() *Config {
 	// Load .env file if present
 	if err := godotenv.Load(); err != nil {
-		log.Warn("No .env file found, relying on environment variables", map[string]interface{}{"error": err})
+		cs.logger.Warn("No .env file found, relying on environment variables", map[string]interface{}{"error": err})
 	}
 
 	k := koanf.New(".")
@@ -96,22 +103,53 @@ func loadConfig() (*Config, error) {
 		return strings.ToLower(strings.ReplaceAll(s, "_", "."))
 	}), nil)
 
-	config := &Config{}
-	if err := k.Unmarshal("", config); err != nil {
-		return nil, err
+	err := k.Unmarshal("", cs.config)
+	if err != nil {
+		cs.logger.Warn("Could not load config", map[string]interface{}{"error": err})
 	}
-
-	return config, nil
+	return cs.config
 }
 
-// GetConfig ensures the config is loaded only once and returns it
-func GetConfig() *Config {
-	once.Do(func() {
-		var err error
-		cfg, err = loadConfig()
-		if err != nil {
-			log.Fatal("Could not load config", map[string]interface{}{"error": err})
+func (cs *ConfigService) UpdateSettings(settings *s.Settings) *s.Settings {
+	settings.Meta.AppName = "server"
+	if cs.config.SMTP.Enabled {
+		settings.Smtp = s.SmtpConfig{
+			Enabled:  cs.config.SMTP.Enabled,
+			Host:     cs.config.SMTP.Host,
+			Port:     cs.config.SMTP.Port,
+			Password: cs.config.SMTP.Password,
+			Tls:      cs.config.SMTP.Tls,
 		}
-	})
-	return cfg
+	}
+
+	if cs.config.S3.Enabled {
+		settings.S3 = s.S3Config{
+			Enabled:        cs.config.S3.Enabled,
+			Bucket:         cs.config.S3.Bucket,
+			AccessKey:      cs.config.S3.AccessKey,
+			Secret:         cs.config.S3.Secret,
+			Endpoint:       cs.config.S3.Endpoint,
+			Region:         cs.config.S3.Region,
+			ForcePathStyle: cs.config.S3.ForcePathStyle,
+		}
+	}
+	return settings
+}
+func (cs *ConfigService) SetPBSettings(app *pocketbase.PocketBase) {
+	dao := app.Dao()
+	if dao == nil {
+		cs.logger.Fatal("app.Dao() returned nil")
+	}
+
+	settings, err := dao.FindSettings()
+	if err != nil {
+		cs.logger.Warn("Failed to find settings, using default settings", map[string]interface{}{"error": err})
+		settings = &s.Settings{} // Initialize settings with a default value
+	}
+	newSettings := cs.UpdateSettings(settings)
+	err = dao.SaveSettings(newSettings)
+	if err != nil {
+		cs.logger.Warn("Failed to save settings", map[string]interface{}{"error": err.Error()})
+		return
+	}
 }

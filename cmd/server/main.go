@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/logger"
 	_ "github.com/aligndx/aligndx/internal/migrations"
 	"github.com/pocketbase/pocketbase"
@@ -14,17 +15,19 @@ import (
 
 var log *logger.LoggerWrapper
 
-func init() {
+func main() {
 	ctx := context.Background()
 	log = logger.NewLoggerWrapper("zerolog", ctx)
-}
-
-func main() {
-
 	app := pocketbase.New()
-
+	configService := config.NewConfigService(log)
+	cfg := configService.LoadConfig()
 	log.Info("App started")
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
+
+	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+		configService.SetPBSettings(app)
+		return nil
+	})
 
 	app.OnRecordAfterCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
 		// Extract the submission inputs
@@ -40,7 +43,7 @@ func main() {
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		// enable auto creation of migration files when making collection changes in the Admin UI
 		// (the isGoRun check is to enable it only during development)
-		Dir:         "./internal/migrations", // path to migration files
+		Dir:         cfg.DB.MigrationsDir, // path to migration files
 		Automigrate: isGoRun,
 	})
 
