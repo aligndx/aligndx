@@ -31,7 +31,8 @@ var (
 
 func initJetStream() {
 	once.Do(func() {
-		cfg := config.GetConfig()
+		configService := config.NewConfigService(log)
+		cfg := configService.LoadConfig()
 		nc, err = nats.Connect(cfg.Nats.URL)
 		if err != nil {
 			log.Fatal("Error connecting to NATS", map[string]interface{}{"error": err})
