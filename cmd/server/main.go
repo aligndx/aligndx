@@ -17,11 +17,13 @@ var log *logger.LoggerWrapper
 
 func main() {
 	ctx := context.Background()
-	log = logger.NewLoggerWrapper("zerolog", ctx)
 	app := pocketbase.New()
+	log = logger.NewLoggerWrapper("zerolog", ctx)
 	configService := config.NewConfigService(log)
 	cfg := configService.LoadConfig()
+
 	log.Info("App started")
+
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 
 	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {

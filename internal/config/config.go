@@ -14,16 +14,16 @@ import (
 
 // Config struct holds configuration values
 type Config struct {
-	Nats NatsConfig `koanf:"nats"`
+	MQ   MQConfig   `koanf:"mq"`
 	DB   DbConfig   `koanf:"db"`
 	SMTP SMTPConfig `koanf:"smtp"`
 	S3   S3Config   `koanf:"s3"`
 }
 
-// NatsConfig settings
-type NatsConfig struct {
-	InMemory bool   `koanf:"in.memory"`
-	URL      string `koanf:"url"`
+// Message Queue settings
+type MQConfig struct {
+	URL    string `koanf:"url"`
+	Stream string `koanf:"stream"`
 }
 
 type DbConfig struct {
@@ -63,9 +63,9 @@ func NewConfigService(logger *logger.LoggerWrapper) *ConfigService {
 // NewConfig creates a new Config instance with default values
 func NewConfig() *Config {
 	return &Config{
-		Nats: NatsConfig{
-			InMemory: false,
-			URL:      nats.DefaultURL,
+		MQ: MQConfig{
+			URL:    nats.DefaultURL,
+			Stream: "JOBS",
 		},
 		DB: DbConfig{
 			MigrationsDir: "internal/migrations",

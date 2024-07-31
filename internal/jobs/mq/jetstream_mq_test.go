@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats.go/jetstream"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -118,8 +117,8 @@ func TestPublishAndSubscribe(t *testing.T) {
 
 			// Set up a subscriber
 			received := make(chan []byte)
-			handler := func(msg jetstream.Msg) {
-				received <- msg.Data()
+			handler := func(msg []byte) {
+				received <- msg
 			}
 
 			err = service.Subscribe(ctx, handler)

@@ -53,7 +53,7 @@ func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject stri
 	return nil
 }
 
-func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler func(msg jetstream.Msg)) error {
+func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler func([]byte)) error {
 	consumerConfig := jetstream.ConsumerConfig{
 		Durable:       fmt.Sprintf("%s-consumer", s.streamName),
 		AckPolicy:     jetstream.AckExplicitPolicy,
@@ -65,7 +65,10 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler fu
 		return err
 	}
 
-	consContext, err := cons.Consume(handler)
+	consContext, err := cons.Consume(func(msg jetstream.Msg) {
+		handler(msg.Data())
+		msg.Ack()
+	})
 	if err != nil {
 		return err
 	}

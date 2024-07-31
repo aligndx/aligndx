@@ -19,16 +19,13 @@ type Job struct {
 
 type JobServiceInterface interface {
 	QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error
-	// GetJobInfo(ctx context.Context, jobID string) (*Job, error)
-	// CancelJob(ctx context.Context, jobID string) error
-	// RunJob(ctx context.Context, jobID string) error
 	RegisterJobHandler(schema string, handler JobHandler)
 	ProcessJobs(ctx context.Context) error
 }
 
 type MessageQueueService interface {
 	Publish(ctx context.Context, subject string, data []byte) error
-	Subscribe(ctx context.Context, subject string, handler func([]byte)) error
+	Subscribe(ctx context.Context, handler func([]byte)) error
 }
 
 type JobService struct {
@@ -121,7 +118,7 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 }
 
 func (s *JobService) ProcessJobs(ctx context.Context) error {
-	return s.mq.Subscribe(ctx, s.stream, func(msg []byte) {
+	return s.mq.Subscribe(ctx, func(msg []byte) {
 		if err := s.processJob(ctx, msg); err != nil {
 			s.log.Error("Failed to handle message", map[string]interface{}{"error": err})
 		}

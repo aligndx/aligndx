@@ -2,109 +2,59 @@ package jobs
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/nats-io/nats.go"
+	"github.com/aligndx/aligndx/internal/config"
+	"github.com/aligndx/aligndx/internal/logger"
 )
 
-var cli *client.Client
+type Worker struct {
+	jobService JobServiceInterface
+	log        *logger.LoggerWrapper
+	cfg        *config.Config
+}
 
-func StartWorker() {
-	js := getJetStream()
-	var err error
-	cli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		log.Fatal("Error creating client", map[string]interface{}{"error": err})
+func NewWorker(jobService JobServiceInterface, log *logger.LoggerWrapper, cfg *config.Config) *Worker {
+	return &Worker{
+		jobService: jobService,
+		log:        log,
+		cfg:        cfg,
 	}
+}
 
-	sub, err := js.QueueSubscribe("jobs.*", "job_workers", processJob, nats.Durable("job_worker_durable"), nats.ManualAck())
-	if err != nil {
-		log.Fatal("Error subscribing to jobs", map[string]interface{}{"error": err})
-	}
-
-	log.Info("Worker started and waiting for jobs...", nil)
-
-	// Handle shutdown signals
+func (w *Worker) Start() {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Ensure the context is cancelled on function exit
-
-	go handleShutdown(cancel, sub)
-
-	// Wait for shutdown signal
-	waitForShutdown(ctx)
-}
-
-func processJob(msg *nats.Msg) {
-	var job Job
-	err := json.Unmarshal(msg.Data, &job)
-	if err != nil {
-		log.Error("Error unmarshaling job data", map[string]interface{}{"error": err})
-		return
-	}
-
-	if job.Status != "running" {
-		job.Status = "running"
-		log.Info("Job is running", map[string]interface{}{"job_id": job.JobID})
-
-		runCommand := []string{"run", string(job.Status)}
-		launchJob(cli, runCommand)
-
-	}
-
-	// Acknowledge the message to JetStream
-	msg.Ack()
-}
-
-func launchJob(cli *client.Client, cmd []string) {
-	ctx := context.Background()
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: "nextflow/nextflow",
-		Cmd:   cmd,
-	}, nil, nil, nil, "")
-	if err != nil {
-		log.Fatal("Could not construct the container", map[string]interface{}{"error": err})
-	}
-
-	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		log.Fatal("Could not start the container", map[string]interface{}{"error": err})
-	}
-
-	fmt.Printf("Started container %s\n", resp.ID)
-}
-
-func handleShutdown(cancel context.CancelFunc, sub *nats.Subscription) {
 	defer cancel()
 
-	// Unsubscribe from the NATS subscription
-	if err := sub.Unsubscribe(); err != nil {
-		log.Error("Error unsubscribing", map[string]interface{}{"error": err})
+	// Capture OS signals for graceful shutdown
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sigs
+		w.log.Info("Shutting down worker...", nil)
+		cancel()
+	}()
+
+	w.log.Info("Starting worker to process jobs...", nil)
+
+	// Continuously process jobs
+	for {
+		err := w.jobService.ProcessJobs(ctx)
+		if err != nil {
+			w.log.Error("Error processing jobs", map[string]interface{}{"error": err})
+			time.Sleep(5 * time.Second) // Backoff before retrying
+		}
+
+		select {
+		case <-ctx.Done():
+			w.log.Info("Worker has been shut down", nil)
+			return
+		default:
+			// Continue processing jobs
+		}
 	}
-
-	// Close the NATS connection
-	if err := sub.Drain(); err != nil {
-		log.Error("Error draining subscription", map[string]interface{}{"error": err})
-	}
-
-	log.Info("Shutdown complete", nil)
-}
-
-func waitForShutdown(ctx context.Context) {
-	// Create a channel to listen for OS signals
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	// Block until a signal is received or context is cancelled
-	select {
-	case sig := <-sigChan:
-		log.Info("Received signal, initiating shutdown...", map[string]interface{}{"signal": sig})
-	case <-ctx.Done():
-	}
-
-	log.Info("Worker shutting down...", nil)
 }
