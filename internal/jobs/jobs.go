@@ -9,7 +9,7 @@ import (
 	"github.com/aligndx/aligndx/internal/logger"
 )
 
-type JobHandler func(inputs map[string]interface{}) error
+type JobHandler func(ctx context.Context, inputs map[string]interface{}) error
 
 type Job struct {
 	JobID     string                 `json:"job_id"`
@@ -105,7 +105,7 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 
 	// Process the job using the found handler
 	s.updateJobStatus(ctx, job.JobID, string(StatusProcessing))
-	if err := handler(job.JobInputs); err != nil {
+	if err := handler(ctx, job.JobInputs); err != nil {
 		s.log.Error("Error processing job", map[string]interface{}{
 			"job_id": job.JobID, "error": err,
 		})
