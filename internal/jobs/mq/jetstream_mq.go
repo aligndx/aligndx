@@ -1,9 +1,8 @@
-package jobs
+package mq
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -11,7 +10,8 @@ import (
 )
 
 type JetStreamMessageQueueService struct {
-	js jetstream.JetStream
+	js         jetstream.JetStream
+	streamName string
 }
 
 func NewJetStreamMessageQueueService(url string, streamName string, subject string) (*JetStreamMessageQueueService, error) {
@@ -32,7 +32,8 @@ func NewJetStreamMessageQueueService(url string, streamName string, subject stri
 	cfg := jetstream.StreamConfig{
 		Name:      streamName,
 		Retention: jetstream.WorkQueuePolicy,
-		Subjects:  []string{fmt.Sprintf("%s.>", subject)},
+		Subjects:  []string{subject},
+		Storage:   jetstream.FileStorage,
 	}
 
 	_, err = js.CreateStream(ctx, cfg)
@@ -40,46 +41,37 @@ func NewJetStreamMessageQueueService(url string, streamName string, subject stri
 		return nil, err
 	}
 
-	return &JetStreamMessageQueueService{js: js}, nil
+	return &JetStreamMessageQueueService{js: js, streamName: streamName}, nil
 }
 
-func (s *JetStreamMessageQueueService) Publish(subject string, data []byte) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	ack, err := s.js.Publish(ctx, subject, data)
+func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject string, data []byte) error {
+	_, err := s.js.Publish(ctx, subject, data)
 	if err != nil {
 		return err
-	}
-
-	// Ensure the message was published successfully
-	if ack.Stream != "" {
-		fmt.Printf("Published to stream: %s, seq: %d\n", ack.Stream, ack.Sequence)
 	}
 
 	return nil
 }
 
-func (s *JetStreamMessageQueueService) Subscribe(subject string, handler func(msg *jetstream.Msg)) error {
-	sub, err := s.js.PullSubscribe(subject, jetstream.PullDefault())
+func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler func(msg jetstream.Msg)) error {
+	consumerConfig := jetstream.ConsumerConfig{
+		Durable:       fmt.Sprintf("%s-consumer", s.streamName),
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		DeliverPolicy: jetstream.DeliverAllPolicy,
+	}
+
+	cons, err := s.js.CreateOrUpdateConsumer(ctx, s.streamName, consumerConfig)
 	if err != nil {
 		return err
 	}
 
+	consContext, err := cons.Consume(handler)
+	if err != nil {
+		return err
+	}
 	go func() {
-		for {
-			msgs, err := sub.Fetch(10)
-			if err != nil {
-				log.Printf("Error fetching messages: %v", err)
-				time.Sleep(time.Second)
-				continue
-			}
-			for _, msg := range msgs {
-				handler(msg)
-				msg.Ack()
-			}
-		}
+		<-ctx.Done()
+		consContext.Stop()
 	}()
-
 	return nil
 }

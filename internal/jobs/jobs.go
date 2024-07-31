@@ -1,8 +1,8 @@
 package jobs
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/aligndx/aligndx/internal/config"
@@ -19,37 +19,38 @@ type Job struct {
 }
 
 type JobServiceInterface interface {
-	QueueJob(jobID string, jobInputs map[string]interface{}, jobSchema string) error
-	GetJobInfo(jobID string) (*Job, error)
-	CancelJob(jobID string) error
-	RunJob(jobID string) error
+	QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error
+	// GetJobInfo(ctx context.Context, jobID string) (*Job, error)
+	// CancelJob(ctx context.Context, jobID string) error
+	// RunJob(ctx context.Context, jobID string) error
 	RegisterJobHandler(schema string, handler JobHandler)
+	ProcessJobs(ctx context.Context) error
 }
 
 type MessageQueueService interface {
-	Publish(subject string, data []byte) error
-	Subscribe(subject string) ([]byte, error)
+	Publish(ctx context.Context, subject string, data []byte) error
+	Subscribe(ctx context.Context, subject string, handler func([]byte)) error
 }
 
 type JobService struct {
-	mq        MessageQueueService
-	log       *logger.LoggerWrapper
-	cfg       *config.Config
-	handlers  map[string]JobHandler
-	jobPrefix string
+	mq       MessageQueueService
+	log      *logger.LoggerWrapper
+	cfg      *config.Config
+	handlers map[string]JobHandler
+	stream   string
 }
 
-func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *config.Config, jobPrefix string) JobServiceInterface {
+func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *config.Config, stream string) JobServiceInterface {
 	return &JobService{
-		mq:        mq,
-		log:       log,
-		cfg:       cfg,
-		handlers:  make(map[string]JobHandler),
-		jobPrefix: jobPrefix,
+		mq:       mq,
+		log:      log,
+		cfg:      cfg,
+		handlers: make(map[string]JobHandler),
+		stream:   stream,
 	}
 }
 
-func (s *JobService) QueueJob(jobID string, jobInputs map[string]interface{}, jobSchema string) error {
+func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error {
 	job := Job{
 		JobID:     jobID,
 		JobInputs: jobInputs,
@@ -62,7 +63,8 @@ func (s *JobService) QueueJob(jobID string, jobInputs map[string]interface{}, jo
 		s.log.Error("Error marshaling job data", map[string]interface{}{"error": err})
 		return err
 	}
-	err = s.mq.Publish(fmt.Sprintf("%s.%s", s.jobPrefix, jobID), jobData)
+	// publish to single queue
+	err = s.mq.Publish(ctx, s.stream, jobData)
 	if err != nil {
 		s.log.Error("Error publishing job", map[string]interface{}{"error": err})
 		return err
@@ -72,82 +74,41 @@ func (s *JobService) QueueJob(jobID string, jobInputs map[string]interface{}, jo
 	return nil
 }
 
-func (s *JobService) GetJobInfo(jobID string) (*Job, error) {
-	subject := fmt.Sprintf("%s.%s", s.jobPrefix, jobID)
+func (s *JobService) ProcessJobs(ctx context.Context) error {
+	messageHandler := func(msgData []byte) error {
+		// Unmarshal the message data into Job structure
+		var job Job
+		if err := json.Unmarshal(msgData, &job); err != nil {
+			s.log.Error("Error unmarshalling job data", map[string]interface{}{"error": err})
+			return err
+		}
 
-	msgData, err := s.mq.Subscribe(subject)
-	if err != nil {
-		s.log.Error("Error fetching job message", map[string]interface{}{"error": err})
-		return nil, err
+		// Find the handler based on the job's schema
+		handler, exists := s.handlers[job.JobSchema]
+		if !exists {
+			errMsg := fmt.Sprintf("No handler registered for schema: %s", job.JobSchema)
+			s.log.Error(errMsg, nil)
+			return fmt.Errorf(errMsg)
+		}
+
+		// Process the job using the found handler
+		if err := handler(job.JobInputs); err != nil {
+			s.log.Error("Error processing job", map[string]interface{}{
+				"job_id": job.JobID, "error": err,
+			})
+			return err
+		}
+
+		s.log.Info("Job processed successfully", map[string]interface{}{"job_id": job.JobID})
+		return nil
 	}
 
-	var job Job
-	err = json.Unmarshal(msgData, &job)
-	if err != nil {
-		s.log.Error("Error unmarshaling job data", map[string]interface{}{"error": err})
-		return nil, err
-	}
-
-	s.log.Info("Job Info", map[string]interface{}{"job": job})
-	return &job, nil
-}
-
-func (s *JobService) CancelJob(jobID string) error {
-	job, err := s.GetJobInfo(jobID)
-	if err != nil {
-		return err
-	}
-
-	job.Status = "cancelled"
-
-	jobData, err := json.Marshal(job)
-	if err != nil {
-		s.log.Error("Error marshaling job data", map[string]interface{}{"error": err})
-		return err
-	}
-	err = s.mq.Publish(fmt.Sprintf("%s.%s", s.jobPrefix, jobID), jobData)
-	if err != nil {
-		s.log.Error("Error publishing job", map[string]interface{}{"error": err})
-		return err
-	}
-
-	s.log.Info("Job cancelled", map[string]interface{}{"job_id": jobID})
-	return nil
-}
-
-func (s *JobService) RunJob(jobID string) error {
-	job, err := s.GetJobInfo(jobID)
-	if err != nil {
-		return err
-	}
-
-	handler, exists := s.handlers[job.JobSchema]
-	if !exists {
-		s.log.Error("No handler registered for job schema", map[string]interface{}{"job_schema": job.JobSchema})
-		return errors.New("no handler registered for job schema")
-	}
-
-	err = handler(job.JobInputs)
-	if err != nil {
-		s.log.Error("Error running job", map[string]interface{}{"error": err, "job_id": jobID})
-		return err
-	}
-
-	job.Status = "completed"
-
-	jobData, err := json.Marshal(job)
-	if err != nil {
-		s.log.Error("Error marshaling job data", map[string]interface{}{"error": err})
-		return err
-	}
-	err = s.mq.Publish(fmt.Sprintf("%s.%s", s.jobPrefix, jobID), jobData)
-	if err != nil {
-		s.log.Error("Error publishing job", map[string]interface{}{"error": err})
-		return err
-	}
-
-	s.log.Info("Job completed", map[string]interface{}{"job_id": jobID})
-	return nil
+	// Subscribe using the internal message handler
+	return s.mq.Subscribe(ctx, s.stream, func(msg []byte) {
+		if err := messageHandler(msg); err != nil {
+			s.log.Error("Failed to handle message", map[string]interface{}{"error": err})
+		}
+	})
 }
 
 func (s *JobService) RegisterJobHandler(schema string, handler JobHandler) {
