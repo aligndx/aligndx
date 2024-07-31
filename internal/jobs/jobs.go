@@ -28,7 +28,7 @@ type JobServiceInterface interface {
 
 type MessageQueueService interface {
 	Publish(subject string, data []byte) error
-	GetLastMsg(subject string) ([]byte, error)
+	Subscribe(subject string) ([]byte, error)
 }
 
 type JobService struct {
@@ -75,7 +75,7 @@ func (s *JobService) QueueJob(jobID string, jobInputs map[string]interface{}, jo
 func (s *JobService) GetJobInfo(jobID string) (*Job, error) {
 	subject := fmt.Sprintf("%s.%s", s.jobPrefix, jobID)
 
-	msgData, err := s.mq.GetLastMsg(subject)
+	msgData, err := s.mq.Subscribe(subject)
 	if err != nil {
 		s.log.Error("Error fetching job message", map[string]interface{}{"error": err})
 		return nil, err
