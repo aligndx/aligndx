@@ -9,7 +9,7 @@ type JobDetails struct {
 type JobOption func(*JobDetails)
 
 type Executor interface {
-	ExecuteJob(ctx context.Context, command []string, opts ...JobOption) (string, error)
+	Execute(ctx context.Context, command []string, opts ...JobOption) (string, error)
 }
 
 type ExecutorService struct {
@@ -20,6 +20,6 @@ func NewExecutorService(executor Executor) *ExecutorService {
 	return &ExecutorService{executor: executor}
 }
 
-func (s *ExecutorService) ExecuteJob(ctx context.Context, command []string, opts ...JobOption) (string, error) {
-	return s.executor.ExecuteJob(ctx, command, opts...)
+func (s *ExecutorService) Execute(ctx context.Context, command []string, opts ...JobOption) (string, error) {
+	return s.executor.Execute(ctx, command, opts...)
 }

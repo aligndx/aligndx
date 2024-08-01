@@ -25,7 +25,7 @@ func main() {
 	jobService := jobs.NewJobService(mqService, log, cfg, cfg.MQ.Stream)
 
 	// Register job handlers
-	// jobService.RegisterJobHandler("example_schema", exampleJobHandler)
+	jobService.RegisterJobHandler("workflow", jobs.WorkflowHandler)
 
 	// Initialize worker
 	worker := jobs.NewWorker(jobService, log, cfg)

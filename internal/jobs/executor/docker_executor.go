@@ -1,4 +1,4 @@
-package dockerexecutor
+package executor
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/aligndx/aligndx/internal/executor"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -29,8 +28,8 @@ func NewDockerExecutor() (*DockerExecutor, error) {
 	return &DockerExecutor{client: cli}, nil
 }
 
-func (d *DockerExecutor) ExecuteJob(ctx context.Context, command []string, opts ...executor.JobOption) (string, error) {
-	jobDetails := executor.JobDetails{
+func (d *DockerExecutor) Execute(ctx context.Context, command []string, opts ...JobOption) (string, error) {
+	jobDetails := JobDetails{
 		Command: command,
 		Options: make(map[string]interface{}),
 	}
