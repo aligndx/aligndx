@@ -1,6 +1,7 @@
 'use client';
 
-import AuthLayout from "@/layouts/auth";
+import { SignInLayout } from "@/layouts/auth";
+
 
 type Props = {
   children: React.ReactNode;
@@ -8,6 +9,6 @@ type Props = {
 
 export default function Layout({ children }: Props) {
   return (
-      <AuthLayout>{children}</AuthLayout>
+      <SignInLayout>{children}</SignInLayout>
   );
 }
