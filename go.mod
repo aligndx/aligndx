@@ -3,6 +3,7 @@ module github.com/aligndx/aligndx
 go 1.22.1
 
 require (
+	github.com/docker/docker v27.1.1+incompatible
 	github.com/joho/godotenv v1.5.1
 	github.com/knadh/koanf/providers/env v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
@@ -48,7 +49,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v27.0.3+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/domodwyer/mailyak/v3 v3.6.2 // indirect
