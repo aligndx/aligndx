@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type Props = {
     children: React.ReactNode;
     sideContent: React.ReactNode;
@@ -9,7 +7,7 @@ type Props = {
 export default function AuthLayout({ children, sideContent, reverse = false}: Props) { 
 
     return (
-        <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
+        <div className="w-full lg:grid min-h-screen lg:grid-cols-2">
             <div className={`flex items-center justify-center py-12 ${reverse ? "order-last" : null}`}>
                 {children}
             </div>

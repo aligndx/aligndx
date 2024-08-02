@@ -7,16 +7,16 @@ type Props = {
 
 export default function SignInLayout({ children }: Props) {
 
-    const SignInImage = <Image
-        src="/placeholder.svg"
-        alt="Image"
-        width="1920"
-        height="1080"
-        className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-    />
+    const SignInImage = (
+        <Image
+            src="/auth/signin.jpg"
+            alt="Image"
+            width="1920"
+            height="1080"
+            className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        />
+    )
     return (
-        <div>
-            <AuthLayout sideContent={SignInImage}>{children}</AuthLayout>
-        </div>
+        <AuthLayout sideContent={SignInImage}>{children}</AuthLayout>
     );
 }
