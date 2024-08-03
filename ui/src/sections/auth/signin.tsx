@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
 import { routes } from "@/routes"
+import Logo from "@/components/logo"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -27,6 +28,9 @@ export default function SignIn() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto grid w-[400px] space-y-6">
+        <div className="flex items-center justify-center">
+          <Logo full={false} width={150} />
+        </div>
         <h1 className="text-3xl font-bold ">Sign In </h1>
         <div className="space-y-3">
           <FormField

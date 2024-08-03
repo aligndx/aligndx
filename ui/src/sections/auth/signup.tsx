@@ -9,6 +9,7 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import Logo from "@/components/logo"
 
 const formSchema = z.object({
   username: z.string(),
@@ -38,6 +39,9 @@ export default function SignUp() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto grid w-[400px] space-y-6">
+        <div className="flex items-center justify-center">
+          <Logo full={false} width={150} />
+        </div>
         <h1 className="text-3xl font-bold ">Sign Up</h1>
         <div className="space-y-3">
           <FormField
@@ -87,7 +91,7 @@ export default function SignUp() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input  placeholder="••••••••" type="password" {...field} />
+                    <Input placeholder="••••••••" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
