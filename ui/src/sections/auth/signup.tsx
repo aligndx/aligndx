@@ -38,7 +38,7 @@ export default function SignUp() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto grid w-[400px] space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto grid md:w-[400px] space-y-6">
         <div className="flex items-center justify-center">
           <Logo full={false} width={150} />
         </div>
@@ -75,7 +75,7 @@ export default function SignUp() {
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex-1">
                   <FormLabel>Password</FormLabel>
                   <FormControl>
                     <Input placeholder="••••••••" type="password" {...field} />
@@ -88,7 +88,7 @@ export default function SignUp() {
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex-1">
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
                     <Input placeholder="••••••••" type="password" {...field} />

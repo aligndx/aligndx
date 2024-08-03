@@ -1,11 +1,11 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Atkinson_Hyperlegible } from 'next/font/google'
 import { ReactNode } from 'react'
 import { siteConfig } from '@/config'
 import ThemeProvider from '@/components/theme-provider/theme-provider'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Atkinson_Hyperlegible({ weight: "400", subsets: ["latin"] })
 
 export const metadata: Metadata = {
   description: siteConfig.description,
