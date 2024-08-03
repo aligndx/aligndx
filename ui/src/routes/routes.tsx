@@ -1,12 +1,12 @@
 const BASE_ROUTES = {
-    ROOT: '/',
+    ROOT: '',
     DASHBOARD: '/dashboard',
 }
 
 export const routes = {
     home: BASE_ROUTES.ROOT,
     auth: {
-        login: `${BASE_ROUTES.ROOT}/login`,
+        signin: `${BASE_ROUTES.ROOT}/signin`,
         signup: `${BASE_ROUTES.ROOT}/signup`,
         activate: `${BASE_ROUTES.ROOT}/activate`,
         forgotPassword: `${BASE_ROUTES.ROOT}/forgot-password`,

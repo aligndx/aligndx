@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
+import { routes } from "@/routes"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -59,7 +60,7 @@ export default function SignIn() {
 
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="underline">
+          <Link href={routes.auth.signup} className="underline">
             Sign up
           </Link>
         </div>
