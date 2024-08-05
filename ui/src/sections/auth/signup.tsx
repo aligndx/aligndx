@@ -12,7 +12,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import Logo from "@/components/logo"
 
 const formSchema = z.object({
-  username: z.string(),
   email: z.string().email(),
   password: z.string().min(8),
   confirmPassword: z.string().min(8),
@@ -43,19 +42,6 @@ export default function SignUp() {
         </div>
         <h1 className="text-3xl font-bold ">Sign Up</h1>
         <div className="space-y-3">
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input placeholder="username" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="email"
