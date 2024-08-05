@@ -16,7 +16,6 @@ const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   confirmPassword: z.string().min(8),
-  avatar: z.string().optional(),
 }).superRefine(({ confirmPassword, password }, ctx) => {
   if (confirmPassword !== password) {
     ctx.addIssue({
