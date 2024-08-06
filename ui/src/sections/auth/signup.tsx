@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Logo from "@/components/logo"
+import { PasswordInput } from "@/components/ui/passwordInput"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -63,7 +64,7 @@ export default function SignUp() {
                 <FormItem className="flex-1">
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="••••••••" type="password" {...field} />
+                    <PasswordInput {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -76,7 +77,7 @@ export default function SignUp() {
                 <FormItem className="flex-1">
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="••••••••" type="password" {...field} />
+                    <PasswordInput {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
