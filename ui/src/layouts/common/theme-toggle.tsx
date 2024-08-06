@@ -57,7 +57,7 @@ export default function ThemeToggle() {
                 <TooltipTrigger asChild >
                     <Button
                         className="rounded-full w-8 h-8 bg-background"
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
                         onClick={handleToggle}>
                         {renderIcon()}

@@ -17,7 +17,11 @@ export function Notifications() {
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="ghost"><Bell /></Button>
+                <Button
+                    className="rounded-full w-8 h-8 bg-background"
+                    variant="ghost"
+                    size="icon"
+                ><Bell /></Button>
             </SheetTrigger>
             <SheetContent>
                 <SheetHeader>
