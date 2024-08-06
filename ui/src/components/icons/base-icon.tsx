@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import React from 'react';
 
-const sharedStyles = 'h-4 w-4 text-gray-700';
+const sharedStyles = 'h-5 w-5';
 
 interface BaseIconProps extends React.SVGProps<SVGSVGElement> {
   IconComponent: React.ElementType;

@@ -14,14 +14,8 @@ export const routes = {
     },
     dashboard: {
         root: BASE_ROUTES.DASHBOARD,
-        create: {
-            root: `${BASE_ROUTES.DASHBOARD}/create`,
-            module: `${BASE_ROUTES.DASHBOARD}/create/module`,
-            workflow: `${BASE_ROUTES.DASHBOARD}/create/workflow`,
-        },
-        explore: `${BASE_ROUTES.DASHBOARD}/explore`,
+        analyze: `${BASE_ROUTES.DASHBOARD}/analyze`,
         jobs: `${BASE_ROUTES.DASHBOARD}/jobs`,
-        deployments: `${BASE_ROUTES.DASHBOARD}/deployments`,
-        teams: `${BASE_ROUTES.DASHBOARD}/teams`,
+        visualize: `${BASE_ROUTES.DASHBOARD}/visualize`,
     },
 }
