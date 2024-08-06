@@ -1,9 +1,9 @@
 import { SiteConfig } from "@/types/site"
 
 export const siteConfig: SiteConfig = {
-    name: "BioJig",
+    name: "AlignDx",
     description:
-        "The Bioinformatics Platform of the Future",
-    url: "https://biojig.com",
+        "Surveillance from the future",
+    url: "https://aligndx.uwaterloo.ca",
     author: "Manjot Hunjan",
 }

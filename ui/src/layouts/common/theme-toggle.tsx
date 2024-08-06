@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, HalfCircle} from "@/components/icons";
+import { Sun, Moon, HalfCircle } from "@/components/icons";
 import {
     Tooltip,
     TooltipContent,
@@ -55,7 +55,11 @@ export default function ThemeToggle() {
         <TooltipProvider>
             <Tooltip delayDuration={100}>
                 <TooltipTrigger asChild >
-                    <Button variant="ghost" onClick={handleToggle}>
+                    <Button
+                        className="rounded-full w-8 h-8 bg-background"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleToggle}>
                         {renderIcon()}
                     </Button>
                 </TooltipTrigger>

@@ -38,7 +38,7 @@ const Logo = forwardRef<HTMLDivElement, LogoProps>(
                 <div className="flex items-center">
                     {logo}
                     {full ?
-                        <span className="ml-2 font-extrabold text-sm">{siteConfig.name}</span>
+                        <span className="ml-2 text-sm">{siteConfig.name}</span>
                         :
                         null
                     }
