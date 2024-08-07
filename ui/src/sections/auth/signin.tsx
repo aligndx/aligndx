@@ -2,14 +2,14 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
 import { routes } from "@/routes"
 import Logo from "@/components/logo"
+import { useApiService } from "@/services/api"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -20,9 +20,25 @@ export default function SignIn() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   })
+  const { auth } = useApiService();
+  const login = auth.loginMutation;
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await login.mutateAsync(
+        values,
+        {
+          onSuccess: (data) => {
+            console.log('Login successful:', data);
+          },
+          onError: (error) => {
+            console.error('Login failed:', error);
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Login error:', error);
+    }
   }
 
   return (

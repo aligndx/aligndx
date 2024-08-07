@@ -1,27 +1,25 @@
 'use client'
-import Image from "next/image"
-import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Logo from "@/components/logo"
 import { PasswordInput } from "@/components/ui/passwordInput"
+import { useApiService } from "@/services/api"
 
 const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  confirmPassword: z.string().min(8),
-}).superRefine(({ confirmPassword, password }, ctx) => {
-  if (confirmPassword !== password) {
+  passwordConfirm: z.string().min(8),
+}).superRefine(({ passwordConfirm, password }, ctx) => {
+  if (passwordConfirm !== password) {
     ctx.addIssue({
       code: "custom",
       message: "The passwords did not match",
-      path: ['confirmPassword']
+      path: ['passwordConfirm']
     });
   }
 });
@@ -31,8 +29,26 @@ export default function SignUp() {
     resolver: zodResolver(formSchema),
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+  const { auth } = useApiService();
+  const signup = auth.registerMutation;
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const { email, password, passwordConfirm, ...rest } = values;
+    try {
+      await signup.mutateAsync(
+        { email, password, additionalData: { passwordConfirm, ...rest } },
+        {
+          onSuccess: (data) => {
+            console.log('SignUp successful:', data);
+          },
+          onError: (error) => {
+            console.error('SignUp failed:', error);
+          },
+        }
+      );
+    } catch (error) {
+      console.error('SignUp error:', error);
+    }
   }
 
   return (
@@ -72,7 +88,7 @@ export default function SignUp() {
             />
             <FormField
               control={form.control}
-              name="confirmPassword"
+              name="passwordConfirm"
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormLabel>Confirm Password</FormLabel>
