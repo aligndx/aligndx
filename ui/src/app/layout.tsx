@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { Atkinson_Hyperlegible } from 'next/font/google'
 import { ReactNode } from 'react'
 import { siteConfig } from '@/config'
-import ThemeProvider from '@/components/theme-provider/theme-provider'
+import Providers from '@/contexts/providers'
 
 const inter = Atkinson_Hyperlegible({ weight: "400", subsets: ["latin"] })
 
@@ -21,9 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+        <Providers>
           {children}
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   )
