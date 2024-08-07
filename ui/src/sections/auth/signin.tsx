@@ -7,10 +7,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
-import { routes, useRouter} from "@/routes"
+import { routes, useRouter } from "@/routes"
 import Logo from "@/components/logo"
 import { useApiService } from "@/services/api"
 import { toast } from "@/components/ui/sonner"
+import { Label } from "@/components/ui/label"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -53,7 +54,7 @@ export default function SignIn() {
           <Logo full={false} width={150} />
         </div>
         <h1 className="text-3xl font-bold ">Sign In </h1>
-        <div className="space-y-3">
+        <div className="space-y-6">
           <FormField
             control={form.control}
             name="email"
@@ -72,7 +73,12 @@ export default function SignIn() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <div className="flex items-center">
+                  <FormLabel>Password</FormLabel>
+                  <Link href={routes.auth.forgotPassword} className="ml-auto inline-block text-sm underline">
+                    Forgot your password?
+                  </Link>
+                </div>
                 <FormControl>
                   <Input placeholder="••••••••" type="password" {...field} />
                 </FormControl>

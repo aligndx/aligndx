@@ -12,7 +12,7 @@ interface LogoProps extends Omit<React.ComponentProps<typeof Image>, 'src' | 'al
 }
 
 const Logo = forwardRef<HTMLDivElement, LogoProps>(
-    ({ disabledLink = false, className, full = true, width = 35, height = 35, ...imageProps }, ref) => {
+    ({ disabledLink = false, className, full = true, width = 80, height = 100, ...imageProps }, ref) => {
         const logoClasses = cn(className);
 
         const logo = (
