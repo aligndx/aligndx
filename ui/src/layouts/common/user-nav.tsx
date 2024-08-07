@@ -13,8 +13,8 @@ export function UserNav() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-12 w-12 rounded-full">
-                    <Avatar className="h-12 w-12">
+                <Button variant="ghost" className="h-[40px] w-[40px] rounded-full">
+                    <Avatar className="">
                         <AvatarImage src="/avatars/01.png" alt="profile-pic" />
                         <AvatarFallback>{fallback}</AvatarFallback>
                     </Avatar>

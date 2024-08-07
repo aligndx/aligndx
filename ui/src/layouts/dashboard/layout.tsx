@@ -35,7 +35,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
           </div>
           <div className="flex flex-row items-center gap-5">
             <ThemeToggle />
-            <Notifications />
+            {/* <Notifications /> */}
           </div>
         </Header>
         <main>

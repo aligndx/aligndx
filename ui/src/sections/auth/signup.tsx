@@ -9,6 +9,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import Logo from "@/components/logo"
 import { PasswordInput } from "@/components/ui/passwordInput"
 import { useApiService } from "@/services/api"
+import { toast } from "@/components/ui/sonner"
+import { routes, useRouter } from "@/routes"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -31,6 +33,7 @@ export default function SignUp() {
 
   const { auth } = useApiService();
   const signup = auth.registerMutation;
+  const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { email, password, passwordConfirm, ...rest } = values;
@@ -39,9 +42,12 @@ export default function SignUp() {
         { email, password, additionalData: { passwordConfirm, ...rest } },
         {
           onSuccess: (data) => {
+            toast.success("SignUp Successful")
+            router.push(routes.auth.signin)
             console.log('SignUp successful:', data);
           },
           onError: (error) => {
+            toast.error("SignUp Failed")
             console.error('SignUp failed:', error);
           },
         }

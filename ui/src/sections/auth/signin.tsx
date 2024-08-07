@@ -7,9 +7,10 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
-import { routes } from "@/routes"
+import { routes, useRouter} from "@/routes"
 import Logo from "@/components/logo"
 import { useApiService } from "@/services/api"
+import { toast } from "@/components/ui/sonner"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -22,6 +23,7 @@ export default function SignIn() {
   })
   const { auth } = useApiService();
   const login = auth.loginMutation;
+  const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -29,9 +31,12 @@ export default function SignIn() {
         values,
         {
           onSuccess: (data) => {
+            toast.success("Login Successful")
+            router.push(routes.dashboard.root)
             console.log('Login successful:', data);
           },
           onError: (error) => {
+            toast.error("Login Failed")
             console.error('Login failed:', error);
           },
         }

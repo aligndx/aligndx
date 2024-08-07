@@ -13,10 +13,10 @@ interface SideNavProps extends React.HTMLAttributes<HTMLDivElement> {
 const SideNav: React.FC<SideNavProps> = ({ open, toggleMobileSideNav, className, ...props }) => {
   const desktopContent = (
     <div
-      className={cn('hidden md:flex flex-col gap-2 items-center justify-between px-2 pb-6 border-r-2 w-20', className)}
+      className={cn('hidden md:flex flex-col gap-2 items-center justify-between px-2 pb-6 border-r-2 w-[80px]', className)}
       {...props}
     >
-      <Logo full={false} className='w-[60px]' />
+      <Logo full={false} className='w-[70px] ' />
       <NavContent />
       <UserNav />
     </div>
