@@ -4,6 +4,7 @@ import { Atkinson_Hyperlegible } from 'next/font/google'
 import { ReactNode } from 'react'
 import { siteConfig } from '@/config'
 import Providers from '@/contexts/providers'
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Atkinson_Hyperlegible({ weight: "400", subsets: ["latin"] })
 
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <NextTopLoader showSpinner={false} color='#2661a1' />
         <Providers>
           {children}
         </Providers>
