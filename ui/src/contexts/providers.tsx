@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import ThemeProvider from '@/components/theme-provider/theme-provider'
+import QueryProvider from "./query-context";
 
 interface ProvidersProps {
     children: ReactNode;
@@ -8,7 +9,9 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
     return (
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
-            {children}
+            <QueryProvider>
+                {children}
+            </QueryProvider>
         </ThemeProvider>
     )
 }
