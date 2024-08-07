@@ -65,7 +65,9 @@ export default function ForgotPassword() {
                     />
                 </div>
                 <Button type="submit">Reset Password</Button>
-                <Link href={routes.auth.signin}>Return to Sign In</Link>
+                <div>
+                    <Link className="underline text-sm" href={routes.auth.signin}>Return to Sign In</Link>
+                </div>
             </form>
         </Form>
     )
