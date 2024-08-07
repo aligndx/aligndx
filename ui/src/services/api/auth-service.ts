@@ -1,5 +1,5 @@
-// src/services/AuthService.ts
 import PocketBase, { RecordAuthResponse, RecordModel } from 'pocketbase';
+import { useMutation, UseMutationResult, useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 
 export const login = async (pb: PocketBase, email: string, password: string): Promise<RecordAuthResponse<RecordModel>> => {
   const user = await pb.collection('users').authWithPassword(email, password);
@@ -28,17 +28,90 @@ export const requestPasswordReset = async (pb: PocketBase, email: string): Promi
 };
 
 export const confirmPasswordReset = async (pb: PocketBase, passwordResetToken: string, password: string, passwordConfirm: string): Promise<void> => {
-  await pb.collection('users').confirmPasswordReset(passwordResetToken , password, passwordConfirm);
+  await pb.collection('users').confirmPasswordReset(passwordResetToken, password, passwordConfirm);
 };
 
-export const authService = {
-  login,
-  logout,
-  getCurrentUser,
-  isAuthenticated,
-  register,
-  requestPasswordReset,
-  confirmPasswordReset,
+interface LoginData {
+  email: string;
+  password: string;
+}
+
+interface RegisterData {
+  email: string;
+  password: string;
+  additionalData?: any;
+}
+
+interface ConfirmPasswordResetData {
+  passwordResetToken: string;
+  password: string;
+  passwordConfirm: string;
+}
+
+const useAuthService = (pb: PocketBase) => {
+  const queryClient = useQueryClient();
+
+  const loginMutation: UseMutationResult<RecordAuthResponse<RecordModel>, Error, LoginData> = useMutation(
+    {
+      mutationFn: (data: LoginData) => login(pb, data.email, data.password),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      },
+    }
+  );
+
+  const logoutMutation: UseMutationResult<void, Error, void> = useMutation(
+    {
+      mutationFn: () => logout(pb),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      },
+    }
+  );
+
+  const registerMutation: UseMutationResult<RecordModel, Error, RegisterData> = useMutation(
+    {
+      mutationFn: (data: RegisterData) => register(pb, data.email, data.password, data.additionalData),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      },
+    }
+  );
+
+  const requestPasswordResetMutation: UseMutationResult<void, Error, string> = useMutation(
+    {
+      mutationFn: (email: string) => requestPasswordReset(pb, email),
+    }
+  );
+
+  const confirmPasswordResetMutation: UseMutationResult<void, Error, ConfirmPasswordResetData> = useMutation(
+    {
+      mutationFn: (data: ConfirmPasswordResetData) => confirmPasswordReset(pb, data.passwordResetToken, data.password, data.passwordConfirm),
+    }
+  );
+
+
+  const currentUserQuery: UseQueryResult<RecordModel | null, Error> = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => getCurrentUser(pb),
+    enabled: isAuthenticated(pb),
+  });
+
+
+  const authStatusQuery: UseQueryResult<boolean, Error> = useQuery({
+    queryKey: ['authStatus'],
+    queryFn: () => isAuthenticated(pb),
+  });
+
+  return {
+    loginMutation,
+    logoutMutation,
+    registerMutation,
+    requestPasswordResetMutation,
+    confirmPasswordResetMutation,
+    currentUserQuery,
+    authStatusQuery,
+  };
 };
 
-export default authService;
+export default useAuthService;
