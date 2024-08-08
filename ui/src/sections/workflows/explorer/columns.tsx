@@ -16,30 +16,18 @@ export const columns: ColumnDef<Workflow>[] = [
       const originalRow = row.original
       const name = originalRow.name
       const url = originalRow.repository
+      const description = originalRow.description
       return (
-        <div className="flex flex-col gap-2 font-medium text-lg">
+        <div className="flex flex-col gap-4 font-medium text-lg">
           <div>{name}</div>
           <a className="flex flex-row  gap-2 underline items-center text-sm hover:text-muted-foreground" href={url} target="_blank" rel="noopener noreferrer">
-            <GitBranch /> 
+            <GitBranch />
             {url}
-          </a> 
+          </a>
         </div>
       )
     },
-  },
-  {
-    id: "description",
-    cell: ({ row }) => {
-      const originalRow = row.original
-      const description = originalRow.description
-
-      return (
-        <div className="">
-          {description}
-        </div>
-      )
-    },
-  },
+  }, 
   {
     accessorKey: "updated",
     header: ({ column }) => (

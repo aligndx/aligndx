@@ -1,19 +1,32 @@
 import PocketBase, { RecordModel } from 'pocketbase';
 import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import { Workflow } from '@/types/workflow';
 
-export const getWorkflow = async (pb: PocketBase, id: string): Promise<RecordModel> => {
-  const workflow = await pb.collection('workflows').getOne(id);
-  return workflow as RecordModel;
+export const mapRecordToWorkflow = (record: RecordModel): Workflow => {
+  return {
+      id: record.id,
+      name: record.name,
+      repository: record.repository,
+      description: record.description,
+      schema: record.schema,
+      created: new Date(record.created),
+      updated: new Date(record.updated)
+  };
 };
 
-export const getWorkflows = async (pb: PocketBase): Promise<RecordModel[]> => {
-  const workflows = await pb.collection('workflows').getFullList();
-  return workflows as RecordModel[];
+export const getWorkflow = async (pb: PocketBase, id: string): Promise<Workflow> => {
+  const record = await pb.collection('workflows').getOne(id);
+  return mapRecordToWorkflow(record);
 };
 
-export const createWorkflow = async (pb: PocketBase, data: any): Promise<RecordModel> => {
-  const workflow = await pb.collection('workflows').create(data);
-  return workflow as RecordModel;
+export const getWorkflows = async (pb: PocketBase): Promise<Workflow[]> => {
+  const records = await pb.collection('workflows').getFullList();
+  return records.map(mapRecordToWorkflow);
+};
+
+export const createWorkflow = async (pb: PocketBase, data: any): Promise<Workflow> => {
+  const record = await pb.collection('workflows').create(data);
+  return mapRecordToWorkflow(record);
 };
 
 export const updateWorkflow = async (pb: PocketBase, id: string, data: any): Promise<void> => {
@@ -23,7 +36,6 @@ export const updateWorkflow = async (pb: PocketBase, id: string, data: any): Pro
 export const deleteWorkflow = async (pb: PocketBase, id: string): Promise<void> => {
   await pb.collection('workflows').delete(id);
 };
-
 interface CreateWorkflowData {
   data: any;
 }
@@ -36,19 +48,17 @@ interface UpdateWorkflowData {
 interface DeleteWorkflowData {
   id: string;
 }
-
 const useWorkflowService = (pb: PocketBase) => {
   const queryClient = useQueryClient();
 
-  const useGetWorkflow = (id: string): UseQueryResult<RecordModel, Error> =>
+  const useGetWorkflow = (id: string): UseQueryResult<Workflow, Error> =>
     useQuery({ queryKey: ['workflow', id], queryFn: () => getWorkflow(pb, id) });
 
-  const getWorkflowsQuery: UseQueryResult<RecordModel[], Error> = useQuery({
-    queryKey: ['workflows'], queryFn:
-      () => getWorkflows(pb)
-  })
+  const getWorkflowsQuery: UseQueryResult<Workflow[], Error> = useQuery({
+    queryKey: ['workflows'], queryFn: () => getWorkflows(pb)
+  });
 
-  const createWorkflowMutation: UseMutationResult<RecordModel, Error, CreateWorkflowData> = useMutation(
+  const createWorkflowMutation: UseMutationResult<Workflow, Error, CreateWorkflowData> = useMutation(
     {
       mutationFn: (data: CreateWorkflowData) => createWorkflow(pb, data.data),
       onSuccess: () => {
