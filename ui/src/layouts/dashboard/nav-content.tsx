@@ -14,17 +14,17 @@ const links = [
     ),
   },
   {
-    label: "Data",
-    href: routes.dashboard.data,
-    icon: (
-      <Drive className={commonStyles} />
-    ),
-  },
-  {
     label: "Workflows",
     href: routes.dashboard.workflows,
     icon: (
       <Analyze className={commonStyles} />
+    ),
+  },
+  {
+    label: "Data",
+    href: routes.dashboard.data,
+    icon: (
+      <Drive className={commonStyles} />
     ),
   },
   {
