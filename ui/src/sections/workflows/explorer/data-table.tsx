@@ -20,7 +20,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import React from "react"
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input" 
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -52,17 +52,17 @@ export function DataTable<TData, TValue>({
 
     return (
         <div>
-            <div className="flex items-center p-4">
+            <div className="flex items-center justify-between p-4">
                 <Input
-                    placeholder="Filter workflows..."
+                    placeholder="Search workflows..."
                     value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
                     onChange={(event) =>
                         table.getColumn("name")?.setFilterValue(event.target.value)
                     }
                     className="max-w-sm"
-                />
+                /> 
             </div>
-            <div>
+            <div className="border-b border-t-0">
                 <Table >
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

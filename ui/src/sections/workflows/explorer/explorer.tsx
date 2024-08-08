@@ -1,14 +1,16 @@
-import { columns } from "./table/columns"
-import { DataTable } from "./table/data-table"
-import { Workflow } from "@/types/workflow"
+'use client'
 
-async function getData(): Promise<Workflow[]> {
+import { columns } from "./columns"
+import { DataTable } from "./data-table"
+import { Workflow } from "@/types/workflow" 
+
+function getData(): Workflow[] {
     // Fetch data from your API here.
     return [
         {
             id: "728ed52f",
             name: "workflow1",
-            repository: "github.com/repo",
+            repository: "https://github.com/repo",
             description: "blah blah",
             schema: {
                 version: "1.0",
@@ -37,7 +39,9 @@ async function getData(): Promise<Workflow[]> {
                         run: "npm run deploy"
                     }
                 ]
-            }
+            },
+            created: new Date(),
+            updated: new Date()
         },
         {
             id: "489e1d42",
@@ -67,14 +71,16 @@ async function getData(): Promise<Workflow[]> {
                         run: "pytest"
                     }
                 ]
-            }
+            },
+            created: new Date(),
+            updated: new Date()
         }
     ]
 
 }
 
-export default async function WorkflowBrowser() {
-    const data = await getData()
+export default function WorkflowExplorer() {
+    const data = getData()
     return (
         <DataTable columns={columns} data={data} />
     )

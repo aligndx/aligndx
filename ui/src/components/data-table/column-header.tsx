@@ -22,7 +22,7 @@ import {
     title: string
   }
    
-  export function DataTableColumnHeader<TData, TValue>({
+  export default function DataTableColumnHeader<TData, TValue>({
     column,
     title,
     className,
@@ -59,11 +59,11 @@ import {
               <ArrowDown className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
               Desc
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
               <EyeSlash className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
               Hide
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

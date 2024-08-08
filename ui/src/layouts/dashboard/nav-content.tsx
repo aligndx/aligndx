@@ -61,7 +61,7 @@ function NavItem({ title, route, icon, highlighted, isMobile }: NavListProps) {
       <Tooltip delayDuration={200}>
         <TooltipTrigger>
           <Link href={route} className={
-            cn("flex flex-row items-center rounded-md px-2 py-2 hover:text-foreground/60  hover:cursor-pointer",
+            cn("flex flex-row items-center rounded-md px-2 py-2 hover:text-muted-foreground  hover:cursor-pointer",
               highlighted ? "border" : null,
               isMobile ? "gap-4" : null
             )}>
