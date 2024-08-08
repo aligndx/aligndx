@@ -1,14 +1,11 @@
 // src/services/ApiService.ts
-import PocketBase from 'pocketbase';
-import { API } from '@/config-global';
 import useAuthService from './auth-service';
 import useUserService from './user-service';
-
-const pb = new PocketBase(API);
+import { client } from './client';
 
 const useApiService = () => {
-  const authService = useAuthService(pb);
-  const userService = useUserService(pb);
+  const authService = useAuthService(client);
+  const userService = useUserService(client);
 
   return {
     auth: authService,
