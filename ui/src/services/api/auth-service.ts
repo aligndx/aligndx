@@ -31,6 +31,7 @@ export const confirmPasswordReset = async (pb: PocketBase, passwordResetToken: s
   await pb.collection('users').confirmPasswordReset(passwordResetToken, password, passwordConfirm);
 };
 
+
 interface LoginData {
   email: string;
   password: string;

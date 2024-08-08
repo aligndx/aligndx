@@ -10,3 +10,4 @@ export { default as Analyze } from './analyze';
 export { default as Chart } from './chart';
 export { default as ArrowLeft } from './arrow-left';
 export { default as Bell } from './bell';
+export { default as Drive } from './drive';

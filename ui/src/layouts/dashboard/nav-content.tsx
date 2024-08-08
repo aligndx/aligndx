@@ -1,4 +1,4 @@
-import { Analyze, Chart, DashboardIcon } from "@/components/icons";
+import { Analyze, Chart, DashboardIcon, Eye, Drive} from "@/components/icons";
 import { routes, usePathname } from "@/routes";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
@@ -14,8 +14,15 @@ const links = [
     ),
   },
   {
-    label: "Analyze",
-    href: routes.dashboard.analyze,
+    label: "Data",
+    href: routes.dashboard.data,
+    icon: (
+      <Drive className={commonStyles} />
+    ),
+  },
+  {
+    label: "Workflows",
+    href: routes.dashboard.workflows,
     icon: (
       <Analyze className={commonStyles} />
     ),
@@ -26,7 +33,7 @@ const links = [
     icon: (
       <Chart className={commonStyles} />
     ),
-  }
+  },
 
 ];
 type NavListProps = {

@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export default function Header({ className, children }: HeaderProps) {
     return (
-        <header className={cn("px-6 py-1 border-b sticky", className)}>
+        <header className={cn("px-6 py-2 border-b sticky", className)}>
             {children}
         </header>
     )

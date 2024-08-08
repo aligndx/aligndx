@@ -14,8 +14,9 @@ export const routes = {
     },
     dashboard: {
         root: BASE_ROUTES.DASHBOARD,
-        analyze: `${BASE_ROUTES.DASHBOARD}/analyze`,
-        jobs: `${BASE_ROUTES.DASHBOARD}/jobs`,
+        repository: `${BASE_ROUTES.DASHBOARD}/repository`,
+        data: `${BASE_ROUTES.DASHBOARD}/data`,
+        workflows: `${BASE_ROUTES.DASHBOARD}/workflows`,
         visualize: `${BASE_ROUTES.DASHBOARD}/visualize`,
     },
 }
