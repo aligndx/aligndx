@@ -28,13 +28,13 @@ const DashboardLayout: FC<Props> = ({ children }) => {
       )}
     >
       <SideNav open={open} toggleMobileSideNav={() => setOpen(!open)}/>
-      <div className="flex flex-grow flex-col">
+      <div className="flex flex-grow flex-col pt-2">
         <Header className="flex flex-row items-center justify-between border-0">
-          <div className="flex items-center text-md font-bold gap-2">
+          <div className="flex items-center text-2xl font-medium gap-2">
             <Button onClick={() => setOpen(!open)} variant="ghost" size="icon" className="md:hidden p-2">
               <Menu />
             </Button>
-              {capitalizedSegment}
+            {capitalizedSegment}
           </div>
           <div className="flex flex-row items-center gap-5">
             <ThemeToggle />
