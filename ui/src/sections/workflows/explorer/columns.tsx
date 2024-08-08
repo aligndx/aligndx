@@ -27,12 +27,30 @@ export const columns: ColumnDef<Workflow>[] = [
         </div>
       )
     },
-  }, 
+  },
   {
     accessorKey: "updated",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Last Updated" />
     ),
+    cell: ({ row }) => {
+      const date = new Date(row.original.updated);
+      const formattedDate = new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short'
+      }).format(date);
+
+      return (
+        <div>
+          {formattedDate}
+        </div>
+      );
+    }
   },
   {
     id: "actions",
