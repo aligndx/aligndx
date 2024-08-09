@@ -8,9 +8,17 @@ export const useUpdateSearchParams = () => {
   const searchParams = useSearchParams();
 
   const createQueryString = useCallback(
-    (name: string, value: string) => {
+    (paramsToUpdate: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set(name, value);
+
+      Object.keys(paramsToUpdate).forEach((key) => {
+        const value = paramsToUpdate[key];
+        if (value !== undefined) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
 
       return params.toString();
     },
@@ -18,8 +26,8 @@ export const useUpdateSearchParams = () => {
   );
 
   const updateSearchParams = useCallback(
-    (name: string, value: string) => {
-      const newQueryString = createQueryString(name, value);
+    (paramsToUpdate: Record<string, string | undefined>) => {
+      const newQueryString = createQueryString(paramsToUpdate);
       router.push(`${pathname}?${newQueryString}`);
     },
     [router, pathname, createQueryString]

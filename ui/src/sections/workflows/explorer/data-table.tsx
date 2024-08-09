@@ -24,13 +24,13 @@ import React from "react"
 import { Input } from "@/components/ui/input"
 import { useUpdateSearchParams } from "@/routes"
 
-interface DataTableProps<TData extends { id: string }, TValue> {
+interface DataTableProps<TData extends { id: string, name: string }, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[],
     loading: boolean
 }
 
-export function DataTable<TData extends { id: string }, TValue>({
+export function DataTable<TData extends { id: string, name: string }, TValue>({
     columns,
     data,
     loading
@@ -96,7 +96,7 @@ export function DataTable<TData extends { id: string }, TValue>({
                                         className="hover:cursor-pointer"
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
-                                        onClick={() => updateSearchParams("id", row.original.id)}
+                                        onClick={() => updateSearchParams({"id" : row.original.id, "name": row.original.name})}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>

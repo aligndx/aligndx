@@ -71,7 +71,7 @@ export const useColumns = () => {
         return (
           <div className="text-right">
             <Button variant={"icon"} onClick={(e) => {
-              e.stopPropagation(); updateSearchParams("id", workflowId);
+              e.stopPropagation(); updateSearchParams({"id" : workflowId,  "name": row.original.name});
             }}> <ArrowRight /></Button>
           </div>
         )
