@@ -5,21 +5,15 @@ import Header from "../common/header";
 import ThemeToggle from "../common/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Menu } from "@/components/icons";
-import { usePathname } from '@/routes'
 import SideNav from "./side-nav";
 import { Breadcrumbs } from "./breadcrumbs";
+
 type Props = {
   children: ReactNode;
 };
 
-
 const DashboardLayout: FC<Props> = ({ children }) => {
   const [open, setOpen] = useState(false);
-  const path = usePathname()
-  const pathSegments = path.split('/').filter(Boolean);
-  const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : '';
-  const capitalize = (str : string) => str.charAt(0).toUpperCase() + str.slice(1);
-  const capitalizedSegment = capitalize(lastSegment);
 
   return (
     <div

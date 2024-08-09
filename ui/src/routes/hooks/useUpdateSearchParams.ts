@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 export const useUpdateSearchParams = () => {
   const router = useRouter();
-  const pathname = usePathname();
+  const currentPathname = usePathname();
   const searchParams = useSearchParams();
 
   const createQueryString = useCallback(
@@ -26,11 +26,15 @@ export const useUpdateSearchParams = () => {
   );
 
   const updateSearchParams = useCallback(
-    (paramsToUpdate: Record<string, string | undefined>) => {
+    (
+      paramsToUpdate: Record<string, string | undefined>,
+      newPathname?: string
+    ) => {
       const newQueryString = createQueryString(paramsToUpdate);
-      router.push(`${pathname}?${newQueryString}`);
+      const pathToPush = newPathname || currentPathname;
+      router.push(`${pathToPush}?${newQueryString}`);
     },
-    [router, pathname, createQueryString]
+    [router, currentPathname, createQueryString]
   );
 
   return updateSearchParams;

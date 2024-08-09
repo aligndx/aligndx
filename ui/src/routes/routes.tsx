@@ -16,7 +16,10 @@ export const routes = {
         root: BASE_ROUTES.DASHBOARD,
         repository: `${BASE_ROUTES.DASHBOARD}/repository`,
         data: `${BASE_ROUTES.DASHBOARD}/data`,
-        workflows: `${BASE_ROUTES.DASHBOARD}/workflows`,
+        workflows: {
+            root: `${BASE_ROUTES.DASHBOARD}/workflows`,
+            workflow: `${BASE_ROUTES.DASHBOARD}/workflows/workflow`,
+        },
         visualize: `${BASE_ROUTES.DASHBOARD}/visualize`,
     },
 }

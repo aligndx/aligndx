@@ -15,7 +15,7 @@ const links = [
   },
   {
     label: "Workflows",
-    href: routes.dashboard.workflows,
+    href: routes.dashboard.workflows.root,
     icon: (
       <Analyze className={commonStyles} />
     ),

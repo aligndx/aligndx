@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Workflow } from "@/types/workflow"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowRight, GitBranch } from "@/components/icons"
-import { useUpdateSearchParams } from "@/routes"
+import { routes, useUpdateSearchParams } from "@/routes"
 
 export const useColumns = () => {
   const updateSearchParams = useUpdateSearchParams();
@@ -71,7 +71,7 @@ export const useColumns = () => {
         return (
           <div className="text-right">
             <Button variant={"icon"} onClick={(e) => {
-              e.stopPropagation(); updateSearchParams({"id" : workflowId,  "name": row.original.name});
+              e.stopPropagation(); updateSearchParams({"id" : workflowId}, routes.dashboard.workflows.workflow);
             }}> <ArrowRight /></Button>
           </div>
         )
