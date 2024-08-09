@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "@/components/icons";
 import { usePathname } from '@/routes'
 import SideNav from "./side-nav";
+import { Breadcrumbs } from "./breadcrumbs";
 type Props = {
   children: ReactNode;
 };
@@ -34,7 +35,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
             <Button onClick={() => setOpen(!open)} variant="ghost" size="icon" className="md:hidden p-2">
               <Menu />
             </Button>
-            {capitalizedSegment}
+            <Breadcrumbs />
           </div>
           <div className="flex flex-row items-center gap-5">
             <ThemeToggle />
