@@ -3,6 +3,7 @@
 import {
     ColumnDef,
     ColumnFiltersState,
+    Row,
     SortingState,
     flexRender,
     getCoreRowModel,
@@ -21,14 +22,15 @@ import {
 } from "@/components/ui/table"
 import React from "react"
 import { Input } from "@/components/ui/input"
+import { useUpdateSearchParams } from "@/routes"
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends { id: string }, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[],
     loading: boolean
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends { id: string }, TValue>({
     columns,
     data,
     loading
@@ -37,6 +39,7 @@ export function DataTable<TData, TValue>({
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
         []
     )
+    const updateSearchParams = useUpdateSearchParams()
 
     const table = useReactTable({
         data,
@@ -90,8 +93,10 @@ export function DataTable<TData, TValue>({
                             table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
+                                        className="hover:cursor-pointer"
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
+                                        onClick={() => updateSearchParams("id", row.original.id)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
@@ -111,6 +116,6 @@ export function DataTable<TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-        </div>
+        </div >
     )
 }

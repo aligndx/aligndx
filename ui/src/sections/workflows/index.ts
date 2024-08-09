@@ -1,1 +1,1 @@
-export { default as WorkflowExplorerView } from './view/workflows'
+export { default as WorkflowExplorerView } from './view/workflows-explorer'
