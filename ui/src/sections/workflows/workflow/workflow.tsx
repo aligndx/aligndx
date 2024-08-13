@@ -5,6 +5,7 @@ import { useSearchParams } from "@/routes";
 import DOMPurify from 'dompurify';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import WorkflowForm from "./workflowForm";
 
 export default function Workflow() {
     const searchParams = useSearchParams();
@@ -35,12 +36,25 @@ export default function Workflow() {
                         >
                             Graph
                         </TabsTrigger>
+                        <TabsTrigger
+                            value="runs"
+                            className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none "
+                        >
+                            Runs
+                        </TabsTrigger>
                     </TabsList>
-                    <TabsContent value="parameters">
-                        Form parameters
+                    <TabsContent value="parameters" className="p-4">
+                        {
+                            workflow.isLoading ? "loading" :
+                                <WorkflowForm jsonSchema={workflow.data?.schema} />
+                        }
+
                     </TabsContent>
-                    <TabsContent value="graph">
+                    <TabsContent value="graph" className="p-4">
                         Example graph
+                    </TabsContent>
+                    <TabsContent value="runs" className="p-4">
+                        Example runs
                     </TabsContent>
                 </Tabs>
                 <div className="flex  flex-col gap-4 p-4 border h-screen bg-muted/50">
@@ -48,7 +62,7 @@ export default function Workflow() {
                         {workflow.data?.name}
                     </header>
                     <div className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
-                    <Separator className="my-4"/>
+                    <Separator className="my-4" />
                 </div>
             </div>
         </div>
