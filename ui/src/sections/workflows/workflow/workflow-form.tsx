@@ -5,12 +5,12 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useRouter } from "@/routes";
 import { toast } from "@/components/ui/sonner";
-import { string, z } from "zod"
+import { z } from "zod"
 import generateZodSchema, { JsonSchema } from "@/lib/parser";
+import getRandomName from "@/lib/getRandomName";
 
-interface JsonSchemaProperty {
+export interface JsonSchemaProperty {
     type: string;
     description?: string;
     default?: any;
@@ -55,29 +55,39 @@ export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
-                    const { description, default: defaultValue } = value as JsonSchemaProperty;
-                    return (
-                        <FormField
-                            key={key}
-                            control={form.control}
-                            name={key}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{capitalizeWords(key)}</FormLabel>
-                                    <FormDescription>{description}</FormDescription>
-                                    <FormControl>
-                                        <Input
-                                            type={"text"}
-                                            // placeholder={defaultValue}
-                                            defaultValue={defaultValue}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    );
+                    const { type, description, default: defaultValue, format } = value as JsonSchemaProperty;
+                    let formDefault = defaultValue 
+                    if (key === "name") {
+                        formDefault = getRandomName()
+                    }
+
+                    switch (type) {
+                        case 'string':
+                            return (
+                                <FormField
+                                    key={key}
+                                    control={form.control}
+                                    name={key}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{capitalizeWords(key)}</FormLabel>
+                                            <FormDescription>{description}</FormDescription>
+                                            <FormControl>
+                                                <Input
+                                                    type={"text"}
+                                                    defaultValue={formDefault}
+                                                    // placeholder={defaultValue}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            );
+                        default:
+                            break;
+                    }
                 })}
 
                 <Button type="submit">Submit</Button>

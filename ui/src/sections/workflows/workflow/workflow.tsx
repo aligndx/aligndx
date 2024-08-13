@@ -5,7 +5,7 @@ import { useSearchParams } from "@/routes";
 import DOMPurify from 'dompurify';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import WorkflowForm from "./workflowForm";
+import WorkflowForm from "./workflow-form";
 import { GitBranch } from "@/components/icons";
 
 export default function Workflow() {

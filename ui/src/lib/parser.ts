@@ -75,9 +75,9 @@ export default function generateZodSchema(jsonSchema: JsonSchema): ZodObject<any
             }
         }
 
-        if (property.default !== undefined) {
-            zodType = zodType.default(property.default);
-        }
+        // if (property.default !== undefined) {
+        //     zodType = zodType.default(property.default);
+        // }
 
         zodProperties[key] = zodType;
     }
