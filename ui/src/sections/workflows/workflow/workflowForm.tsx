@@ -53,7 +53,7 @@ export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto grid w-[400px] space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
                     const { description, default: defaultValue } = value as JsonSchemaProperty;
                     return (

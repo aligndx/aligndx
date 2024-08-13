@@ -6,6 +6,7 @@ import DOMPurify from 'dompurify';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import WorkflowForm from "./workflowForm";
+import { GitBranch } from "@/components/icons";
 
 export default function Workflow() {
     const searchParams = useSearchParams();
@@ -31,12 +32,6 @@ export default function Workflow() {
                             Parameters
                         </TabsTrigger>
                         <TabsTrigger
-                            value="graph"
-                            className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none "
-                        >
-                            Graph
-                        </TabsTrigger>
-                        <TabsTrigger
                             value="runs"
                             className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none "
                         >
@@ -50,16 +45,21 @@ export default function Workflow() {
                         }
 
                     </TabsContent>
-                    <TabsContent value="graph" className="p-4">
-                        Example graph
-                    </TabsContent>
                     <TabsContent value="runs" className="p-4">
                         Example runs
                     </TabsContent>
                 </Tabs>
                 <div className="flex  flex-col gap-4 p-4 border h-screen bg-muted/50">
-                    <header className="text-lg" >
+                    <header className="flex  gap-2 text-lg" >
                         {workflow.data?.name}
+                        <a className="flex flex-row  gap-2 underline items-center text-sm hover:text-muted-foreground"
+                            href={workflow.data?.repository}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => { e.stopPropagation(); }}
+                        >
+                            <GitBranch />
+                        </a>
                     </header>
                     <div className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
                     <Separator className="my-4" />
