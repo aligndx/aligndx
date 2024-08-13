@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import WorkflowForm from "./workflow-form";
 import { GitBranch } from "@/components/icons";
+import Loader from "@/components/ui/loader";
 
 export default function Workflow() {
     const searchParams = useSearchParams();
@@ -40,7 +41,9 @@ export default function Workflow() {
                     </TabsList>
                     <TabsContent value="parameters" className="p-4">
                         {
-                            workflow.isLoading ? "loading" :
+                            workflow.isLoading ?
+                                <Loader />
+                                :
                                 <WorkflowForm jsonSchema={workflow.data?.schema} />
                         }
 
