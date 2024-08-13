@@ -25,6 +25,7 @@ export interface JsonSchemaProperty {
 }
 
 interface WorkflowFormProps {
+    workflowId: string;
     jsonSchema: JsonSchema;
 }
 
@@ -35,7 +36,7 @@ function capitalizeWords(input: string): string {
 }
 
 
-export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
+export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormProps) {
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
         const { default: defaultValue, type } = value as JsonSchemaProperty;
 
@@ -61,24 +62,26 @@ export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
     // const router = useRouter();
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        const { name, ...rest } = values
+        const inputs = { ...rest }
+        const workflow = workflowId
+        const user = ""
         try {
             await createSubmissionMutation.mutateAsync(
-                values,
+                { name, inputs, workflow, user },
                 {
                     onSuccess: (data) => {
-                        toast.success("Login Successful")
                         // router.push(routes.dashboard.root)
                         toast.success("Form Submitted Successfully");
                     },
                     onError: (error) => {
                         console.table(values)
                         toast.error("Form Submission Failed");
-                        console.error('Login failed:', error);
                     },
                 }
             );
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('Error:', error);
         }
     }
 
@@ -87,7 +90,7 @@ export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
                     const { type, description, default: defaultValue, format } = value as JsonSchemaProperty;
-
+                    
                     switch (type) {
                         case 'string':
                             return (

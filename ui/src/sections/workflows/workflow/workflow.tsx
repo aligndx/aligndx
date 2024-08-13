@@ -44,7 +44,7 @@ export default function Workflow() {
                             workflow.isLoading ?
                                 <Loader />
                                 :
-                                <WorkflowForm jsonSchema={workflow.data?.schema} />
+                                <WorkflowForm workflowId={workflow.data?.id || ""} jsonSchema={workflow.data?.schema} />
                         }
 
                     </TabsContent>

@@ -36,8 +36,11 @@ export const updateSubmission = async (pb: PocketBase, id: string, data: any): P
 export const deleteSubmission = async (pb: PocketBase, id: string): Promise<void> => {
   await pb.collection('submissions').delete(id);
 };
-interface CreateSubmissionData {
-  data: any;
+type CreateSubmissionData = {
+  name : string;
+  inputs: any;
+  workflow: string;
+  user: string;
 }
 
 interface UpdateSubmissionData {
@@ -60,7 +63,7 @@ const useSubmissionService = (pb: PocketBase) => {
 
   const createSubmissionMutation: UseMutationResult<Submission, Error, CreateSubmissionData> = useMutation(
     {
-      mutationFn: (data: CreateSubmissionData) => createSubmission(pb, data.data),
+      mutationFn: (data: CreateSubmissionData) => createSubmission(pb, data),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['submissions'] });
       },
