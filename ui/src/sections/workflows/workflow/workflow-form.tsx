@@ -42,12 +42,9 @@ export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            // Handle form submission (e.g., API call)
             toast.success("Form Submitted Successfully");
-            console.log('Form submitted:', values);
         } catch (error) {
             toast.error("Form Submission Failed");
-            console.error('Form submission error:', error);
         }
     }
 
