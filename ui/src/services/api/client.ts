@@ -14,7 +14,6 @@ export class Client extends PocketBase {
 
     async send<T = any>(path: string, options: SendOptions): Promise<T> {
         try {
-            await this.refreshAuthIfNeeded();
             return await super.send<T>(path, options);
         } catch (error) {
             const httpError = error as HttpError;
