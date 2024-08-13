@@ -16,10 +16,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     const pathname = usePathname();
     const isPublicRoute = publicRoutes.includes(pathname);
     useEffect(() => {
+        if (isLoading) return; // Skip redirect if loading
 
-        if (!isLoading && !isAuthenticated && !isPublicRoute) {
+        // If user is not authenticated and trying to access a private route
+        if (!isAuthenticated && !isPublicRoute) {
             router.push('/signin');
         }
+
     }, [isAuthenticated, isLoading, isPublicRoute, router]);
 
     // Show a loading state while checking authentication

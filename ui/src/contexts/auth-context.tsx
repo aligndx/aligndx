@@ -3,10 +3,12 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { RecordModel } from 'pocketbase';
 import { useApiService } from '@/services/api';
+import { routes, useRouter } from '@/routes';
+import { toast } from "@/components/ui/sonner"
 
 interface AuthContextType {
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => Promise<void>;
+    login: (email: string, password: string) => void;
+    logout: () => void;
     register: (email: string, password: string, additionalData?: any) => Promise<void>;
     requestPasswordReset: (email: string) => Promise<void>;
     confirmPasswordReset: (passwordResetToken: string, password: string, passwordConfirm: string) => Promise<void>;
@@ -17,7 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode}) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
         auth
     } = useApiService();
@@ -30,12 +32,32 @@ export const AuthProvider = ({ children }: { children: ReactNode}) => {
         currentUserQuery,
         authStatusQuery,
     } = auth
-    const login = async (email: string, password: string) => {
-        await loginMutation.mutateAsync({ email, password });
+    const router = useRouter()
+
+    const login = (email: string, password: string) => {
+        loginMutation.mutate({ email, password },
+            {
+                onSuccess() {
+                    toast.success("Login Successful")
+                },
+                onError: () => {
+                    toast.error("Login Failed")
+                },
+            }
+        );
+        router.push(routes.dashboard.root)
     };
 
-    const logout = async () => {
-        await logoutMutation.mutateAsync();
+    const logout = () => {
+        logoutMutation.mutate(undefined, {
+            onSuccess() {
+                toast.success("Logout Successful")
+            },
+            onError: () => {
+                toast.error("Logout Failed")
+            },
+        });
+        router.push(routes.auth.signin)
     };
 
     const register = async (email: string, password: string, additionalData?: any) => {
