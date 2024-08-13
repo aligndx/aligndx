@@ -29,6 +29,11 @@ const formSchema = z.object({
 export default function SignUp() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      email : "",
+      password : "",
+      passwordConfirm : "",
+    }
   })
 
   const { auth } = useApiService();
@@ -44,11 +49,9 @@ export default function SignUp() {
           onSuccess: (data) => {
             toast.success("SignUp Successful")
             router.push(routes.auth.signin)
-            console.log('SignUp successful:', data);
           },
           onError: (error) => {
             toast.error("SignUp Failed")
-            console.error('SignUp failed:', error);
           },
         }
       );

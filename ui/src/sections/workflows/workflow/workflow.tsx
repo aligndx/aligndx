@@ -49,7 +49,7 @@ export default function Workflow() {
                         Example runs
                     </TabsContent>
                 </Tabs>
-                <div className="flex  flex-col gap-4 p-4 border h-screen bg-muted/50">
+                <div className="hidden md:flex  flex-col gap-4 p-4 border h-screen bg-muted/50">
                     <header className="flex  gap-2 text-lg" >
                         {workflow.data?.name}
                         <a className="flex flex-row  gap-2 underline items-center text-sm hover:text-muted-foreground"

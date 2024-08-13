@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/sonner";
 import { z } from "zod"
 import generateZodSchema, { JsonSchema } from "@/lib/parser";
 import getRandomName from "@/lib/getRandomName";
+import { useApiService } from "@/services/api";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -35,16 +36,49 @@ function capitalizeWords(input: string): string {
 
 
 export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
+    const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
+        const { default: defaultValue, type } = value as JsonSchemaProperty;
+
+        let formDefault = defaultValue;
+
+        if (key === "name") {
+            formDefault = getRandomName();
+        }
+
+        acc[key] = formDefault ?? (type === 'string' ? '' : undefined);
+
+        return acc;
+    }, {} as Record<string, any>);
+
     const formSchema = generateZodSchema(jsonSchema);
     const form = useForm({
         resolver: zodResolver(formSchema),
+        defaultValues
     });
+
+    const { submissions } = useApiService()
+    const { createSubmissionMutation } = submissions
+    // const router = useRouter();
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            toast.success("Form Submitted Successfully");
+            await createSubmissionMutation.mutateAsync(
+                values,
+                {
+                    onSuccess: (data) => {
+                        toast.success("Login Successful")
+                        // router.push(routes.dashboard.root)
+                        toast.success("Form Submitted Successfully");
+                    },
+                    onError: (error) => {
+                        console.table(values)
+                        toast.error("Form Submission Failed");
+                        console.error('Login failed:', error);
+                    },
+                }
+            );
         } catch (error) {
-            toast.error("Form Submission Failed");
+            console.error('Login error:', error);
         }
     }
 
@@ -53,10 +87,6 @@ export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
                     const { type, description, default: defaultValue, format } = value as JsonSchemaProperty;
-                    let formDefault = defaultValue 
-                    if (key === "name") {
-                        formDefault = getRandomName()
-                    }
 
                     switch (type) {
                         case 'string':
@@ -72,7 +102,6 @@ export default function WorkflowForm({ jsonSchema }: WorkflowFormProps) {
                                             <FormControl>
                                                 <Input
                                                     type={"text"}
-                                                    defaultValue={formDefault}
                                                     // placeholder={defaultValue}
                                                     {...field}
                                                 />

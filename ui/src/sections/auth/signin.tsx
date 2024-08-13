@@ -21,6 +21,10 @@ const formSchema = z.object({
 export default function SignIn() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      email : "",
+      password : ""
+    }
   })
   const { auth } = useApiService();
   const login = auth.loginMutation;
