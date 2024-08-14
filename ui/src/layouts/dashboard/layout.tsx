@@ -18,11 +18,11 @@ const DashboardLayout: FC<Props> = ({ children }) => {
   return (
     <div
       className={cn(
-        "flex flex-col md:flex-row overflow-hidden",
+        "flex flex-col md:flex-row",
         "h-screen"
       )}
     >
-      <SideNav open={open} toggleMobileSideNav={() => setOpen(!open)}/>
+      <SideNav open={open} toggleMobileSideNav={() => setOpen(!open)} className=""/>
       <div className="flex flex-grow flex-col pt-2">
         <Header className="flex flex-row items-center justify-between border-0">
           <div className="flex items-center text-2xl font-medium gap-2">
@@ -35,7 +35,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
             <ThemeToggle />
           </div>
         </Header>
-        <main>
+        <main className="overflow-y-auto">
           {children}
         </main>
       </div>

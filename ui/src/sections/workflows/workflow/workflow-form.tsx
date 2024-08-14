@@ -11,6 +11,7 @@ import generateZodSchema, { JsonSchema } from "@/lib/parser";
 import getRandomName from "@/lib/getRandomName";
 import { useApiService } from "@/services/api";
 import { useAuth } from "@/contexts/auth-context";
+import { FileUploader } from "@/components/file-uploader";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -39,14 +40,13 @@ function capitalizeWords(input: string): string {
 
 export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormProps) {
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
-        const { default: defaultValue, type } = value as JsonSchemaProperty;
+        const { default: defaultValue, type, format } = value as JsonSchemaProperty;
 
         let formDefault = defaultValue;
 
-        if (key === "name") {
+        if (format === "name") {
             formDefault = getRandomName();
         }
-
         acc[key] = formDefault ?? (type === 'string' ? '' : undefined);
 
         return acc;
@@ -87,40 +87,44 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
                     const { type, description, default: defaultValue, format } = value as JsonSchemaProperty;
 
-                    switch (type) {
-                        case 'string':
-                            return (
-                                <FormField
-                                    key={key}
-                                    control={form.control}
-                                    name={key}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{capitalizeWords(key)}</FormLabel>
-                                            <FormDescription>{description}</FormDescription>
-                                            <FormControl>
-                                                <Input
-                                                    type={"text"}
-                                                    // placeholder={defaultValue}
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            );
-                        default:
-                            break;
-                    }
+                    return (
+                        <FormField
+                            key={key}
+                            control={form.control}
+                            name={key}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{capitalizeWords(key)}</FormLabel>
+                                    <FormDescription>{description}</FormDescription>
+                                    <FormControl>
+                                        {(() => {
+                                            switch (format) {
+                                                case 'file-path':
+                                                    return <FileUploader
+                                                        multiple
+                                                        compact
+                                                        value={field.value}
+                                                        onValueChange={field.onChange}
+                                                    />
+                                                default:
+                                                    return <Input type="text" {...field} />;
+                                            }
+                                        })()}
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )
                 })}
 
                 <Button type="submit">Submit</Button>
             </form>
         </Form>
+
     );
 }
