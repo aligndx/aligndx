@@ -22,20 +22,21 @@ export default function Workflow() {
     return (
         <div>
             <header className="px-6 py-2 sticky text-2xl" >
-                {workflow.data?.name || <Skeleton className="w-32 h-6"/>}
+                {workflow.data?.name || <Skeleton className="w-32 h-6" />}
             </header>
             <div className="flex">
                 <Tabs defaultValue="parameters" className="relative mr-auto w-full">
-                    <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
+                    <TabsList
+                        variant="underlined"
+                        className="w-full justify-start"
+                    >
                         <TabsTrigger
                             value="parameters"
-                            variant="underlined"
                         >
                             Parameters
                         </TabsTrigger>
                         <TabsTrigger
                             value="runs"
-                            variant="underlined"
                         >
                             Runs
                         </TabsTrigger>

@@ -10,18 +10,37 @@ import { cn } from "@/lib/utils"
 const Tabs = TabsPrimitive.Root
 
 type TabsListRef = React.ElementRef<typeof TabsPrimitive.List>
-type TabsListProps = React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+type TabsListProps = React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> & {
+  variant?: "default" | "underlined"
+}
+
+const TabsVariantContext = React.createContext<"default" | "underlined">("default")
+
+// Define the cva variant for the TabsList
+const tabsListVariants = cva(
+  "inline-flex h-10 items-center justify-center rounded-md bg-muted text-muted-foreground",
+  {
+    variants: {
+      variant: {
+        default: "rounded-sm",
+        underlined: "border-b-2 rounded-none border-b bg-transparent",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
 
 const TabsList = React.forwardRef<TabsListRef, TabsListProps>(
-  ({ className, ...props }, ref) => (
-    <TabsPrimitive.List
-      ref={ref}
-      className={cn(
-        "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-        className
-      )}
-      {...props}
-    />
+  ({ className, variant = "default", ...props }, ref) => (
+    <TabsVariantContext.Provider value={variant}>
+      <TabsPrimitive.List
+        ref={ref}
+        className={cn(tabsListVariants({ variant }), className)}
+        {...props}
+      />
+    </TabsVariantContext.Provider>
   )
 )
 TabsList.displayName = TabsPrimitive.List.displayName
@@ -32,38 +51,27 @@ type TabsTriggerProps = Omit<
   keyof MotionProps
 > &
   MotionProps & {
-    variant?: "default" | "underlined"
-  }& {
     'data-state'?: 'active' | 'inactive';
   }
 
-// Define the cva variant for the underlined style
-const tabsTriggerVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap  px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "rounded-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-        underlined:
-          "border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:text-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
-
 const TabsTrigger = React.forwardRef<TabsTriggerRef, TabsTriggerProps>(
-  ({ className, value, variant = "default", ...props }, ref) => (
-    <TabsPrimitive.Trigger ref={ref} asChild value={value}>
-      <motion.button
-        ref={ref as React.Ref<HTMLButtonElement>}
-        className={cn(tabsTriggerVariants({ variant }), className)}
-        {...props}
-      />
-    </TabsPrimitive.Trigger>
-  )
+  ({ className, value, ...props }, ref) => {
+    const variant = React.useContext(TabsVariantContext)
+    return (
+      <TabsPrimitive.Trigger ref={ref} asChild value={value}>
+        <motion.button
+          ref={ref as React.Ref<HTMLButtonElement>}
+          className={cn(
+            "inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+            variant === "default" && "rounded-sm data-[state=active]:bg-background data-[state=active]:text-foreground",
+            variant === "underlined" && "border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:text-foreground",
+            className
+          )}
+          {...props}
+        />
+      </TabsPrimitive.Trigger>
+    )
+  }
 )
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
