@@ -1,36 +1,48 @@
 
 import { z, ZodSchema, ZodObject, ZodString, ZodTypeAny } from "zod";
 
-export interface JsonSchema {
+export type JsonSchemaProperty = {
+    type: string;
+    description?: string;
+    default?: string;
+    pattern?: string;
+    format?: string;
+    minLength?: number;  // For strings
+    minItems?: number;   // For arrays
+}
+
+export type JsonSchema = {
     $schema?: string;
     title?: string;
     type: string;
     properties: {
-        [key: string]: {
-            type: string;
-            description?: string;
-            default?: string;
-            pattern?: string;
-            format?: string;
-        };
+        [key: string]: JsonSchemaProperty;
     };
     required?: string[];
 }
+ 
 
-function convertType(jsonType: string): ZodTypeAny {
-    switch (jsonType) {
+function convertType(property?: JsonSchemaProperty): ZodTypeAny {
+    switch (property?.type) {
         case "string":
             return z.string();
         case "number":
             return z.number();
         case "boolean":
             return z.boolean();
-        case "array":
-            return z.array(z.any());
+        case "array": {
+            let zodArray = z.array(z.any());
+            if (property?.minItems !== undefined) {
+                zodArray = zodArray.min(property.minItems, {
+                    message: `Minimum number of items is ${property.minItems}`,
+                });
+            }
+            return zodArray;
+        }
         case "object":
             return z.object({});
         default:
-            throw new Error(`Unsupported type: ${jsonType}`);
+            throw new Error(`Unsupported type: ${property?.type}`);
     }
 }
 
@@ -55,13 +67,8 @@ export default function generateZodSchema(jsonSchema: JsonSchema): ZodObject<any
 
     for (const key in jsonSchema.properties) {
         const property = jsonSchema.properties[key];
-        let zodType = convertType(property.type);
+        let zodType = convertType(property);
 
-        if (property.pattern) {
-            zodType = (zodType as ZodString).regex(new RegExp(property.pattern), {
-                message: `Invalid format for ${key}`,
-            });
-        }
 
         if (property.format) {
             switch (property.format) {

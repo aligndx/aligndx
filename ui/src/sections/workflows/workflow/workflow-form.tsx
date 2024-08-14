@@ -23,6 +23,7 @@ export interface JsonSchemaProperty {
         pattern?: string;
     };
     format?: string;
+    maxItems: number;
     minLength?: number;
     contentMediaType?: string;
 }
@@ -90,11 +91,12 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
-                    const { type, description, pattern, default: defaultValue, format, contentMediaType } = value as JsonSchemaProperty;
+                    const { type, description, pattern, default: defaultValue, format, contentMediaType, maxItems } = value as JsonSchemaProperty;
                     const acceptKey = contentMediaType || "application/octet-stream";
                     const accept = {
                         [acceptKey]: [],
                     }
+                    const maxFileCount = maxItems || undefined
 
                     return (
                         <FormField
@@ -103,7 +105,9 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
                             name={key}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{capitalizeWords(key)}</FormLabel>
+                                    <FormLabel>
+                                        {capitalizeWords(key)}
+                                    </FormLabel>
                                     <FormDescription>{description}</FormDescription>
                                     <FormControl>
                                         {(() => {
@@ -113,6 +117,7 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
                                                         accept={accept}
                                                         multiple
                                                         compact
+                                                        maxFileCount={maxFileCount}
                                                         value={field.value}
                                                         onValueChange={field.onChange}
                                                     />
