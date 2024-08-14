@@ -13,7 +13,7 @@ import { useApiService } from "@/services/api";
 import { useAuth } from "@/contexts/auth-context";
 import { FileUploader } from "@/components/file-uploader";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GitBranch } from "@/components/icons";
+import { ArrowRight, GitBranch } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import DOMPurify from "dompurify";
 
@@ -141,7 +141,7 @@ export default function WorkflowForm({name, repository, description, id, jsonSch
                         )
                     })}
 
-                    <Button type="submit">Submit</Button>
+                    <Button variant="expandIcon" Icon={ArrowRight} iconPlacement="right" className="text-background-foreground" type="submit">Submit</Button>
                 </form>
             </Form>
             <div className="hidden md:flex w-[300px] flex-col gap-4 p-4 border bg-muted/50">
