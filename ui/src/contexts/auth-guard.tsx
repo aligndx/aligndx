@@ -25,11 +25,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
 
     }, [isAuthenticated, isLoading, isPublicRoute, router]);
 
-    // Show a loading state while checking authentication
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
-
     // Allow access to public routes or authenticated users
     if (isPublicRoute || isAuthenticated) {
         return <>{children}</>;
