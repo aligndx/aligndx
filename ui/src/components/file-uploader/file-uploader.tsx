@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Trash, UploadIcon } from "lucide-react"
+import { Trash, Upload as UploadIcon } from "@/components/icons"
 import Dropzone, {
   type DropzoneProps,
   type FileRejection,

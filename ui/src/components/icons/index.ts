@@ -19,3 +19,5 @@ export { default as MixerHorizontal } from './mixer-horizontal';
 export { default as ArrowRight } from './arrow-right';
 export { PiGitBranch as GitBranch} from "react-icons/pi";
 export { PiGridFour as GridFour, PiTable as Table } from "react-icons/pi"
+export { default as Trash} from './trash'
+export { default as Upload} from './upload'
