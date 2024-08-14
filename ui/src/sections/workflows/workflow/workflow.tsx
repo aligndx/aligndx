@@ -29,13 +29,13 @@ export default function Workflow() {
                     <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
                         <TabsTrigger
                             value="parameters"
-                            className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none "
+                            variant="underlined"
                         >
                             Parameters
                         </TabsTrigger>
                         <TabsTrigger
                             value="runs"
-                            className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none "
+                            variant="underlined"
                         >
                             Runs
                         </TabsTrigger>
