@@ -12,6 +12,7 @@ import getRandomName from "@/lib/getRandomName";
 import { useApiService } from "@/services/api";
 import { useAuth } from "@/contexts/auth-context";
 import { FileUploader } from "@/components/file-uploader";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -138,4 +139,36 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
         </Form>
 
     );
+}
+
+
+export function WorkflowFormSkeleton() {
+    return (
+        <div className="flex flex-col gap-4">
+            <WorkflowSkeletonInput />
+            <WorkflowSkeletonFileInput />
+            <WorkflowSkeletonInput />
+            <Skeleton className="w-full h-12" />
+        </div>
+    )
+}
+
+function WorkflowSkeletonInput() {
+    return (
+        <div className="flex flex-col gap-2">
+            <Skeleton className="w-10 h-4" />
+            <Skeleton className="w-20 h-4" />
+            <Skeleton className="w-full h-16" />
+        </div>
+    )
+}
+
+function WorkflowSkeletonFileInput() {
+    return (
+        <div className="flex flex-col gap-2">
+            <Skeleton className="w-10 h-4" />
+            <Skeleton className="w-20 h-4" />
+            <Skeleton className="w-full h-52" />
+        </div>
+    )
 }

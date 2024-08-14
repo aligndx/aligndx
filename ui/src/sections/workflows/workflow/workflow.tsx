@@ -5,9 +5,10 @@ import { useSearchParams } from "@/routes";
 import DOMPurify from 'dompurify';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import WorkflowForm from "./workflow-form";
+import WorkflowForm, { WorkflowFormSkeleton } from "./workflow-form";
 import { GitBranch } from "@/components/icons";
 import Loader from "@/components/ui/loader";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Workflow() {
     const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ export default function Workflow() {
     return (
         <div>
             <header className="px-6 py-2 sticky text-2xl" >
-                {workflow.data?.name}
+                {workflow.data?.name || <Skeleton className="w-32 h-6"/>}
             </header>
             <div className="flex">
                 <Tabs defaultValue="parameters" className="relative mr-auto w-full">
@@ -40,9 +41,11 @@ export default function Workflow() {
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="parameters" className="p-6">
+
                         {
                             workflow.isLoading ?
-                                <Loader />
+                                <WorkflowFormSkeleton />
+
                                 :
                                 <WorkflowForm workflowId={workflow.data?.id || ""} jsonSchema={workflow.data?.schema} />
                         }
@@ -52,21 +55,7 @@ export default function Workflow() {
                         Example runs
                     </TabsContent>
                 </Tabs>
-                <div className="hidden md:flex  flex-col gap-4 p-4 border h-screen bg-muted/50">
-                    <header className="flex  gap-2 text-lg" >
-                        {workflow.data?.name}
-                        <a className="flex flex-row  gap-2 underline items-center text-sm hover:text-muted-foreground"
-                            href={workflow.data?.repository}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => { e.stopPropagation(); }}
-                        >
-                            <GitBranch />
-                        </a>
-                    </header>
-                    <div className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
-                    <Separator className="my-4" />
-                </div>
+
             </div>
         </div>
     )
