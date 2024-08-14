@@ -24,6 +24,7 @@ export interface JsonSchemaProperty {
     };
     format?: string;
     minLength?: number;
+    contentMediaType?: string;
 }
 
 interface WorkflowFormProps {
@@ -89,7 +90,11 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
-                    const { type, description, default: defaultValue, format } = value as JsonSchemaProperty;
+                    const { type, description, pattern, default: defaultValue, format, contentMediaType } = value as JsonSchemaProperty;
+                    const acceptKey = contentMediaType || "application/octet-stream";
+                    const accept = {
+                        [acceptKey]: [],
+                    }
 
                     return (
                         <FormField
@@ -105,6 +110,7 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
                                             switch (format) {
                                                 case 'file-path':
                                                     return <FileUploader
+                                                        accept={accept}
                                                         multiple
                                                         compact
                                                         value={field.value}
