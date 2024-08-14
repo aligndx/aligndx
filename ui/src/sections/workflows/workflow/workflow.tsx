@@ -41,14 +41,14 @@ export default function Workflow() {
                             Runs
                         </TabsTrigger>
                     </TabsList>
-                    <TabsContent value="parameters" className="p-6">
+                    <TabsContent value="parameters">
 
                         {
                             workflow.isLoading ?
                                 <WorkflowFormSkeleton />
 
                                 :
-                                <WorkflowForm workflowId={workflow.data?.id || ""} jsonSchema={workflow.data?.schema} />
+                                <WorkflowForm id={workflow.data?.id || ""} name={workflow.data?.name || ""} repository={workflow.data?.repository || ""} description={workflow.data?.description || ""} jsonSchema={workflow.data?.schema} />
                         }
 
                     </TabsContent>

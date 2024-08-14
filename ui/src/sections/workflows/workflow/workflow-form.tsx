@@ -13,6 +13,9 @@ import { useApiService } from "@/services/api";
 import { useAuth } from "@/contexts/auth-context";
 import { FileUploader } from "@/components/file-uploader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GitBranch } from "@/components/icons";
+import { Separator } from "@/components/ui/separator";
+import DOMPurify from "dompurify";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -30,7 +33,10 @@ export interface JsonSchemaProperty {
 }
 
 interface WorkflowFormProps {
-    workflowId: string;
+    id: string;
+    name: string;
+    repository: string;
+    description: string;
     jsonSchema: JsonSchema;
 }
 
@@ -41,7 +47,7 @@ function capitalizeWords(input: string): string {
 }
 
 
-export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormProps) {
+export default function WorkflowForm({name, repository, description, id, jsonSchema }: WorkflowFormProps) {
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
         const { default: defaultValue, type, format } = value as JsonSchemaProperty;
 
@@ -69,7 +75,7 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const { name, ...rest } = values
         const inputs = { ...rest }
-        const workflow = workflowId
+        const workflow = id
         try {
             await createSubmissionMutation.mutateAsync(
                 { name, inputs, workflow, user: currentUser?.id || "" },
@@ -89,54 +95,71 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
     }
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-                {Object.entries(jsonSchema.properties).map(([key, value]) => {
-                    const { type, description, pattern, default: defaultValue, format, contentMediaType, maxItems } = value as JsonSchemaProperty;
-                    const acceptKey = contentMediaType || "application/octet-stream";
-                    const accept = {
-                        [acceptKey]: [],
-                    }
-                    const maxFileCount = maxItems || undefined
+        <div className="flex flex-row gap-2">
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 p-4 gap-4">
+                    {Object.entries(jsonSchema.properties).map(([key, value]) => {
+                        const { type, description, pattern, default: defaultValue, format, contentMediaType, maxItems } = value as JsonSchemaProperty;
+                        const acceptKey = contentMediaType || "application/octet-stream";
+                        const accept = {
+                            [acceptKey]: [],
+                        }
+                        const maxFileCount = maxItems || undefined
 
-                    return (
-                        <FormField
-                            key={key}
-                            control={form.control}
-                            name={key}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>
-                                        {capitalizeWords(key)}
-                                    </FormLabel>
-                                    <FormDescription>{description}</FormDescription>
-                                    <FormControl>
-                                        {(() => {
-                                            switch (format) {
-                                                case 'file-path':
-                                                    return <FileUploader
-                                                        accept={accept}
-                                                        multiple
-                                                        compact
-                                                        maxFileCount={maxFileCount}
-                                                        value={field.value}
-                                                        onValueChange={field.onChange}
-                                                    />
-                                                default:
-                                                    return <Input type="text" {...field} />;
-                                            }
-                                        })()}
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )
-                })}
+                        return (
+                            <FormField
+                                key={key}
+                                control={form.control}
+                                name={key}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            {capitalizeWords(key)}
+                                        </FormLabel>
+                                        <FormDescription>{description}</FormDescription>
+                                        <FormControl>
+                                            {(() => {
+                                                switch (format) {
+                                                    case 'file-path':
+                                                        return <FileUploader
+                                                            accept={accept}
+                                                            multiple
+                                                            compact
+                                                            maxFileCount={maxFileCount}
+                                                            value={field.value}
+                                                            onValueChange={field.onChange}
+                                                        />
+                                                    default:
+                                                        return <Input type="text" {...field} />;
+                                                }
+                                            })()}
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )
+                    })}
 
-                <Button type="submit">Submit</Button>
-            </form>
-        </Form>
+                    <Button type="submit">Submit</Button>
+                </form>
+            </Form>
+            <div className="hidden md:flex w-[300px] flex-col gap-4 p-4 border bg-muted/50">
+                <header className="flex  gap-2 text-lg" >
+                    {name}
+                    <a className="flex flex-row  gap-2 underline items-center text-sm hover:text-muted-foreground"
+                        href={repository}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => { e.stopPropagation(); }}
+                    >
+                        <GitBranch />
+                    </a>
+                </header>
+                <div className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
+                <Separator className="my-4" />
+            </div>
+        </div>
 
     );
 }
