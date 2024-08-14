@@ -5,6 +5,7 @@ import { RecordModel } from 'pocketbase';
 import { useApiService } from '@/services/api';
 import { routes, useRouter } from '@/routes';
 import { toast } from "@/components/ui/sonner"
+import { User } from '@/types/user';
 
 interface AuthContextType {
     login: (email: string, password: string) => void;
@@ -12,7 +13,7 @@ interface AuthContextType {
     register: (email: string, password: string, additionalData?: any) => Promise<void>;
     requestPasswordReset: (email: string) => Promise<void>;
     confirmPasswordReset: (passwordResetToken: string, password: string, passwordConfirm: string) => Promise<void>;
-    currentUser: RecordModel | null;
+    currentUser: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
 }

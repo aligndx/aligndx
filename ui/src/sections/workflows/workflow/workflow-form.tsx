@@ -10,6 +10,7 @@ import { z } from "zod"
 import generateZodSchema, { JsonSchema } from "@/lib/parser";
 import getRandomName from "@/lib/getRandomName";
 import { useApiService } from "@/services/api";
+import { useAuth } from "@/contexts/auth-context";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -50,6 +51,7 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
 
         return acc;
     }, {} as Record<string, any>);
+    const { currentUser } = useAuth();
 
     const formSchema = generateZodSchema(jsonSchema);
     const form = useForm({
@@ -65,17 +67,15 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
         const { name, ...rest } = values
         const inputs = { ...rest }
         const workflow = workflowId
-        const user = ""
         try {
             await createSubmissionMutation.mutateAsync(
-                { name, inputs, workflow, user },
+                { name, inputs, workflow, user: currentUser?.id || "" },
                 {
                     onSuccess: (data) => {
                         // router.push(routes.dashboard.root)
                         toast.success("Form Submitted Successfully");
                     },
                     onError: (error) => {
-                        console.table(values)
                         toast.error("Form Submission Failed");
                     },
                 }
@@ -90,7 +90,7 @@ export default function WorkflowForm({ workflowId, jsonSchema }: WorkflowFormPro
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
                 {Object.entries(jsonSchema.properties).map(([key, value]) => {
                     const { type, description, default: defaultValue, format } = value as JsonSchemaProperty;
-                    
+
                     switch (type) {
                         case 'string':
                             return (

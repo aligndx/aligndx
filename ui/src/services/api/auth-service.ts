@@ -1,5 +1,6 @@
 import PocketBase, { RecordAuthResponse, RecordModel } from 'pocketbase';
 import { useMutation, UseMutationResult, useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import { User } from '@/types/user';
 
 export const login = async (pb: PocketBase, email: string, password: string): Promise<RecordAuthResponse<RecordModel>> => {
   const user = await pb.collection('users').authWithPassword(email, password);
@@ -92,7 +93,7 @@ const useAuthService = (pb: PocketBase) => {
   );
 
 
-  const currentUserQuery: UseQueryResult<RecordModel | null, Error> = useQuery({
+  const currentUserQuery: UseQueryResult<User | null, Error> = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => getCurrentUser(pb),
     enabled: isAuthenticated(pb),
