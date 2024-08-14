@@ -39,7 +39,7 @@ export default function Workflow() {
                             Runs
                         </TabsTrigger>
                     </TabsList>
-                    <TabsContent value="parameters" className="p-4">
+                    <TabsContent value="parameters" className="p-6">
                         {
                             workflow.isLoading ?
                                 <Loader />

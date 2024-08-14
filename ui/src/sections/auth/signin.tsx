@@ -9,9 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import Link from "next/link"
 import { routes } from "@/routes"
 import Logo from "@/components/logo"
-import { useApiService } from "@/services/api"
-import { toast } from "@/components/ui/sonner"
 import { useAuth } from "@/contexts/auth-context"
+import { PasswordInput } from "@/components/ui/password-input"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -22,15 +21,15 @@ export default function SignIn() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email : "",
-      password : ""
+      email: "",
+      password: ""
     }
   })
   const { login } = useAuth();
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const { email, password} = values
+      const { email, password } = values
       login(email, password)
     } catch (error) {
       console.error('Login error:', error);
@@ -70,7 +69,7 @@ export default function SignIn() {
                   </Link>
                 </div>
                 <FormControl>
-                  <Input placeholder="••••••••" type="password" {...field} />
+                  <PasswordInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
