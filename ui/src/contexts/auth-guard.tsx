@@ -2,7 +2,7 @@
 
 import { useEffect, ReactNode } from 'react';
 import { useAuth } from './auth-context';
-import { useRouter, usePathname } from '@/routes';
+import { useRouter, usePathname, routes } from '@/routes';
 
 interface AuthGuardProps {
     children: ReactNode;
@@ -11,27 +11,25 @@ interface AuthGuardProps {
 const publicRoutes = ['/signin', '/signup'];
 
 const AuthGuard = ({ children }: AuthGuardProps) => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
     const isPublicRoute = publicRoutes.includes(pathname);
-    useEffect(() => {
-        if (isLoading) return; // Skip redirect if loading
 
+    useEffect(() => {
         // If user is not authenticated and trying to access a private route
         if (!isAuthenticated && !isPublicRoute) {
-            router.push('/signin');
+            router.push(routes.auth.signin);
         }
+    }, [isAuthenticated, isPublicRoute, router]);
 
-    }, [isAuthenticated, isLoading, isPublicRoute, router]);
-
-    // Allow access to public routes or authenticated users
-    if (isPublicRoute || isAuthenticated) {
-        return <>{children}</>;
+    // If user is not authenticated and it's not a public route, render nothing
+    if (!isAuthenticated && !isPublicRoute) {
+        return null;
     }
 
-    // Optionally, render nothing or a custom unauthorized component while redirecting
-    return null;
+    // Allow access to public routes or authenticated users
+    return <>{children}</>;
 };
 
 export default AuthGuard;

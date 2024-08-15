@@ -7,15 +7,15 @@ export const login = async (pb: PocketBase, email: string, password: string): Pr
   return user as RecordAuthResponse<RecordModel>;
 };
 
-export const logout = async (pb: PocketBase): Promise<void> => {
+export const _logout = async (pb: PocketBase): Promise<void> => {
   await pb.authStore.clear();
 };
 
-export const getCurrentUser = (pb: PocketBase): RecordModel | null => {
+export const _getCurrentUser = (pb: PocketBase): RecordModel | null => {
   return pb.authStore.model as RecordModel | null;
 };
 
-export const isAuthenticated = (pb: PocketBase): boolean => {
+export const _isAuthenticated = (pb: PocketBase): boolean => {
   return pb.authStore.isValid;
 };
 
@@ -62,15 +62,6 @@ const useAuthService = (pb: PocketBase) => {
     }
   );
 
-  const logoutMutation: UseMutationResult<void, Error, void> = useMutation(
-    {
-      mutationFn: () => logout(pb),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      },
-    }
-  );
-
   const registerMutation: UseMutationResult<RecordModel, Error, RegisterData> = useMutation(
     {
       mutationFn: (data: RegisterData) => register(pb, data.email, data.password, data.additionalData),
@@ -92,27 +83,26 @@ const useAuthService = (pb: PocketBase) => {
     }
   );
 
+  const logout = () => {
+    return _logout(pb)
+  }
 
-  const currentUserQuery: UseQueryResult<User | null, Error> = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => getCurrentUser(pb),
-    enabled: isAuthenticated(pb),
-  });
+  const getCurrentUser = () => {
+    return _getCurrentUser(pb)
+  }
 
-
-  const authStatusQuery: UseQueryResult<boolean, Error> = useQuery({
-    queryKey: ['authStatus'],
-    queryFn: () => isAuthenticated(pb),
-  });
+  const isAuthenticated = () => {
+    return _isAuthenticated(pb)
+  }
 
   return {
     loginMutation,
-    logoutMutation,
+    logout,
     registerMutation,
     requestPasswordResetMutation,
     confirmPasswordResetMutation,
-    currentUserQuery,
-    authStatusQuery,
+    getCurrentUser,
+    isAuthenticated
   };
 };
 

@@ -11,15 +11,15 @@ interface ProvidersProps {
 
 export default function Providers({ children }: ProvidersProps) {
     return (
-        <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
-            <QueryProvider>
-                <Toaster richColors position="top-right" />
-                <AuthProvider>
-                    <AuthGuard>
+        <QueryProvider>
+            <Toaster richColors position="top-right" />
+            <AuthProvider>
+                <AuthGuard>
+                    <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
                         {children}
-                    </AuthGuard>
-                </AuthProvider>
-            </QueryProvider>
-        </ThemeProvider>
+                    </ThemeProvider>
+                </AuthGuard>
+            </AuthProvider>
+        </QueryProvider>
     )
 }
