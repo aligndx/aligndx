@@ -23,3 +23,5 @@ export const routes = {
         visualize: `${BASE_ROUTES.DASHBOARD}/visualize`,
     },
 }
+
+export const publicRoutes = [routes.auth.signin, routes.auth.signup, routes.auth.activate, routes.auth.forgotPassword, routes.auth.resetPassword]

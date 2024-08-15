@@ -13,13 +13,13 @@ export default function Providers({ children }: ProvidersProps) {
     return (
         <QueryProvider>
             <Toaster richColors position="top-right" />
-            <AuthProvider>
-                <AuthGuard>
-                    <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+            <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+                <AuthProvider>
+                    <AuthGuard>
                         {children}
-                    </ThemeProvider>
-                </AuthGuard>
-            </AuthProvider>
+                    </AuthGuard>
+                </AuthProvider>
+            </ThemeProvider>
         </QueryProvider>
     )
 }
