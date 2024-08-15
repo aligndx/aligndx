@@ -95,7 +95,7 @@ export default function WorkflowForm({name, repository, description, id, jsonSch
     }
 
     return (
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-grow flex-row gap-2">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 p-4 gap-4">
                     {Object.entries(jsonSchema.properties).map(([key, value]) => {
