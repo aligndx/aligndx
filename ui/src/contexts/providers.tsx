@@ -18,11 +18,11 @@ export default function Providers({ children }: ProvidersProps) {
             <Toaster richColors position="top-right" />
             <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
                 <AuthProvider>
-                    <AuthGuard>
-                        <LazyMotion features={domAnimation}>
+                    <LazyMotion features={domAnimation}>
+                        <AuthGuard>
                             {children}
-                        </LazyMotion>
-                    </AuthGuard>
+                        </AuthGuard>
+                    </LazyMotion>
                 </AuthProvider>
             </ThemeProvider>
         </QueryProvider>
