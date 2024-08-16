@@ -18,14 +18,17 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!isAuthenticated && !isPublicRoute) {
-            router.push(routes.auth.signin);
-        } else {
-            setLoading(false);
-        }
+        const checkAuth = async () => {
+            if (!isAuthenticated && !isPublicRoute) {
+                await router.push(routes.auth.signin);
+            } else {
+                setLoading(false);
+            }
+        };
+        checkAuth();
     }, [isAuthenticated, isPublicRoute, router]);
-
-    if (loading) {
+    
+    if (loading || !isAuthenticated && !isPublicRoute) {
         return <SplashScreen />; 
     }
 
