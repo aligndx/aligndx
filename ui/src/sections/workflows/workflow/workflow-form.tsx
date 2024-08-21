@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, GitBranch } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import DOMPurify from "dompurify";
+import { useUploadFile } from "@/hooks/use-upload-file";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -47,7 +48,7 @@ function capitalizeWords(input: string): string {
 }
 
 
-export default function WorkflowForm({name, repository, description, id, jsonSchema }: WorkflowFormProps) {
+export default function WorkflowForm({ name, repository, description, id, jsonSchema }: WorkflowFormProps) {
 
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
         const { default: defaultValue, type, format } = value as JsonSchemaProperty;
@@ -63,6 +64,14 @@ export default function WorkflowForm({name, repository, description, id, jsonSch
     }, {} as Record<string, any>);
     const { currentUser } = useAuth();
 
+    function getFilePathKeys(jsonSchema: JsonSchema): string[] {
+        return Object.keys(jsonSchema.properties).filter(key => {
+            const property = jsonSchema.properties[key] as JsonSchemaProperty;
+            return property.format === 'file-path';
+        });
+    }
+
+
     const formSchema = generateZodSchema(jsonSchema);
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -71,27 +80,73 @@ export default function WorkflowForm({name, repository, description, id, jsonSch
 
     const { submissions } = useApiService()
     const { createSubmissionMutation } = submissions
-    // const router = useRouter();
+    const { onUpload, progresses, isUploading } = useUploadFile({
+        defaultUploadedFiles: [],
+    });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const { name, ...rest } = values
         const inputs = { ...rest }
-        const workflow = id
+
+
+        function transformInputsToFiles(inputs) {
+            const filePathKeys = getFilePathKeys(jsonSchema);
+            return Object.entries(inputs)
+                .filter(([id]) => filePathKeys.includes(id)) // Filter to include only keys present in filePathKeys
+                .flatMap(([id, files]) =>
+                    files.map((file) => ({
+                        id,
+                        file,
+                    }))
+                );
+        }
+        const fileInputs = transformInputsToFiles(inputs)
+
         try {
-            await createSubmissionMutation.mutateAsync(
-                { name, inputs, workflow, user: currentUser?.id || "" },
-                {
-                    onSuccess: (data) => {
-                        // router.push(routes.dashboard.root)
-                        toast.success("Form Submitted Successfully");
-                    },
-                    onError: (error) => {
-                        toast.error("Form Submission Failed");
-                    },
+            let uploadResults = []
+            if (fileInputs.length > 0) {
+                uploadResults = await onUpload(fileInputs, { user: currentUser?.id || "" });
+                // Check if all files were successfully uploaded
+                const allUploadsSuccessful = uploadResults.every(result => result.success);
+
+                if (!allUploadsSuccessful) {
+                    throw new Error("File upload failed");
                 }
-            );
+            }
+
+            // grab file inputs if they exist
+            const attachedData: string[] = []
+            const newFileInputs: Record<string, string> = {};
+            uploadResults.forEach((item) => {
+                newFileInputs[item.id] = item.data.id
+                attachedData.push(item.data.id)
+            }) 
+            const mergedInputs = {
+                ...inputs,
+                ...newFileInputs
+            }
+
+            // Proceed with the rest of the form submission
+            const workflow = id;
+            const submissionPayload = {
+                name,
+                inputs: mergedInputs,
+                workflow,
+                user: currentUser?.id || "",
+                data : attachedData
+            };
+
+            await createSubmissionMutation.mutateAsync(submissionPayload, {
+                onSuccess: (data) => {
+                    toast.success("Form Submitted Successfully");
+                },
+                onError: (error) => {
+                    toast.error("Form Submission Failed");
+                },
+            });
         } catch (error) {
-            console.error('Error:', error);
+            console.error("Error:", error);
+            toast.error("There was an error submitting the form");
         }
     }
 
@@ -126,6 +181,8 @@ export default function WorkflowForm({name, repository, description, id, jsonSch
                                                             accept={accept}
                                                             multiple
                                                             compact
+                                                            progresses={progresses}
+                                                            disabled={isUploading}
                                                             maxFileCount={maxFileCount}
                                                             value={field.value}
                                                             onValueChange={field.onChange}

@@ -1,5 +1,5 @@
 import PocketBase, { RecordModel } from 'pocketbase';
-import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult, UseQueryOptions } from '@tanstack/react-query';
 import { Data } from '@/types/data';
 
 export const mapRecordToData = (record: RecordModel): Data => {
@@ -38,14 +38,8 @@ export const updateData = async (pb: PocketBase, id: string, data: any): Promise
 export const deleteData = async (pb: PocketBase, id: string): Promise<void> => {
   await pb.collection('data').delete(id);
 };
-type CreateDataData = {
-  name : string;
-  inputs: any;
-  workflow: string;
-  user: string;
-}
 
-interface UpdateDataData {
+type UpdateDataData = {
   id: string;
   data: any;
 }
@@ -56,16 +50,29 @@ interface DeleteDataData {
 const useDataService = (pb: PocketBase) => {
   const queryClient = useQueryClient();
 
-  const useGetData = (id: string): UseQueryResult<Data, Error> =>
-    useQuery({ queryKey: ['data', id], queryFn: () => getData(pb, id) });
+  const useGetDataQuery = (
+    id: string,
+    options?: UseQueryOptions<Data, Error>
+  ): UseQueryResult<Data, Error> => {
+    return useQuery({
+      queryKey: ['Data', id],
+      queryFn: () => getData(pb, id),
+      ...options,
+    });
+  };
 
-  const getDatasQuery: UseQueryResult<Data[], Error> = useQuery({
-    queryKey: ['datas'], queryFn: () => getDatas(pb)
-  });
+  const useGetDatasQuery = (queryOptions?: UseQueryOptions<Data[], Error>): UseQueryResult<Data[], Error> => {
+    return useQuery({
+      queryKey: ['datas'],
+      queryFn: () => getDatas(pb),
+      enabled: false, // Default to disabled
+      ...queryOptions, // Override with user-provided options
+    });
+  };
 
-  const createDataMutation: UseMutationResult<Data, Error, CreateDataData> = useMutation(
+  const createDataMutation: UseMutationResult<Data, Error, FormData> = useMutation(
     {
-      mutationFn: (data: CreateDataData) => createData(pb, data),
+      mutationFn: (data: FormData) => createData(pb, data),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['datas'] });
       },
@@ -91,8 +98,8 @@ const useDataService = (pb: PocketBase) => {
   );
 
   return {
-    useGetData,
-    getDatasQuery,
+    useGetDataQuery,
+    useGetDatasQuery,
     createDataMutation,
     updateDataMutation,
     deleteDataMutation,
