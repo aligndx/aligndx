@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strings"
 
 	"github.com/aligndx/aligndx/internal/config"
+	"github.com/aligndx/aligndx/internal/jobs"
+	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
 	_ "github.com/aligndx/aligndx/internal/migrations"
 	"github.com/pocketbase/pocketbase"
@@ -24,6 +27,13 @@ func main() {
 
 	log.Info("App started")
 
+	mqService, err := mq.NewJetStreamMessageQueueService(cfg.MQ.URL, cfg.MQ.Stream, "jobs", log)
+	if err != nil {
+		log.Fatal("Failed to initialize message queue service", map[string]interface{}{"error": err})
+		return
+	}
+	jobService := jobs.NewJobService(mqService, log, cfg, cfg.MQ.Stream)
+
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 
 	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
@@ -32,13 +42,25 @@ func main() {
 	})
 
 	app.OnRecordAfterCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
-		// Extract the submission inputs
-		// Submit a background job
-		log.Info("Submission received", map[string]interface{}{
-			"http_context":   e.HttpContext,
-			"record":         e.Record,
-			"uploaded_files": e.UploadedFiles,
+		submissionInputs, ok := e.Record.Get("inputs").(map[string]interface{})
+		if !ok {
+			log.Error("Failed to assert inputs as map[string]interface{}")
+			return errors.New("invalid inputs format")
+		}
+
+		jobID := e.Record.Id
+
+		err := jobService.QueueJob(nil, jobID, submissionInputs, "workflow")
+		if err != nil {
+			log.Error("Failed to queue job", map[string]interface{}{"error": err})
+			return err
+		}
+
+		log.Info("Job successfully queued", map[string]interface{}{
+			"job_id": jobID,
+			"inputs": submissionInputs,
 		})
+
 		return nil
 	})
 

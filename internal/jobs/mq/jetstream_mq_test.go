@@ -66,7 +66,7 @@ func TestNewJetStreamMessageQueueService(t *testing.T) {
 	// Execute each test scenario
 	for _, sc := range scenarios {
 		t.Run(fmt.Sprintf("%s_%s", sc.streamName, sc.subjectName), func(t *testing.T) {
-			_, err := NewJetStreamMessageQueueService(url, sc.streamName, sc.subjectName)
+			_, err := NewJetStreamMessageQueueService(url, sc.streamName, sc.subjectName, nil)
 			if sc.expectedErr != "" {
 				assert.ErrorContains(t, err, sc.expectedErr, "Service creation should fail")
 			} else {
@@ -112,7 +112,7 @@ func TestPublishAndSubscribe(t *testing.T) {
 
 	for _, sc := range scenarios {
 		t.Run(sc.description, func(t *testing.T) {
-			service, err := NewJetStreamMessageQueueService(url, sc.stream, sc.subject)
+			service, err := NewJetStreamMessageQueueService(url, sc.stream, sc.subject, nil)
 			require.NoError(t, err, "Failed to create JetStream service")
 
 			// Set up a subscriber

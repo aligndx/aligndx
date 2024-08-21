@@ -15,7 +15,7 @@ func main() {
 	configService := config.NewConfigService(log)
 	cfg := configService.LoadConfig()
 
-	mqService, err := mq.NewJetStreamMessageQueueService(cfg.MQ.URL, cfg.MQ.Stream, "jobs")
+	mqService, err := mq.NewJetStreamMessageQueueService(cfg.MQ.URL, cfg.MQ.Stream, "jobs", log)
 	if err != nil {
 		log.Fatal("Failed to initialize message queue service", map[string]interface{}{"error": err})
 		return
