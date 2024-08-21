@@ -48,6 +48,7 @@ function capitalizeWords(input: string): string {
 
 
 export default function WorkflowForm({name, repository, description, id, jsonSchema }: WorkflowFormProps) {
+
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
         const { default: defaultValue, type, format } = value as JsonSchemaProperty;
 
@@ -167,7 +168,7 @@ export default function WorkflowForm({name, repository, description, id, jsonSch
 
 export function WorkflowFormSkeleton() {
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 p-4 w-full">
             <WorkflowSkeletonInput />
             <WorkflowSkeletonFileInput />
             <WorkflowSkeletonInput />

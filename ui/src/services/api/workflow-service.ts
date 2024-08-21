@@ -1,5 +1,5 @@
 import PocketBase, { RecordModel } from 'pocketbase';
-import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult, UseQueryOptions } from '@tanstack/react-query';
 import { Workflow } from '@/types/workflow';
 
 export const mapRecordToWorkflow = (record: RecordModel): Workflow => {
@@ -51,9 +51,17 @@ interface DeleteWorkflowData {
 const useWorkflowService = (pb: PocketBase) => {
   const queryClient = useQueryClient();
 
-  const useGetWorkflow = (id: string): UseQueryResult<Workflow, Error> =>
-    useQuery({ queryKey: ['workflow', id], queryFn: () => getWorkflow(pb, id) });
-
+  const useGetWorkflow = (
+    id: string,
+    options?: UseQueryOptions<Workflow, Error>
+  ): UseQueryResult<Workflow, Error> => {
+    return useQuery({
+      queryKey: ['workflow', id],
+      queryFn: () => getWorkflow(pb, id),
+      ...options, // Spread the options to allow overrides
+    });
+  };
+  
   const getWorkflowsQuery: UseQueryResult<Workflow[], Error> = useQuery({
     queryKey: ['workflows'], queryFn: () => getWorkflows(pb)
   });

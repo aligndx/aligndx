@@ -5,12 +5,7 @@ interface HttpError extends Error {
     status?: number;
 }
 
-export class Client extends PocketBase {
-    async refreshAuthIfNeeded() {
-        if (!this.authStore.isValid) {
-            await this.collection('users').authRefresh();
-        }
-    }
+export class Client extends PocketBase { 
 
     async send<T = any>(path: string, options: SendOptions): Promise<T> {
         try {

@@ -38,7 +38,6 @@ export default function Workflow() {
                     {
                         workflow.isLoading ?
                             <WorkflowFormSkeleton />
-
                             :
                             <WorkflowForm id={workflow.data?.id || ""} name={workflow.data?.name || ""} repository={workflow.data?.repository || ""} description={workflow.data?.description || ""} jsonSchema={workflow.data?.schema} />
                     }
