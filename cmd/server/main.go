@@ -27,7 +27,7 @@ func main() {
 
 	log.Info("App started")
 
-	mqService, err := mq.NewJetStreamMessageQueueService(cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
+	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
 	if err != nil {
 		log.Fatal("Failed to initialize message queue service", map[string]interface{}{"error": err})
 		return

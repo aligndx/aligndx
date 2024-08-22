@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/nats-io/nats.go"
@@ -17,9 +16,7 @@ type JetStreamMessageQueueService struct {
 	log        *logger.LoggerWrapper
 }
 
-func NewJetStreamMessageQueueService(url string, streamName string, subject string, log *logger.LoggerWrapper) (*JetStreamMessageQueueService, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+func NewJetStreamMessageQueueService(ctx context.Context, url string, streamName string, subject string, log *logger.LoggerWrapper) (*JetStreamMessageQueueService, error) {
 
 	nc, err := nats.Connect(url)
 	if err != nil {
