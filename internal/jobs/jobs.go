@@ -57,10 +57,17 @@ func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *confi
 	}
 }
 
-func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) {
+func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) error {
 	statusUpdate := map[string]interface{}{"status": status}
-	statusData, _ := json.Marshal(statusUpdate)
-	s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.subjectPrefix, jobID), statusData)
+	statusData, err := json.Marshal(statusUpdate)
+	if err != nil {
+		return fmt.Errorf("error marshaling status update: %w", err)
+	}
+	err = s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.subjectPrefix, jobID), statusData)
+	if err != nil {
+		return fmt.Errorf("error publishing job status: %w", err)
+	}
+	return nil
 }
 
 func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error {
@@ -72,65 +79,63 @@ func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs map[s
 
 	jobData, err := json.Marshal(job)
 	if err != nil {
-		s.log.Error("Error marshaling job data", map[string]interface{}{"error": err})
-		return err
-	}
-	// publish to single queue
-	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.subjectPrefix), jobData)
-	if err != nil {
-		s.log.Error("Error publishing job", map[string]interface{}{"error": err})
-		return err
+		return fmt.Errorf("error marshaling job data: %w", err)
 	}
 
-	s.updateJobStatus(ctx, job.JobID, string(StatusQueued))
+	// Publish to a single queue
+	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.subjectPrefix), jobData)
+	if err != nil {
+		return fmt.Errorf("error publishing job: %w", err)
+	}
+
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusQueued)); err != nil {
+		return err
+	}
 
 	s.log.Info("Job queued", map[string]interface{}{"job_id": jobID})
 	return nil
 }
 
 func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
-	// Unmarshal the message data into Job structure
 	var job Job
 	if err := json.Unmarshal(msgData, &job); err != nil {
-		s.log.Error("Error unmarshalling job data", map[string]interface{}{"error": err.Error()})
-		return err
+		return fmt.Errorf("error unmarshalling job data: %w", err)
 	}
 
-	// Find the handler based on the job's schema
 	handler, exists := s.handlers[job.JobSchema]
 	if !exists {
-		errMsg := fmt.Sprintf("No handler registered for schema: %s", job.JobSchema)
-		s.log.Error(errMsg, nil)
 		s.updateJobStatus(ctx, job.JobID, string(StatusError))
-		return fmt.Errorf(errMsg)
+		return fmt.Errorf("no handler registered for schema: %s", job.JobSchema)
 	}
 
-	// Process the job using the found handler
-	s.updateJobStatus(ctx, job.JobID, string(StatusProcessing))
-	if err := handler(ctx, job.JobInputs); err != nil {
-		s.log.Error("Error processing job", map[string]interface{}{
-			"job_id": job.JobID, "error": err,
-		})
-		s.updateJobStatus(ctx, job.JobID, string(StatusError))
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusProcessing)); err != nil {
 		return err
 	}
-	s.updateJobStatus(ctx, job.JobID, string(StatusFinished))
-	s.log.Info("Job processed successfully", map[string]interface{}{"job_id": job.JobID})
+
+	if err := handler(ctx, job.JobInputs); err != nil {
+		s.updateJobStatus(ctx, job.JobID, string(StatusError))
+		return fmt.Errorf("error processing job (job_id: %s): %w", job.JobID, err)
+	}
+
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusFinished)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (s *JobService) ProcessJobs(ctx context.Context) error {
 	return s.mq.Subscribe(ctx, func(msgData []byte, subject string) {
-		// Check if the subject matches the expected job request subject
 		expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
 		if subject != expectedSubject {
 			s.log.Debug("Ignoring message with non-request subject", map[string]interface{}{"subject": subject})
 			return
 		}
 
-		// Process the job if the subject matches
 		if err := s.processJob(ctx, msgData); err != nil {
 			s.log.Error("Failed to process job", map[string]interface{}{"error": err.Error()})
+		} else {
+			s.log.Info("Job processed successfully")
 		}
 	})
 }
