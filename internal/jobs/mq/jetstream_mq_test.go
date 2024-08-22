@@ -117,7 +117,7 @@ func TestPublishAndSubscribe(t *testing.T) {
 
 			// Set up a subscriber
 			received := make(chan []byte)
-			handler := func(msg []byte) {
+			handler := func(msg []byte, subject string) {
 				received <- msg
 			}
 
