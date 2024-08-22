@@ -15,14 +15,14 @@ func main() {
 	configService := config.NewConfigService(log)
 	cfg := configService.LoadConfig()
 
-	mqService, err := mq.NewJetStreamMessageQueueService(cfg.MQ.URL, cfg.MQ.Stream, "jobs", log)
+	mqService, err := mq.NewJetStreamMessageQueueService(cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
 	if err != nil {
-		log.Fatal("Failed to initialize message queue service", map[string]interface{}{"error": err})
+		log.Fatal("Failed to initialize message queue service", map[string]interface{}{"error": err.Error()})
 		return
 	}
 
 	// Initialize job service
-	jobService := jobs.NewJobService(mqService, log, cfg, cfg.MQ.Stream)
+	jobService := jobs.NewJobService(mqService, log, cfg, cfg.MQ.Stream, "jobs")
 
 	// Register job handlers
 	jobService.RegisterJobHandler("workflow", jobs.WorkflowHandler)
@@ -32,5 +32,4 @@ func main() {
 
 	// Start worker
 	worker.Start()
-
 }

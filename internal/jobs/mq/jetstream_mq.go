@@ -2,6 +2,7 @@ package mq
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -24,7 +25,7 @@ func NewJetStreamMessageQueueService(url string, streamName string, subject stri
 	if err != nil {
 		log.Error("Failed to connect to NATS server", map[string]interface{}{
 			"url":   url,
-			"error": err,
+			"error": err.Error(),
 		})
 		return nil, err
 	}
@@ -35,10 +36,11 @@ func NewJetStreamMessageQueueService(url string, streamName string, subject stri
 	js, err := jetstream.New(nc)
 	if err != nil {
 		log.Error("Failed to initialize JetStream", map[string]interface{}{
-			"error": err,
+			"error": err.Error(),
 		})
 		return nil, err
 	}
+
 	log.Info("JetStream initialized", nil)
 
 	// Declare the stream
@@ -63,7 +65,11 @@ func NewJetStreamMessageQueueService(url string, streamName string, subject stri
 		"subject":    subject,
 	})
 
-	return &JetStreamMessageQueueService{js: js, streamName: streamName}, nil
+	return &JetStreamMessageQueueService{
+		js:         js,
+		streamName: streamName,
+		log:        log,
+	}, nil
 }
 
 func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject string, data []byte) error {
@@ -71,7 +77,7 @@ func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject stri
 	if err != nil {
 		s.log.Error("Failed to publish message", map[string]interface{}{
 			"subject": subject,
-			"error":   err,
+			"error":   err.Error(),
 		})
 		return err
 	}
@@ -82,18 +88,25 @@ func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject stri
 	return nil
 }
 
-func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler func([]byte)) error {
+func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler func([]byte, string)) error {
 	consumerConfig := jetstream.ConsumerConfig{
 		Durable:       fmt.Sprintf("%s-consumer", s.streamName),
 		AckPolicy:     jetstream.AckExplicitPolicy,
 		DeliverPolicy: jetstream.DeliverAllPolicy,
+	}
+	if s.log == nil {
+		return errors.New("Logger is not initialized")
+	}
+
+	if s.js == nil {
+		return errors.New("JetStream client is not initialized")
 	}
 
 	cons, err := s.js.CreateOrUpdateConsumer(ctx, s.streamName, consumerConfig)
 	if err != nil {
 		s.log.Error("Failed to create or update consumer", map[string]interface{}{
 			"streamName": s.streamName,
-			"error":      err,
+			"error":      err.Error(),
 		})
 		return err
 	}
@@ -102,22 +115,24 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler fu
 	})
 
 	consContext, err := cons.Consume(func(msg jetstream.Msg) {
-		s.log.Info("Message received", map[string]interface{}{
+		s.log.Debug("Message received", map[string]interface{}{
 			"streamName": s.streamName,
+			"subject":    msg.Subject(),
+			"data":       string(msg.Data()), // Log the message data for debugging
 		})
-		handler(msg.Data())
+		handler(msg.Data(), msg.Subject())
 		err := msg.Ack()
 		if err != nil {
 			s.log.Error("Failed to acknowledge message", map[string]interface{}{
-				"error": err,
+				"error": err.Error(),
 			})
 		} else {
-			s.log.Info("Message acknowledged", nil)
+			s.log.Debug("Message acknowledged", nil)
 		}
 	})
 	if err != nil {
 		s.log.Error("Failed to start consuming messages", map[string]interface{}{
-			"error": err,
+			"error": err.Error(),
 		})
 		return err
 	}

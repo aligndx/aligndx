@@ -25,15 +25,16 @@ type JobServiceInterface interface {
 
 type MessageQueueService interface {
 	Publish(ctx context.Context, subject string, data []byte) error
-	Subscribe(ctx context.Context, handler func([]byte)) error
+	Subscribe(ctx context.Context, handler func([]byte, string)) error
 }
 
 type JobService struct {
-	mq       MessageQueueService
-	log      *logger.LoggerWrapper
-	cfg      *config.Config
-	handlers map[string]JobHandler
-	stream   string
+	mq            MessageQueueService
+	log           *logger.LoggerWrapper
+	cfg           *config.Config
+	handlers      map[string]JobHandler
+	stream        string
+	subjectPrefix string
 }
 
 type JobStatus string
@@ -45,20 +46,21 @@ const (
 	StatusError      JobStatus = "error"
 )
 
-func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *config.Config, stream string) JobServiceInterface {
+func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *config.Config, stream string, subjectPrefix string) JobServiceInterface {
 	return &JobService{
-		mq:       mq,
-		log:      log,
-		cfg:      cfg,
-		handlers: make(map[string]JobHandler),
-		stream:   stream,
+		mq:            mq,
+		log:           log,
+		cfg:           cfg,
+		handlers:      make(map[string]JobHandler),
+		stream:        stream,
+		subjectPrefix: subjectPrefix,
 	}
 }
 
 func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) {
 	statusUpdate := map[string]interface{}{"status": status}
 	statusData, _ := json.Marshal(statusUpdate)
-	s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.stream, jobID), statusData)
+	s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.subjectPrefix, jobID), statusData)
 }
 
 func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error {
@@ -74,7 +76,7 @@ func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs map[s
 		return err
 	}
 	// publish to single queue
-	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.stream), jobData)
+	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.subjectPrefix), jobData)
 	if err != nil {
 		s.log.Error("Error publishing job", map[string]interface{}{"error": err})
 		return err
@@ -90,7 +92,7 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 	// Unmarshal the message data into Job structure
 	var job Job
 	if err := json.Unmarshal(msgData, &job); err != nil {
-		s.log.Error("Error unmarshalling job data", map[string]interface{}{"error": err})
+		s.log.Error("Error unmarshalling job data", map[string]interface{}{"error": err.Error()})
 		return err
 	}
 
@@ -118,9 +120,17 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 }
 
 func (s *JobService) ProcessJobs(ctx context.Context) error {
-	return s.mq.Subscribe(ctx, func(msg []byte) {
-		if err := s.processJob(ctx, msg); err != nil {
-			s.log.Error("Failed to handle message", map[string]interface{}{"error": err})
+	return s.mq.Subscribe(ctx, func(msgData []byte, subject string) {
+		// Check if the subject matches the expected job request subject
+		expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
+		if subject != expectedSubject {
+			s.log.Debug("Ignoring message with non-request subject", map[string]interface{}{"subject": subject})
+			return
+		}
+
+		// Process the job if the subject matches
+		if err := s.processJob(ctx, msgData); err != nil {
+			s.log.Error("Failed to process job", map[string]interface{}{"error": err.Error()})
 		}
 	})
 }

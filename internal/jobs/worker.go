@@ -35,26 +35,19 @@ func (w *Worker) Start() {
 
 	go func() {
 		<-sigs
-		w.log.Info("Shutting down worker...", nil)
+		w.log.Info("Shutting down worker...")
 		cancel()
 	}()
 
-	w.log.Info("Starting worker to process jobs...", nil)
+	w.log.Info("Starting worker to process jobs...")
 
-	// Continuously process jobs
-	for {
-		err := w.jobService.ProcessJobs(ctx)
-		if err != nil {
-			w.log.Error("Error processing jobs", map[string]interface{}{"error": err})
-			time.Sleep(5 * time.Second) // Backoff before retrying
-		}
-
-		select {
-		case <-ctx.Done():
-			w.log.Info("Worker has been shut down", nil)
-			return
-		default:
-			// Continue processing jobs
-		}
+	// Process jobs continuously until the context is canceled
+	err := w.jobService.ProcessJobs(ctx)
+	if err != nil {
+		w.log.Error("Error processing jobs", map[string]interface{}{"error": err.Error()})
+		time.Sleep(5 * time.Second)
 	}
+
+	<-ctx.Done()
+	w.log.Info("Worker has been shut down")
 }
