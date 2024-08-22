@@ -14,10 +14,7 @@ type DockerExecutor struct {
 	client *client.Client
 }
 
-type DockerOptions struct {
-	Image   string
-	Volumes []string
-}
+var _ Executor = (*DockerExecutor)(nil)
 
 func NewDockerExecutor() (*DockerExecutor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -27,46 +24,55 @@ func NewDockerExecutor() (*DockerExecutor, error) {
 	return &DockerExecutor{client: cli}, nil
 }
 
-func (d *DockerExecutor) Execute(ctx context.Context, command []string, opts ...JobOption) (string, error) {
-	jobDetails := JobDetails{
-		Command: command,
-		Options: make(map[string]interface{}),
+// Execute runs a Docker container based on the provided configuration.
+func (d *DockerExecutor) Execute(ctx context.Context, config interface{}) (string, error) {
+	// Type assertion to ensure the config is of type DockerConfig
+	dockerConfig, ok := config.(*DockerConfig)
+	if !ok {
+		return "", fmt.Errorf("invalid configuration type: expected DockerConfig")
 	}
 
-	for _, opt := range opts {
-		opt(&jobDetails)
+	// Ensure required fields are set
+	if dockerConfig.Image == "" {
+		return "", fmt.Errorf("Docker image must be specified")
 	}
-
-	dockerOpts, ok := jobDetails.Options["docker"].(DockerOptions)
-	if !ok || dockerOpts.Image == "" {
-		return "", fmt.Errorf("invalid or missing Docker options")
+	if len(dockerConfig.Command) == 0 {
+		return "", fmt.Errorf("Docker command must be specified")
 	}
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer cli.Close()
 
-	out, err := cli.ImagePull(ctx, dockerOpts.Image, image.PullOptions{})
+	out, err := cli.ImagePull(ctx, dockerConfig.Image, image.PullOptions{})
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer out.Close()
+
+	// Suppress the logs by writing to io.Discard
 	io.Copy(io.Discard, out)
 
+	// Create the container using the DockerConfig struct
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: dockerOpts.Image,
-		Cmd:   command,
-	}, nil, nil, nil, "")
+		Image:      dockerConfig.Image,
+		Cmd:        dockerConfig.Command,
+		Env:        dockerConfig.Env,
+		WorkingDir: dockerConfig.WorkingDir,
+	}, &container.HostConfig{
+		Binds:      dockerConfig.Volumes,
+		AutoRemove: dockerConfig.AutoRemove,
+	}, nil, nil, "")
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
+	// Start the container
 	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return "", nil
-
+	return "Job started successfully", nil
 }
