@@ -1,4 +1,4 @@
-package executor
+package docker
 
 type DockerConfig struct {
 	Image      string

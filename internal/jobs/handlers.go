@@ -5,18 +5,19 @@ import (
 	"fmt"
 
 	"github.com/aligndx/aligndx/internal/jobs/executor"
+	"github.com/aligndx/aligndx/internal/jobs/executor/docker"
 )
 
 func WorkflowHandler(ctx context.Context, inputs map[string]interface{}) error {
 	// Create a Docker executor
-	dockerExec, err := executor.NewDockerExecutor()
+	dockerExec, err := docker.NewDockerExecutor()
 	if err != nil {
 		return fmt.Errorf("failed to create Docker executor: %w", err)
 	}
 	es := executor.NewExecutorService(dockerExec)
 
 	// Define Docker options
-	dockerConfig := executor.NewDockerConfig(
+	dockerConfig := docker.NewDockerConfig(
 		"nextflow/nextflow:latest",
 		[]string{"nextflow", "run", "hello"},
 	)

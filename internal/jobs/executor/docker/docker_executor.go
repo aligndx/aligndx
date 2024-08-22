@@ -1,10 +1,11 @@
-package executor
+package docker
 
 import (
 	"context"
 	"fmt"
 	"io"
 
+	"github.com/aligndx/aligndx/internal/jobs/executor"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -14,7 +15,7 @@ type DockerExecutor struct {
 	client *client.Client
 }
 
-var _ Executor = (*DockerExecutor)(nil)
+var _ executor.Executor = (*DockerExecutor)(nil)
 
 func NewDockerExecutor() (*DockerExecutor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
