@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -54,7 +53,7 @@ func (d *DockerExecutor) Execute(ctx context.Context, command []string, opts ...
 		panic(err)
 	}
 	defer out.Close()
-	io.Copy(os.Stdout, out)
+	io.Copy(io.Discard, out)
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: dockerOpts.Image,
