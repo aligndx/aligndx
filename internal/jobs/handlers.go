@@ -6,11 +6,14 @@ import (
 
 	"github.com/aligndx/aligndx/internal/jobs/executor"
 	"github.com/aligndx/aligndx/internal/jobs/executor/docker"
+	"github.com/aligndx/aligndx/internal/logger"
 )
 
 func WorkflowHandler(ctx context.Context, inputs map[string]interface{}) error {
+	log := logger.NewLoggerWrapper("zerolog", ctx)
+
 	// Create a Docker executor
-	dockerExec, err := docker.NewDockerExecutor()
+	dockerExec, err := docker.NewDockerExecutor(log)
 	if err != nil {
 		return fmt.Errorf("failed to create Docker executor: %w", err)
 	}
