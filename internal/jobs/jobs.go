@@ -20,7 +20,7 @@ type Job struct {
 type JobServiceInterface interface {
 	QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error
 	RegisterJobHandler(schema string, handler JobHandler)
-	ProcessJobs(ctx context.Context) error
+	ProcessJobs(ctx context.Context, maxConcurrency int) error
 }
 
 type MessageQueueService interface {
@@ -124,19 +124,33 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 	return nil
 }
 
-func (s *JobService) ProcessJobs(ctx context.Context) error {
+func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error {
+	// Create a buffered channel (semaphore) with maxConcurrency slots
+	semaphore := make(chan struct{}, maxConcurrency)
+
 	return s.mq.Subscribe(ctx, func(msgData []byte, subject string) {
+
 		expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
 		if subject != expectedSubject {
 			s.log.Debug("Ignoring message with non-request subject", map[string]interface{}{"subject": subject})
 			return
 		}
+		// Acquire a slot in the semaphore
+		semaphore <- struct{}{}
 
-		if err := s.processJob(ctx, msgData); err != nil {
-			s.log.Error("Failed to process job", map[string]interface{}{"error": err.Error()})
-		} else {
-			s.log.Info("Job processed successfully")
-		}
+		// Process the job in a separate goroutine
+		go func() {
+			defer func() {
+				// Release the slot in the semaphore after the job is done
+				<-semaphore
+			}()
+
+			if err := s.processJob(ctx, msgData); err != nil {
+				s.log.Error("Failed to process job", map[string]interface{}{"error": err.Error()})
+			} else {
+				s.log.Info("Job processed successfully")
+			}
+		}()
 	})
 }
 

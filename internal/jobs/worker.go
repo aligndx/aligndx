@@ -44,7 +44,7 @@ func (w *Worker) Start(ctx context.Context, cancel context.CancelFunc) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := w.jobService.ProcessJobs(ctx)
+		err := w.jobService.ProcessJobs(ctx, 2)
 		if err != nil {
 			w.log.Error("Error processing jobs", map[string]interface{}{"error": err.Error()})
 			time.Sleep(5 * time.Second)

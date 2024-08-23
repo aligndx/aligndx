@@ -97,5 +97,20 @@ func (d *DockerExecutor) Execute(ctx context.Context, config interface{}) (strin
 
 	d.log.Debug("Docker container started successfully", map[string]interface{}{"containerID": resp.ID})
 
+	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case status := <-statusCh:
+		d.log.Debug("Docker container finished", map[string]interface{}{
+			"containerID": resp.ID,
+			"statusCode":  status.StatusCode,
+		})
+		if status.StatusCode != 0 {
+			return "", fmt.Errorf("container exited with non-zero status code: %d", status.StatusCode)
+		}
+	case err := <-errCh:
+		d.log.Error("Error waiting for Docker container", map[string]interface{}{"error": err, "containerID": resp.ID})
+		return "", err
+	}
+
 	return "Success", nil
 }
