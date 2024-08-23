@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -37,29 +37,32 @@ func main() {
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 
 	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
-		configService.SetPBSettings(app)
+		// configService.SetPBSettings(app)
 		return nil
 	})
 
 	app.OnRecordAfterCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
-		submissionInputs, ok := e.Record.Get("inputs").(map[string]interface{})
-		if !ok {
-			log.Error("Failed to assert inputs as map[string]interface{}")
-			return errors.New("invalid inputs format")
-		}
+		record := e.Record
+		result := map[string]interface{}{}
+		record.UnmarshalJSONField("inputs", &result)
 
+		// workflowRecordID := record.GetString("workflow")
+		// workflowRecord, err := app.Dao().FindRecordById("workflows", workflowRecordID)
+		// if err != nil {
+		// 	log.Error("Failed to fetch workflow record", map[string]interface{}{"error": err})
+		// 	return err
+		// }
+		// workflowRepo := workflowRecord.GetString("repository")
+		// println(workflowRepo)
 		jobID := e.Record.Id
 
-		err := jobService.QueueJob(nil, jobID, submissionInputs, "workflow")
-		if err != nil {
+		queue_err := jobService.QueueJob(ctx, jobID, result, "workflow")
+		if queue_err != nil {
 			log.Error("Failed to queue job", map[string]interface{}{"error": err})
 			return err
 		}
 
-		log.Info("Job successfully queued", map[string]interface{}{
-			"job_id": jobID,
-			"inputs": submissionInputs,
-		})
+		log.Info(fmt.Sprintf("Job %s successfully queued", jobID))
 
 		return nil
 	})

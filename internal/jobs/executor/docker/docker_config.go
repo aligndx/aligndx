@@ -18,7 +18,7 @@ func NewDockerConfig(image string, command []string, opts ...DockerConfigOption)
 		Volumes:    []string{},
 		Env:        []string{},
 		WorkingDir: "/workspace",
-		AutoRemove: false,
+		AutoRemove: true,
 	}
 
 	// Apply all options to the config
