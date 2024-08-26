@@ -53,12 +53,7 @@ func (d *DockerExecutor) Execute(ctx context.Context, config interface{}) (strin
 		return "", err
 	}
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		d.log.Error("Failed to create Docker client with API version negotiation", map[string]interface{}{"error": err})
-		return "", err
-	}
-	defer cli.Close()
+	cli := d.client
 
 	d.log.Debug("Pulling Docker Image", map[string]interface{}{"image": dockerConfig.Image})
 
