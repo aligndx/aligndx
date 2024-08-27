@@ -42,20 +42,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const login = (email: string, password: string) => {
-        loginMutation.mutateAsync({ email, password },
-            {
-                onSuccess() {
-                    setCurrentUser(getCurrentUser());
-                    setIsAuthenticated(checkIsAuthenticated());
-                    toast.success("Login Successful")
-                    router.push(routes.dashboard.root)
-                },
-                onError: () => {
-                    toast.error("Login Failed")
-                },
-            }
-        );
+    const login = async (email: string, password: string) => {
+        try {
+            await loginMutation.mutateAsync(
+                { email, password },
+                {
+                    onSuccess() {
+                        setCurrentUser(getCurrentUser());
+                        setIsAuthenticated(checkIsAuthenticated());
+                        toast.success("Login Successful");
+                        router.push(routes.dashboard.root);
+                    },
+                    onError() {
+                        toast.error("Login Failed");
+                    },
+                }
+            );
+        } catch (error) {
+            console.error("Login attempt failed with error:", error);
+        }
     };
 
     const logout = () => {

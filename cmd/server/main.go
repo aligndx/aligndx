@@ -43,20 +43,30 @@ func main() {
 
 	app.OnRecordAfterCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
 		record := e.Record
-		result := map[string]interface{}{}
-		record.UnmarshalJSONField("inputs", &result)
-
-		// workflowRecordID := record.GetString("workflow")
-		// workflowRecord, err := app.Dao().FindRecordById("workflows", workflowRecordID)
-		// if err != nil {
-		// 	log.Error("Failed to fetch workflow record", map[string]interface{}{"error": err})
-		// 	return err
-		// }
-		// workflowRepo := workflowRecord.GetString("repository")
-		// println(workflowRepo)
 		jobID := e.Record.Id
 
-		queue_err := jobService.QueueJob(ctx, jobID, result, "workflow")
+		result := map[string]interface{}{}
+		record.UnmarshalJSONField("inputs", &result)
+		if err != nil {
+			log.Error("Failed to unmarshal inputs field", map[string]interface{}{"error": err})
+			return err
+		}
+
+		// Fetch workflow record ID and other details
+		workflowRecordID := record.GetString("workflow")
+		workflowRecord, err := app.Dao().FindRecordById("workflows", workflowRecordID)
+		if err != nil {
+			log.Error("Failed to fetch workflow record", map[string]interface{}{"error": err})
+			return err
+		}
+		workflowRepo := workflowRecord.GetString("repository")
+		workflowInputs := jobs.WorkflowInputs{
+			JobID:    jobID,
+			Workflow: workflowRepo,
+			Inputs:   result,
+		}
+
+		queue_err := jobService.QueueJob(ctx, jobID, workflowInputs, "workflow")
 		if queue_err != nil {
 			log.Error("Failed to queue job", map[string]interface{}{"error": err})
 			return err

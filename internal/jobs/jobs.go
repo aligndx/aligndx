@@ -9,17 +9,17 @@ import (
 	"github.com/aligndx/aligndx/internal/logger"
 )
 
-type JobHandler func(ctx context.Context, inputs map[string]interface{}) error
+type BaseJobHandler func(ctx context.Context, inputs interface{}) error
 
 type Job struct {
-	JobID     string                 `json:"job_id"`
-	JobInputs map[string]interface{} `json:"job_inputs"`
-	JobSchema string                 `json:"job_schema"`
+	JobID     string      `json:"job_id"`
+	JobInputs interface{} `json:"job_inputs"`
+	JobSchema string      `json:"job_schema"`
 }
 
 type JobServiceInterface interface {
-	QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error
-	RegisterJobHandler(schema string, handler JobHandler)
+	QueueJob(ctx context.Context, jobID string, jobInputs interface{}, jobSchema string) error
+	RegisterJobHandler(schema string, handler BaseJobHandler)
 	ProcessJobs(ctx context.Context, maxConcurrency int) error
 }
 
@@ -32,7 +32,7 @@ type JobService struct {
 	mq            MessageQueueService
 	log           *logger.LoggerWrapper
 	cfg           *config.Config
-	handlers      map[string]JobHandler
+	handlers      map[string]BaseJobHandler
 	stream        string
 	subjectPrefix string
 }
@@ -51,7 +51,7 @@ func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *confi
 		mq:            mq,
 		log:           log,
 		cfg:           cfg,
-		handlers:      make(map[string]JobHandler),
+		handlers:      make(map[string]BaseJobHandler),
 		stream:        stream,
 		subjectPrefix: subjectPrefix,
 	}
@@ -70,19 +70,20 @@ func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) 
 	return nil
 }
 
-func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error {
+func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs interface{}, jobSchema string) error {
 	job := Job{
 		JobID:     jobID,
 		JobInputs: jobInputs,
 		JobSchema: jobSchema,
 	}
 
+	// Marshal the Job struct to JSON
 	jobData, err := json.Marshal(job)
 	if err != nil {
 		return fmt.Errorf("error marshaling job data: %w", err)
 	}
 
-	// Publish to a single queue
+	// Publish to the queue
 	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.subjectPrefix), jobData)
 	if err != nil {
 		return fmt.Errorf("error publishing job: %w", err)
@@ -112,6 +113,7 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 		return err
 	}
 
+	// Directly pass the deserialized byte data to handler
 	if err := handler(ctx, job.JobInputs); err != nil {
 		s.updateJobStatus(ctx, job.JobID, string(StatusError))
 		return fmt.Errorf("error processing job (job_id: %s): %w", job.JobID, err)
@@ -154,7 +156,7 @@ func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error 
 	})
 }
 
-func (s *JobService) RegisterJobHandler(schema string, handler JobHandler) {
+func (s *JobService) RegisterJobHandler(schema string, handler BaseJobHandler) {
 	s.handlers[schema] = handler
 	s.log.Info("Job handler registered", map[string]interface{}{"job_schema": schema})
 }

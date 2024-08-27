@@ -88,7 +88,6 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
         const { name, ...rest } = values
         const inputs = { ...rest }
 
-
         function transformInputsToFiles(inputs) {
             const filePathKeys = getFilePathKeys(jsonSchema);
             return Object.entries(inputs)

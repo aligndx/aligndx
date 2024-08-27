@@ -12,7 +12,9 @@ func main() {
 	ctx := context.Background()
 	log := logger.NewLoggerWrapper("zerolog", ctx)
 
-	opts := &server.Options{}
+	opts := &server.Options{
+		JetStream: true,
+	}
 
 	log.Debug("Initializing NATS server with options", map[string]interface{}{
 		"opts": opts,

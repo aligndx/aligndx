@@ -4,7 +4,7 @@ import { User } from '@/types/user';
 
 export const login = async (pb: PocketBase, email: string, password: string): Promise<RecordAuthResponse<RecordModel>> => {
   const user = await pb.collection('users').authWithPassword(email, password);
-  return user as RecordAuthResponse<RecordModel>;
+  return user;
 };
 
 export const _logout = async (pb: PocketBase): Promise<void> => {

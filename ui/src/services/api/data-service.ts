@@ -4,15 +4,15 @@ import { Data } from '@/types/data';
 
 export const mapRecordToData = (record: RecordModel): Data => {
   return {
-      id: record.id,
-      name: record.name,
-      type: record.type,
-      file: record.file,
-      size: record.size,
-      parent: record.parent,
-      user: record.user,
-      created: new Date(record.created),
-      updated: new Date(record.updated)
+    id: record.id,
+    name: record.name,
+    type: record.type,
+    file: record.file,
+    size: record.size,
+    parent: record.parent,
+    user: record.user,
+    created: new Date(record.created),
+    updated: new Date(record.updated)
   };
 };
 
@@ -38,6 +38,35 @@ export const updateData = async (pb: PocketBase, id: string, data: any): Promise
 export const deleteData = async (pb: PocketBase, id: string): Promise<void> => {
   await pb.collection('data').delete(id);
 };
+
+export const _getDataURL = async (pb: PocketBase, id: string): Promise<string> => {
+  const record = await pb.collection('data').getOne(id);
+  const url = await pb.files.getUrl(record, record.file)
+  return url
+};
+
+export const _getPrivateDataURL = async (pb: PocketBase, id: string): Promise<string> => {
+  try {
+    const fileToken = await pb.files.getToken();
+    console.log("File Token:", fileToken);
+
+    const record = await pb.collection('data').getOne(id);
+    if (!record) {
+      console.error("No record found for ID:", id);
+      return '';
+    }
+
+    const url = pb.files.getUrl(record, record.file, { "token": fileToken });
+    console.log("Generated URL:", url);
+
+    return url;
+  } catch (error) {
+    console.error("Error fetching private data URL:", error);
+    throw error;
+  }
+};
+
+
 
 type UpdateDataData = {
   id: string;
@@ -97,7 +126,17 @@ const useDataService = (pb: PocketBase) => {
     }
   );
 
+  const getPrivateDataURLQuery = async(id: string) => {
+    return await _getPrivateDataURL(pb, id)
+  };
+
+  const getDataURLQuery = async(id: string) => {
+    return await _getDataURL(pb, id)
+  };
+
   return {
+    getDataURLQuery,
+    getPrivateDataURLQuery,
     useGetDataQuery,
     useGetDatasQuery,
     createDataMutation,
