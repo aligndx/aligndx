@@ -18,3 +18,7 @@ nats {
     events = params.nats_events
     jetstream = params.nats_jetstream_enabled
 }
+
+docker {
+    runOptions = '-u $(id -u):$(id -g)' // Use current user's UID and GID
+}
