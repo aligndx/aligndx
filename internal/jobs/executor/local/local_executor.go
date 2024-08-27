@@ -3,6 +3,7 @@ package local
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -54,18 +55,21 @@ func (le *LocalExecutor) Execute(ctx context.Context, config interface{}) (strin
 		cmd.Dir = localConfig.WorkingDir
 	}
 
-	// Capture the combined output (stdout and stderr)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
+	// Suppress the logs by setting stdout and stderr to io.Discard
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+
+	// Execute the command
+	if err := cmd.Run(); err != nil {
 		le.log.Error("Command execution failed", map[string]interface{}{
 			"error":   err,
 			"command": strings.Join(localConfig.Command, " "),
-			"output":  string(output),
 		})
-		return "", fmt.Errorf("command execution failed: %v, output: %s", err, string(output))
+		return "", fmt.Errorf("command execution failed: %v", err)
 	}
 
-	le.log.Debug("Command executed successfully", map[string]interface{}{"output": string(output)})
+	le.log.Debug("Command executed successfully")
 
-	return string(output), nil
+	// Return a success message (or change this to any meaningful result as needed)
+	return "Success", nil
 }
