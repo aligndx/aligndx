@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"os"
-	"strings"
+	"text/template"
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/jobs/executor"
-	"github.com/aligndx/aligndx/internal/jobs/executor/docker"
+	"github.com/aligndx/aligndx/internal/jobs/executor/local"
 	"github.com/aligndx/aligndx/internal/logger"
 )
 
@@ -27,42 +26,60 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	configService := config.NewConfigService(log)
 	cfg := configService.LoadConfig()
 
-	// Proceed with the rest of the workflow handling logic
+	currentDir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error getting current directory:", err)
+	}
+
+	configFilePath, err := generateConfig(cfg.MQ.URL, fmt.Sprintf("jobs.%s", inputs.JobID))
+	if err != nil {
+		return fmt.Errorf("failed to generate nextflow config file: %w", err)
+	}
+	defer os.Remove(configFilePath)
+
 	jsonFilePath, err := prepareJSONFile(inputs.Inputs)
 	if err != nil {
 		return fmt.Errorf("failed to prepare JSON file: %w", err)
 	}
 	defer os.Remove(jsonFilePath)
 
-	// Create a Docker executor
-	dockerExec, err := docker.NewDockerExecutor(log)
-	if err != nil {
-		return fmt.Errorf("failed to create Docker executor: %w", err)
-	}
-	es := executor.NewExecutorService(dockerExec)
+	localExec := local.NewLocalExecutor(log)
+	es := executor.NewExecutorService(localExec)
 
-	hostIP, err := getHostIP()
-	if err != nil {
-		fmt.Printf("Error retrieving host IP: %v\n", err)
-		return err
-	}
-	natsURL := cfg.MQ.URL
-	natsURL = replaceLocalhost(natsURL, hostIP)
+	baseDir := fmt.Sprintf("%s/pb_data/workflows", currentDir)
+	jobDir := fmt.Sprintf("%s/pb_data/workflows/%s", currentDir, inputs.JobID)
+	nxfDir := fmt.Sprintf("%s/nxf", jobDir)
 
-	// Define Docker options
-	dockerConfig := docker.NewDockerConfig(
-		"mshunjan/aligndx-nf-nats:latest",
-		[]string{"nextflow", "run", inputs.Workflow, "-c", "nextflow.config", "-profile", "docker,test", "--nats_url", natsURL, "--nats_subject", "--outdir", "test", fmt.Sprintf("jobs.%s", inputs.JobID)},
-		docker.WithVolumes([]string{fmt.Sprintf("%s:/workspace/params.json", jsonFilePath), "/var/run/docker.sock:/var/run/docker.sock"}),
-		docker.WithAutoRemove(false),
-		docker.WithWorkingDir("/"),
+	config := local.NewLocalConfig(
+		[]string{
+			fmt.Sprintf("%s/nextflow", baseDir),
+			"-log", fmt.Sprintf("%s/nextflow.logs", jobDir),
+			"run", inputs.Workflow,
+			"-c", configFilePath,
+			// "-params-file", jsonFilePath,
+			// "-profile", "docker",
+			"-profile", "docker,test",
+			"--nats_url", cfg.MQ.URL,
+			"--outdir", fmt.Sprintf("%s/results", jobDir),
+		},
+		local.WithWorkingDir(baseDir),
+		local.WithEnv([]string{
+			fmt.Sprintf("NXF_HOME=%s", nxfDir),
+			fmt.Sprintf("NXF_ASSETS=%s/assets", baseDir),
+			fmt.Sprintf("NXF_PLUGINS_DIR=%s/plugins", baseDir),
+			fmt.Sprintf("NXF_WORK=%s/work", nxfDir),
+			fmt.Sprintf("NXF_TEMP=%s/tmp", nxfDir),
+			fmt.Sprintf("NXF_CACHE_DIR=%s/cache", nxfDir),
+		}),
 	)
 
-	// Execute the command with the Docker options
-	_, err = es.Execute(ctx, dockerConfig)
+	_, err = es.Execute(ctx, config)
 	if err != nil {
 		return fmt.Errorf("failed to execute job: %w", err)
 	}
+
+	defer os.RemoveAll(nxfDir)
+	// Stage data back to pocketbase, then cleanup
 
 	return nil
 }
@@ -109,55 +126,55 @@ func prepareJSONFile(inputs map[string]interface{}) (string, error) {
 	return tmpfile.Name(), nil
 }
 
-func getHostIP() (string, error) {
-	// Get a list of all network interfaces
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return "", err
-	}
-
-	// Iterate over the list of interfaces
-	for _, iface := range interfaces {
-		// Ignore interfaces that are down or loopback interfaces
-		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
-			continue
-		}
-
-		// Get a list of all addresses associated with the interface
-		addrs, err := iface.Addrs()
-		if err != nil {
-			return "", err
-		}
-
-		// Iterate over the list of addresses
-		for _, addr := range addrs {
-			var ip net.IP
-
-			// Check if the address is an IP address or a network address
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-
-			// Ignore loopback and IPv6 addresses
-			if ip == nil || ip.IsLoopback() || ip.To4() == nil {
-				continue
-			}
-
-			// Return the first non-loopback, non-link-local IPv4 address
-			return ip.String(), nil
-		}
-	}
-
-	return "", fmt.Errorf("no valid IP address found")
+type NFConfigParams struct {
+	NatsEnabled          bool
+	NatsURL              string
+	NatsSubject          string
+	NatsEvents           []string
+	NatsJetStreamEnabled bool
 }
 
-// replaceLocalhost replaces "localhost" or "127.0.0.1" in a URL with the actual host IP address.
-func replaceLocalhost(url, hostIP string) string {
-	// Replace "127.0.0.1" or "localhost" with the host IP address
-	url = strings.Replace(url, "127.0.0.1", hostIP, -1)
-	url = strings.Replace(url, "localhost", hostIP, -1)
-	return url
+func generateConfig(nats_url string, nats_subject string) (string, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error getting current directory:", err)
+	}
+	// Set up the variables for the template
+	params := NFConfigParams{
+		NatsEnabled:          true,
+		NatsURL:              nats_url,
+		NatsSubject:          nats_subject,
+		NatsEvents:           []string{"workflow.start", "workflow.error", "workflow.complete", "process.start", "process.complete"},
+		NatsJetStreamEnabled: false,
+	}
+
+	// Open the template file
+	tmpl, err := template.ParseFiles(fmt.Sprintf("%s/internal/jobs/nextflow.config.tmpl", currentDir))
+	if err != nil {
+		return "", fmt.Errorf("error reading template file: %w", err)
+	}
+
+	// Create a temporary file
+	tempFile, err := os.CreateTemp("", "nextflow-*.config")
+	if err != nil {
+		return "", fmt.Errorf("error creating temporary file: %w", err)
+	}
+
+	// Execute the template with the provided variables and write to the temporary file
+	err = tmpl.Execute(tempFile, params)
+	if err != nil {
+		tempFile.Close() // Ensure the file is closed if an error occurs
+		os.Remove(tempFile.Name())
+		return "", fmt.Errorf("error writing to temporary file: %w", err)
+	}
+
+	// Make sure the file content is written and the file is closed
+	err = tempFile.Close()
+	if err != nil {
+		os.Remove(tempFile.Name())
+		return "", fmt.Errorf("error closing temporary file: %w", err)
+	}
+
+	// Return the path of the generated temporary config file
+	return tempFile.Name(), nil
 }
