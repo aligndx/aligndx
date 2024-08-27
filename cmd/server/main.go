@@ -61,6 +61,7 @@ func main() {
 		}
 		workflowRepo := workflowRecord.GetString("repository")
 		workflowInputs := jobs.WorkflowInputs{
+			Name:     record.GetString("name"),
 			JobID:    jobID,
 			Workflow: workflowRepo,
 			Inputs:   result,

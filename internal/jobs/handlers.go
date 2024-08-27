@@ -16,6 +16,7 @@ import (
 // WorkflowInputs represents the expected inputs for the WorkflowHandler.
 type WorkflowInputs struct {
 	JobID    string                 `json:"jobid"`
+	Name     string                 `json:"name"`
 	Workflow string                 `json:"workflow"`
 	Inputs   map[string]interface{} `json:"inputs"`
 }
@@ -60,7 +61,7 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 			// "-profile", "docker",
 			"-profile", "docker,test",
 			"--nats_url", cfg.MQ.URL,
-			"--outdir", fmt.Sprintf("%s/results", jobDir),
+			"--outdir", fmt.Sprintf("%s/%s_results", jobDir, inputs.Name),
 		},
 		local.WithWorkingDir(baseDir),
 		local.WithEnv([]string{
