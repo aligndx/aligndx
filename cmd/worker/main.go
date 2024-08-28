@@ -5,6 +5,7 @@ import (
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/jobs"
+	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"
 	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
 )
@@ -27,7 +28,7 @@ func main() {
 	jobService := jobs.NewJobService(mqService, log, cfg, cfg.MQ.Stream, "jobs")
 
 	// Register job handlers
-	jobService.RegisterJobHandler("workflow", jobs.WorkflowHandler)
+	jobService.RegisterJobHandler("workflow", workflow.WorkflowHandler)
 
 	// Initialize worker
 	worker := jobs.NewWorker(jobService, log, cfg)

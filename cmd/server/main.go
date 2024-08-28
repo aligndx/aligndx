@@ -8,6 +8,7 @@ import (
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/jobs"
+	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"
 	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
 	_ "github.com/aligndx/aligndx/internal/migrations"
@@ -60,7 +61,7 @@ func main() {
 			return err
 		}
 		workflowRepo := workflowRecord.GetString("repository")
-		workflowInputs := jobs.WorkflowInputs{
+		workflowInputs := workflow.WorkflowInputs{
 			Name:     record.GetString("name"),
 			JobID:    jobID,
 			Workflow: workflowRepo,
