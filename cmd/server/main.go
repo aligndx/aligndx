@@ -28,9 +28,6 @@ func main() {
 	configService := config.NewConfigService(log)
 	cfg := configService.LoadConfig()
 
-	log.Info(cfg.API.DefaultAdminEmail)
-	log.Info(cfg.API.DefaultAdminPassword)
-
 	log.Info("App started")
 
 	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)

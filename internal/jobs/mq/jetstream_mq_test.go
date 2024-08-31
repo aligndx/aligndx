@@ -117,11 +117,11 @@ func TestPublishAndSubscribe(t *testing.T) {
 
 			// Set up a subscriber
 			received := make(chan []byte)
-			handler := func(msg []byte, subject string) {
+			handler := func(msg []byte) {
 				received <- msg
 			}
 
-			err = service.Subscribe(ctx, handler)
+			err = service.Subscribe(ctx, "", handler)
 			require.NoError(t, err, "Failed to subscribe")
 
 			// Publish a message

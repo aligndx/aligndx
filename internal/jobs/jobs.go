@@ -25,7 +25,7 @@ type JobServiceInterface interface {
 
 type MessageQueueService interface {
 	Publish(ctx context.Context, subject string, data []byte) error
-	Subscribe(ctx context.Context, handler func([]byte, string)) error
+	Subscribe(ctx context.Context, subject string, handler func([]byte)) error
 }
 
 type JobService struct {
@@ -129,14 +129,9 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error {
 	// Create a buffered channel (semaphore) with maxConcurrency slots
 	semaphore := make(chan struct{}, maxConcurrency)
+	expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
 
-	return s.mq.Subscribe(ctx, func(msgData []byte, subject string) {
-
-		expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
-		if subject != expectedSubject {
-			s.log.Debug("Ignoring message with non-request subject", map[string]interface{}{"subject": subject})
-			return
-		}
+	return s.mq.Subscribe(ctx, expectedSubject, func(msgData []byte) {
 		// Acquire a slot in the semaphore
 		semaphore <- struct{}{}
 
@@ -159,4 +154,10 @@ func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error 
 func (s *JobService) RegisterJobHandler(schema string, handler BaseJobHandler) {
 	s.handlers[schema] = handler
 	s.log.Info("Job handler registered", map[string]interface{}{"job_schema": schema})
+}
+
+func (s *JobService) SubscribeToJob(ctx context.Context, jobId string, emit func([]byte)) error {
+	return s.mq.Subscribe(ctx, jobId, func(msgData []byte) {
+		emit(msgData)
+	})
 }

@@ -80,7 +80,7 @@ func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject stri
 	return nil
 }
 
-func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler func([]byte, string)) error {
+func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject string, handler func([]byte)) error {
 	if s.log == nil {
 		return errors.New("logger is not initialized")
 	}
@@ -93,6 +93,10 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler fu
 		Durable:       fmt.Sprintf("%s-consumer", s.streamName),
 		AckPolicy:     jetstream.AckExplicitPolicy,
 		DeliverPolicy: jetstream.DeliverAllPolicy,
+	}
+
+	if subject != "" {
+		consumerConfig.FilterSubject = subject
 	}
 
 	cons, err := s.js.CreateOrUpdateConsumer(ctx, s.streamName, consumerConfig)
@@ -109,7 +113,7 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, handler fu
 			"subject":    msg.Subject(),
 			"data":       string(msg.Data()), // Log the message data for debugging
 		})
-		handler(msg.Data(), msg.Subject())
+		handler(msg.Data())
 		if err := msg.Ack(); err != nil {
 			s.log.Error("Failed to acknowledge message", map[string]interface{}{
 				"error": err.Error(),
