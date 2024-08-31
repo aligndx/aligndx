@@ -17,6 +17,8 @@ import { ArrowRight, GitBranch } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import DOMPurify from "dompurify";
 import { useUploadFile } from "@/hooks/use-upload-file";
+import { useEffect, useState } from "react";
+import { Submission } from "@/types/submission";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -49,7 +51,7 @@ function capitalizeWords(input: string): string {
 
 
 export default function WorkflowForm({ name, repository, description, id, jsonSchema }: WorkflowFormProps) {
-
+    const [submissionId, setSubmissionId] = useState<string>("")
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
         const { default: defaultValue, type, format } = value as JsonSchemaProperty;
 
@@ -71,7 +73,6 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
         });
     }
 
-
     const formSchema = generateZodSchema(jsonSchema);
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -79,21 +80,43 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
     });
 
     const { submissions } = useApiService()
-    const { createSubmissionMutation } = submissions
+    const { createSubmissionMutation, subscribeToSubmission } = submissions
     const { onUpload, progresses, isUploading } = useUploadFile({
         defaultUploadedFiles: [],
     });
+
+    // useEffect(() => {
+    //     // Check if submissionId is not empty or null
+    //     if (submissionId) {
+    //         const handleSubmissionUpdate = (submission: Submission) => {
+    //             console.log('Received new submission update:', submission);
+    //             // Handle the submission update as needed (e.g., update state)
+    //         };
+
+    //         // Subscribe to updates for the job
+    //         const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
+
+    //         // Clean up subscription on component unmount
+    //         return () => {
+    //             unsubscribe();
+    //         };
+    //     }
+
+    //     // If submissionId is empty or null, do nothing
+    //     return () => { };
+    // }, [submissionId, subscribeToSubmission]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const { name, ...rest } = values
         const inputs = { ...rest }
 
-        function transformInputsToFiles(inputs) {
+        // Todo fix typigns
+        function transformInputsToFiles(inputs : any) {
             const filePathKeys = getFilePathKeys(jsonSchema);
             return Object.entries(inputs)
                 .filter(([id]) => filePathKeys.includes(id)) // Filter to include only keys present in filePathKeys
-                .flatMap(([id, files]) =>
-                    files.map((file) => ({
+                .flatMap(([id, files] : any) =>
+                    files.map((file : any) => ({
                         id,
                         file,
                     }))
@@ -119,7 +142,7 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
             uploadResults.forEach((item) => {
                 newFileInputs[item.id] = item.data.id
                 attachedData.push(item.data.id)
-            }) 
+            })
             const mergedInputs = {
                 ...inputs,
                 ...newFileInputs
@@ -132,11 +155,12 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
                 inputs: mergedInputs,
                 workflow,
                 user: currentUser?.id || "",
-                data : attachedData
+                data: attachedData
             };
 
             await createSubmissionMutation.mutateAsync(submissionPayload, {
                 onSuccess: (data) => {
+                    setSubmissionId(data?.id)
                     toast.success("Form Submitted Successfully");
                 },
                 onError: (error) => {

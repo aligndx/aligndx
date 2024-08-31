@@ -121,7 +121,7 @@ func TestPublishAndSubscribe(t *testing.T) {
 				received <- msg
 			}
 
-			err = service.Subscribe(ctx, "", handler)
+			err = service.Subscribe(ctx, "", "test-consumer", handler)
 			require.NoError(t, err, "Failed to subscribe")
 
 			// Publish a message

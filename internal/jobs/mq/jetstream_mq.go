@@ -49,17 +49,28 @@ func NewJetStreamMessageQueueService(ctx context.Context, url string, streamName
 
 	_, err = js.CreateStream(ctx, cfg)
 	if err != nil {
-		log.Error("Failed to create stream", map[string]interface{}{
+		// Check if the error is due to the stream already existing
+		if !errors.Is(err, jetstream.ErrStreamNameAlreadyInUse) {
+			// If it's a different error, log it and return
+			log.Error("Failed to create stream", map[string]interface{}{
+				"streamName": streamName,
+				"subject":    subject,
+				"error":      err,
+			})
+			return nil, fmt.Errorf("failed to create stream (streamName: %s, subject: %s): %w", streamName, subject, err)
+		} else {
+			// If the stream already exists, log it and continue
+			log.Info("Stream already exists", map[string]interface{}{
+				"streamName": streamName,
+				"subject":    subject,
+			})
+		}
+	} else {
+		log.Info("Stream created", map[string]interface{}{
 			"streamName": streamName,
 			"subject":    subject,
-			"error":      err,
 		})
-		return nil, fmt.Errorf("failed to create stream (streamName: %s, subject: %s): %w", streamName, subject, err)
 	}
-	log.Info("Stream created", map[string]interface{}{
-		"streamName": streamName,
-		"subject":    subject,
-	})
 
 	return &JetStreamMessageQueueService{
 		js:         js,
@@ -80,7 +91,7 @@ func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject stri
 	return nil
 }
 
-func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject string, handler func([]byte)) error {
+func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject string, consumerName string, handler func([]byte)) error {
 	if s.log == nil {
 		return errors.New("logger is not initialized")
 	}
@@ -90,7 +101,7 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject st
 	}
 
 	consumerConfig := jetstream.ConsumerConfig{
-		Durable:       fmt.Sprintf("%s-consumer", s.streamName),
+		Durable:       consumerName,
 		AckPolicy:     jetstream.AckExplicitPolicy,
 		DeliverPolicy: jetstream.DeliverAllPolicy,
 	}
@@ -104,7 +115,8 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject st
 		return fmt.Errorf("failed to create or update consumer (streamName: %s): %w", s.streamName, err)
 	}
 	s.log.Info("Consumer created or updated", map[string]interface{}{
-		"streamName": s.streamName,
+		"streamName":   s.streamName,
+		"consumerName": consumerName,
 	})
 
 	consContext, err := cons.Consume(func(msg jetstream.Msg) {

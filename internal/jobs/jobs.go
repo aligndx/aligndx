@@ -21,11 +21,12 @@ type JobServiceInterface interface {
 	QueueJob(ctx context.Context, jobID string, jobInputs interface{}, jobSchema string) error
 	RegisterJobHandler(schema string, handler BaseJobHandler)
 	ProcessJobs(ctx context.Context, maxConcurrency int) error
+	SubscribeToJob(ctx context.Context, jobId string, emit func([]byte)) error
 }
 
 type MessageQueueService interface {
 	Publish(ctx context.Context, subject string, data []byte) error
-	Subscribe(ctx context.Context, subject string, handler func([]byte)) error
+	Subscribe(ctx context.Context, subject string, consumerName string, handler func([]byte)) error
 }
 
 type JobService struct {
@@ -130,8 +131,8 @@ func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error 
 	// Create a buffered channel (semaphore) with maxConcurrency slots
 	semaphore := make(chan struct{}, maxConcurrency)
 	expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
-
-	return s.mq.Subscribe(ctx, expectedSubject, func(msgData []byte) {
+	consumerName := "request-worker"
+	return s.mq.Subscribe(ctx, expectedSubject, consumerName, func(msgData []byte) {
 		// Acquire a slot in the semaphore
 		semaphore <- struct{}{}
 
@@ -157,7 +158,9 @@ func (s *JobService) RegisterJobHandler(schema string, handler BaseJobHandler) {
 }
 
 func (s *JobService) SubscribeToJob(ctx context.Context, jobId string, emit func([]byte)) error {
-	return s.mq.Subscribe(ctx, jobId, func(msgData []byte) {
+	subject := fmt.Sprintf("%s.%s.>", s.subjectPrefix, jobId)
+
+	return s.mq.Subscribe(ctx, subject, jobId, func(msgData []byte) {
 		emit(msgData)
 	})
 }

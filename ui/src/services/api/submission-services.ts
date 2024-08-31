@@ -1,16 +1,17 @@
 import PocketBase, { RecordModel } from 'pocketbase';
 import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { Submission } from '@/types/submission';
+import { useEffect } from 'react';
 
 export const mapRecordToSubmission = (record: RecordModel): Submission => {
   return {
-      id: record.id,
-      name: record.name,
-      inputs: record.inputs,
-      user: record.user,
-      workflow: record.workflow,
-      created: new Date(record.created),
-      updated: new Date(record.updated)
+    id: record.id,
+    name: record.name,
+    inputs: record.inputs,
+    user: record.user,
+    workflow: record.workflow,
+    created: new Date(record.created),
+    updated: new Date(record.updated)
   };
 };
 
@@ -36,8 +37,32 @@ export const updateSubmission = async (pb: PocketBase, id: string, data: any): P
 export const deleteSubmission = async (pb: PocketBase, id: string): Promise<void> => {
   await pb.collection('submissions').delete(id);
 };
+
+export const _subscribeToSubmission = (pb: PocketBase, id: string, onUpdate: (submission: Submission) => void) => {
+  // Initialize EventSource with the PocketBase SSE endpoint
+  const evtSource = new EventSource(`${pb.baseUrl}/jobs/subscribe/${id}`);
+
+  // Handle incoming messages from the SSE stream
+  evtSource.onmessage = (event) => {
+    const update = JSON.parse(event.data);
+    console.log('Received submission update:', update);
+
+    if (update.action === 'create' || update.action === 'update') {
+      const submission = mapRecordToSubmission(update.record);
+      onUpdate(submission);
+    }
+  };
+
+  evtSource.onerror = (error) => {
+    console.error('SSE error:', error);
+    evtSource.close();
+  };
+
+  return () => evtSource.close();
+};
+
 type CreateSubmissionData = {
-  name : string;
+  name: string;
   inputs: any;
   workflow: string;
   user: string;
@@ -88,7 +113,12 @@ const useSubmissionService = (pb: PocketBase) => {
     }
   );
 
+  const subscribeToSubmission = (id: string, onUpdate: (submission: Submission) => void) => {
+    return _subscribeToSubmission(pb, id, onUpdate)
+  }
+
   return {
+    subscribeToSubmission,
     useGetSubmission,
     getSubmissionsQuery,
     createSubmissionMutation,
