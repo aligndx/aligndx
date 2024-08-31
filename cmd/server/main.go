@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 
@@ -166,53 +165,5 @@ func main() {
 
 	if err := app.Start(); err != nil {
 		log.Fatal("Error starting the application", map[string]interface{}{"error": err})
-	}
-}
-
-func handleJobSubscription(ctx context.Context, jobService *jobs.JobService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Get jobId from URL
-		jobID := r.URL.Query().Get("jobId")
-		if jobID == "" {
-			http.Error(w, "Missing jobId parameter", http.StatusBadRequest)
-			return
-		}
-
-		// Set necessary headers for SSE
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
-
-		// Create a channel to send updates
-		updateChan := make(chan []byte)
-
-		// Subscribe to job updates
-		go func() {
-			err := jobService.SubscribeToJob(ctx, jobID, func(msgData []byte) {
-				updateChan <- msgData
-			})
-			if err != nil {
-				log.Error("Failed to subscribe to job updates", map[string]interface{}{"error": err})
-				close(updateChan)
-				return
-			}
-		}()
-
-		// Stream updates to the client
-		for {
-			select {
-			case msgData, ok := <-updateChan:
-				if !ok {
-					// Channel closed, stop streaming
-					return
-				}
-				fmt.Fprintf(w, "data: %s\n\n", string(msgData))
-				w.(http.Flusher).Flush() // Flush the data to the client
-			case <-r.Context().Done():
-				// Client disconnected
-				log.Info(fmt.Sprintf("Client disconnected from job %s updates", jobID))
-				return
-			}
-		}
 	}
 }
