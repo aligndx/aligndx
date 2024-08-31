@@ -13,7 +13,9 @@ import (
 	"github.com/aligndx/aligndx/internal/logger"
 	_ "github.com/aligndx/aligndx/internal/migrations"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 )
 
@@ -25,6 +27,9 @@ func main() {
 	log = logger.NewLoggerWrapper("zerolog", ctx)
 	configService := config.NewConfigService(log)
 	cfg := configService.LoadConfig()
+
+	log.Info(cfg.API.DefaultAdminEmail)
+	log.Info(cfg.API.DefaultAdminPassword)
 
 	log.Info("App started")
 
@@ -60,12 +65,16 @@ func main() {
 			log.Error("Failed to fetch workflow record", map[string]interface{}{"error": err})
 			return err
 		}
+
+		userID := e.HttpContext.Get(apis.ContextAuthRecordKey).(*models.Record).Id
+
 		workflowRepo := workflowRecord.GetString("repository")
 		workflowInputs := workflow.WorkflowInputs{
 			Name:     record.GetString("name"),
-			JobID:    jobID,
 			Workflow: workflowRepo,
 			Inputs:   result,
+			JobID:    jobID,
+			UserID:   userID,
 		}
 
 		queue_err := jobService.QueueJob(ctx, jobID, workflowInputs, "workflow")

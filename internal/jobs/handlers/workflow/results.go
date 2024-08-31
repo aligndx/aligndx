@@ -30,9 +30,9 @@ type AdminAuthResponse struct {
 }
 
 // StoreResults processes and stores the workflow results in PocketBase.
-func StoreResults(cfg config.Config, userId string, resultsDir string) error {
+func StoreResults(cfg *config.Config, userId string, submissionID string, resultsDir string) error {
 	// Authenticate as admin
-	adminToken, err := AuthenticateAsAdmin(cfg.API.URL, cfg.API.DefaultAdminEmail, cfg.PocketBase.API.DefaultAdminPassword)
+	adminToken, err := AuthenticateAsAdmin(cfg.API.URL, cfg.API.DefaultAdminEmail, cfg.API.DefaultAdminPassword)
 	if err != nil {
 		return fmt.Errorf("failed to authenticate as admin: %w", err)
 	}
@@ -44,9 +44,15 @@ func StoreResults(cfg config.Config, userId string, resultsDir string) error {
 	}
 
 	// Upload files and insert records into PocketBase
-	err = InsertRecordsWithFiles(cfg.API.URL, adminToken, "data", files)
+	recordIDs, err := InsertRecordsWithFiles(cfg.API.URL, adminToken, "data", files)
 	if err != nil {
 		return fmt.Errorf("failed to insert records into PocketBase: %w", err)
+	}
+
+	// Upload submission with records into PocketBase
+	err = UpdateSubmissionsCollection(cfg.API.URL, adminToken, submissionID, recordIDs)
+	if err != nil {
+		return fmt.Errorf("failed to update submissions collection: %w", err)
 	}
 
 	return nil
@@ -125,10 +131,11 @@ func TraverseResultsDirectory(basePath string, parentID string, userID string) (
 }
 
 // InsertRecordsWithFiles uploads files and inserts records into PocketBase.
-func InsertRecordsWithFiles(apiURL, adminToken, collectionName string, files []FileMetadata) error {
+func InsertRecordsWithFiles(apiURL, adminToken, collectionName string, files []FileMetadata) ([]string, error) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var firstErr error
+	var recordIDs []string
 
 	client := &http.Client{}
 
@@ -218,10 +225,64 @@ func InsertRecordsWithFiles(apiURL, adminToken, collectionName string, files []F
 				mu.Unlock()
 				return
 			}
+
+			// Decode response to get the record ID
+			var recordResponse map[string]interface{}
+			if err := json.NewDecoder(resp.Body).Decode(&recordResponse); err != nil {
+				mu.Lock()
+				if firstErr == nil {
+					firstErr = fmt.Errorf("failed to decode record response: %w", err)
+				}
+				mu.Unlock()
+				return
+			}
+
+			// Collect the record ID
+			if id, ok := recordResponse["id"].(string); ok {
+				mu.Lock()
+				recordIDs = append(recordIDs, id)
+				mu.Unlock()
+			}
 		}(file)
 	}
 
 	wg.Wait()
 
-	return firstErr
+	return recordIDs, firstErr
+}
+
+// UpdateSubmissionsCollection updates the submissions collection with the provided record IDs.
+func UpdateSubmissionsCollection(apiURL, adminToken, submissionID string, recordIDs []string) error {
+	client := &http.Client{}
+
+	// Prepare the JSON body for the update
+	updateData := map[string]interface{}{
+		"data": recordIDs,
+	}
+	bodyBytes, err := json.Marshal(updateData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal update data: %w", err)
+	}
+
+	// Create the HTTP request for the update
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/api/collections/submissions/records/%s", apiURL, submissionID), bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create update request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Admin "+adminToken)
+
+	// Send the HTTP request
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send update request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response status: %s", resp.Status)
+	}
+
+	return nil
 }

@@ -14,10 +14,11 @@ import (
 
 // WorkflowInputs represents the expected inputs for the WorkflowHandler.
 type WorkflowInputs struct {
-	JobID    string                 `json:"jobid"`
 	Name     string                 `json:"name"`
 	Workflow string                 `json:"workflow"`
 	Inputs   map[string]interface{} `json:"inputs"`
+	JobID    string                 `json:"jobid"`
+	UserID   string                 `json:"userid"`
 }
 
 // WorkflowHandlerSpecific contains specific job logic
@@ -49,18 +50,19 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	baseDir := fmt.Sprintf("%s/pb_data/workflows", currentDir)
 	jobDir := fmt.Sprintf("%s/pb_data/workflows/%s", currentDir, inputs.JobID)
 	nxfDir := fmt.Sprintf("%s/nxf", jobDir)
+	resultsdir := fmt.Sprintf("%s/%s_results", jobDir, inputs.Name)
 
 	config := local.NewLocalConfig(
 		[]string{
 			fmt.Sprintf("%s/nextflow", baseDir),
-			"-log", fmt.Sprintf("%s/nextflow.logs", jobDir),
+			"-log", fmt.Sprintf("%s/nextflow.log", jobDir),
 			"run", inputs.Workflow,
 			"-c", configFilePath,
 			// "-params-file", jsonFilePath,
 			// "-profile", "docker",
 			"-profile", "docker,test",
 			"--nats_url", cfg.MQ.URL,
-			"--outdir", fmt.Sprintf("%s/%s_results", jobDir, inputs.Name),
+			"--outdir", resultsdir,
 		},
 		local.WithWorkingDir(baseDir),
 		local.WithEnv([]string{
@@ -78,8 +80,9 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 		return fmt.Errorf("failed to execute job: %w", err)
 	}
 
-	defer os.RemoveAll(nxfDir)
-	// Stage data back to pocketbase, then cleanup
+	StoreResults(cfg, inputs.UserID, inputs.JobID, resultsdir)
+
+	defer os.RemoveAll(jobDir)
 
 	return nil
 }
