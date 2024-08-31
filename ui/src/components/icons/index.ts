@@ -21,3 +21,4 @@ export { PiGitBranch as GitBranch} from "react-icons/pi";
 export { PiGridFour as GridFour, PiTable as Table } from "react-icons/pi"
 export { default as Trash} from './trash'
 export { default as Upload} from './upload'
+export { Archive as Archive} from 'lucide-react'

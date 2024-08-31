@@ -1,7 +1,6 @@
 import PocketBase, { RecordModel } from 'pocketbase';
 import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { Submission } from '@/types/submission';
-import { useEffect } from 'react';
 
 export const mapRecordToSubmission = (record: RecordModel): Submission => {
   return {
@@ -9,19 +8,25 @@ export const mapRecordToSubmission = (record: RecordModel): Submission => {
     name: record.name,
     inputs: record.inputs,
     user: record.user,
-    workflow: record.workflow,
+    data: record.expand?.data || record.data,  // Use expanded data if available
+    workflow: record.expand?.workflow || record.workflow, 
     created: new Date(record.created),
     updated: new Date(record.updated)
   };
 };
 
 export const getSubmission = async (pb: PocketBase, id: string): Promise<Submission> => {
-  const record = await pb.collection('submissions').getOne(id);
+  const record = await pb.collection('submissions').getOne(id, {
+    expand: "workflow, data"
+  });
+  console.log(record)
   return mapRecordToSubmission(record);
 };
 
 export const getSubmissions = async (pb: PocketBase): Promise<Submission[]> => {
-  const records = await pb.collection('submissions').getFullList();
+  const records = await pb.collection('submissions').getFullList({
+    expand: "workflow, data"
+  });
   return records.map(mapRecordToSubmission);
 };
 

@@ -17,13 +17,13 @@ export default function Providers({ children }: ProvidersProps) {
         <QueryProvider>
             <Toaster richColors position="top-right" />
             <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
-                <AuthProvider>
-                    <LazyMotion features={domAnimation}>
+                <LazyMotion features={domAnimation}>
+                    <AuthProvider>
                         <AuthGuard>
                             {children}
                         </AuthGuard>
-                    </LazyMotion>
-                </AuthProvider>
+                    </AuthProvider>
+                </LazyMotion>
             </ThemeProvider>
         </QueryProvider>
     )

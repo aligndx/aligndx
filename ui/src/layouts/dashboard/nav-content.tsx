@@ -1,4 +1,4 @@
-import { Analyze, Chart, DashboardIcon, Eye, Drive} from "@/components/icons";
+import { Analyze, Archive, Chart, DashboardIcon, Drive} from "@/components/icons";
 import { routes, usePathname } from "@/routes";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
@@ -18,6 +18,13 @@ const links = [
     href: routes.dashboard.workflows.root,
     icon: (
       <Analyze className={commonStyles} />
+    ),
+  },
+  {
+    label: "Submissions",
+    href: routes.dashboard.submissions.root,
+    icon: (
+      <Archive className={commonStyles} />
     ),
   },
   {
