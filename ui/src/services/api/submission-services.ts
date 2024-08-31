@@ -38,19 +38,13 @@ export const deleteSubmission = async (pb: PocketBase, id: string): Promise<void
   await pb.collection('submissions').delete(id);
 };
 
-export const _subscribeToSubmission = (pb: PocketBase, id: string, onUpdate: (submission: Submission) => void) => {
+export const _subscribeToSubmission = (pb: PocketBase, id: string, onMessage: (event: MessageEvent) => void) => {
   // Initialize EventSource with the PocketBase SSE endpoint
   const evtSource = new EventSource(`${pb.baseUrl}/jobs/subscribe/${id}`);
 
   // Handle incoming messages from the SSE stream
-  evtSource.onmessage = (event) => {
-    const update = JSON.parse(event.data);
-    console.log('Received submission update:', update);
-
-    if (update.action === 'create' || update.action === 'update') {
-      const submission = mapRecordToSubmission(update.record);
-      onUpdate(submission);
-    }
+  evtSource.onmessage = (event : MessageEvent) => {
+    onMessage(event)
   };
 
   evtSource.onerror = (error) => {
@@ -113,8 +107,8 @@ const useSubmissionService = (pb: PocketBase) => {
     }
   );
 
-  const subscribeToSubmission = (id: string, onUpdate: (submission: Submission) => void) => {
-    return _subscribeToSubmission(pb, id, onUpdate)
+  const subscribeToSubmission = (id: string, onMessage: (event: MessageEvent) => void)  => {
+    return _subscribeToSubmission(pb, id, onMessage)
   }
 
   return {

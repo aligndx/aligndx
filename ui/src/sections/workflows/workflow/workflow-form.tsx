@@ -85,26 +85,27 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
         defaultUploadedFiles: [],
     });
 
-    // useEffect(() => {
-    //     // Check if submissionId is not empty or null
-    //     if (submissionId) {
-    //         const handleSubmissionUpdate = (submission: Submission) => {
-    //             console.log('Received new submission update:', submission);
-    //             // Handle the submission update as needed (e.g., update state)
-    //         };
+    useEffect(() => {
+        // Check if submissionId is not empty or null
+        if (submissionId) {
+            const handleSubmissionUpdate = (event: MessageEvent) => {
+                console.log('Received new submission update:', event);
+                console.table(JSON.parse(event.data));
+                // Handle the submission update as needed (e.g., update state)
+            };
 
-    //         // Subscribe to updates for the job
-    //         const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
+            // Subscribe to updates for the job
+            const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
 
-    //         // Clean up subscription on component unmount
-    //         return () => {
-    //             unsubscribe();
-    //         };
-    //     }
+            // Clean up subscription on component unmount
+            return () => {
+                unsubscribe();
+            };
+        }
 
-    //     // If submissionId is empty or null, do nothing
-    //     return () => { };
-    // }, [submissionId, subscribeToSubmission]);
+        // If submissionId is empty or null, do nothing
+        return () => { };
+    }, [submissionId, subscribeToSubmission]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const { name, ...rest } = values

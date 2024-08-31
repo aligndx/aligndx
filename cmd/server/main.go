@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
 	_ "github.com/aligndx/aligndx/internal/migrations"
+	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -85,76 +88,55 @@ func main() {
 		return nil
 	})
 
-	// app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-	// 	e.Router.GET("/jobs/subscribe/:jobId", func(c echo.Context) error {
-	// 		log.Debug(fmt.Sprintf("SSE client connected, ip: %v", c.RealIP()))
-	// 		w := c.Response()
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
+		e.Router.GET("/jobs/subscribe/:jobId", func(c echo.Context) error {
+			log.Debug(fmt.Sprintf("SSE client connected, ip: %v", c.RealIP()))
 
-	// 		// Set necessary headers for SSE
-	// 		w.Header().Set("Content-Type", "text/event-stream")
-	// 		w.Header().Set("Cache-Control", "no-cache")
-	// 		w.Header().Set("Connection", "keep-alive")
+			// Set necessary headers for SSE
+			w := c.Response()
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("Connection", "keep-alive")
 
-	// 		// Flush headers to establish SSE connection
-	// 		flusher, ok := w.Writer.(http.Flusher)
-	// 		if !ok {
-	// 			http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
-	// 			return nil
-	// 		}
+			// Get the flusher interface
+			flusher, ok := w.Writer.(http.Flusher)
+			if !ok {
+				http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+				return nil
+			}
 
-	// 		// Get jobId from URL parameters
-	// 		jobID := c.PathParam("jobId")
-	// 		if jobID == "" {
-	// 			http.Error(w, "Missing jobId parameter", http.StatusBadRequest)
-	// 			return nil
-	// 		}
+			// Immediately flush headers to establish connection
+			flusher.Flush()
 
-	// 		// Create a channel to send updates
-	// 		updateChan := make(chan []byte)
-	// 		clientCtx, cancel := context.WithCancel(c.Request().Context())
+			// Get jobId from URL parameters
+			jobID := c.PathParam("jobId")
+			if jobID == "" {
+				return echo.NewHTTPError(http.StatusBadRequest, "Missing jobId parameter")
+			}
 
-	// 		// Subscribe to job updates in a separate goroutine
-	// 		go func() {
-	// 			defer close(updateChan)
-	// 			err := jobService.SubscribeToJob(clientCtx, jobID, func(msgData []byte) {
-	// 				select {
-	// 				case updateChan <- msgData:
-	// 				case <-clientCtx.Done():
-	// 					// Stop sending updates if the client disconnects
-	// 					log.Info(fmt.Sprintf("Client disconnected, stopping subscription for jobID: %s", jobID))
-	// 					return
-	// 				}
-	// 			})
-	// 			if err != nil {
-	// 				log.Error("Failed to subscribe to job updates", map[string]interface{}{"error": err})
-	// 				cancel() // Cancel the context if subscription fails
-	// 			}
-	// 		}()
+			// Create a context that will be canceled when the client disconnects
+			clientCtx := c.Request().Context()
 
-	// 		for {
-	// 			select {
-	// 			case msgData, ok := <-updateChan:
-	// 				if !ok {
-	// 					// Channel closed, stop streaming
-	// 					return nil
-	// 				}
-	// 				_, err := fmt.Fprintf(w, "data: %s\n\n", string(msgData))
-	// 				if err != nil {
-	// 					log.Error("Error writing to SSE client", map[string]interface{}{"error": err})
-	// 					cancel() // Stop if there is an error writing to the client
-	// 					return nil
-	// 				}
-	// 				flusher.Flush() // Ensure the data is sent to the client
+			// Subscribe to job updates using the simplified logic
+			err := jobService.SubscribeToJob(clientCtx, jobID, func(msgData []byte) {
+				// Stream data to SSE client
+				fmt.Fprintf(w, "data: %s\n\n", msgData)
+				flusher.Flush() // Ensure the data is sent immediately
+			})
 
-	// 			case <-clientCtx.Done():
-	// 				// Handle client disconnection
-	// 				log.Info(fmt.Sprintf("Client context canceled, stopping SSE stream for jobID: %s", jobID))
-	// 				return nil
-	// 			}
-	// 		}
-	// 	})
-	// 	return nil
-	// })
+			if err != nil {
+				log.Error("Failed to subscribe to job updates", map[string]interface{}{"error": err})
+				return err
+			}
+
+			<-clientCtx.Done() // Wait for client to disconnect or context cancellation
+
+			log.Info(fmt.Sprintf("SSE client disconnected, ip: %v", c.RealIP()))
+			return nil
+		})
+
+		return nil
+	})
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		// enable auto creation of migration files when making collection changes in the Admin UI
@@ -166,4 +148,33 @@ func main() {
 	if err := app.Start(); err != nil {
 		log.Fatal("Error starting the application", map[string]interface{}{"error": err})
 	}
+}
+
+// Event represents a Server-Sent Event (SSE) message
+type Event struct {
+	Data []byte
+	ID   string
+	Name string
+}
+
+// MarshalTo writes the Event to an io.Writer in the SSE format
+func (e *Event) MarshalTo(w io.Writer) error {
+	if e.Name != "" {
+		if _, err := fmt.Fprintf(w, "event: %s\n", e.Name); err != nil {
+			return err
+		}
+	}
+
+	if e.ID != "" {
+		if _, err := fmt.Fprintf(w, "id: %s\n", e.ID); err != nil {
+			return err
+		}
+	}
+
+	// Writing data line by line as per SSE format
+	if _, err := fmt.Fprintf(w, "data: %s\n\n", e.Data); err != nil {
+		return err
+	}
+
+	return nil
 }
