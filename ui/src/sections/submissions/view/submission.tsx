@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function Submission() {
-    const [submissionUpdates, setSubmissionUpdates] = useState<any>(events);
+    const [submissionUpdates, setSubmissionUpdates] = useState<any>([]);
     const searchParams = useSearchParams();
     const submissionId = searchParams.get('id');
     const { submissions } = useApiService();
@@ -31,25 +31,21 @@ export default function Submission() {
     };
 
     useEffect(() => {
-        if (submissionId) {
-            const handleSubmissionUpdate = (event: MessageEvent) => {
-                console.log('Received new submission update:', event);
-                const parsedData = JSON.parse(event.data);
-                console.table(parsedData);
+        if (!submissionId) return; // Ensure submissionId is valid
+        const handleSubmissionUpdate = (event: MessageEvent) => {
+            console.log('Received new submission update:', event);
+            const parsedData = JSON.parse(event.data);
+            console.table(parsedData);
+            setSubmissionUpdates(prevUpdates => [...prevUpdates, parsedData]);
+        };
 
-                // Append new submission data to the state array
-                setSubmissionUpdates(prevUpdates => [...prevUpdates, parsedData]);
-            };
+        const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
 
-            const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
-
-            return () => {
-                unsubscribe();
-            };
-        }
-
-        return () => { };
-    }, [submissionId, subscribeToSubmission]);
+        return () => {
+            unsubscribe();  
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [submissionId]); 
 
     return (
         <div className="flex flex-col gap-4 h-full flex-grow">

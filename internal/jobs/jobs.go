@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/logger"
@@ -15,6 +16,13 @@ type Job struct {
 	JobID     string      `json:"job_id"`
 	JobInputs interface{} `json:"job_inputs"`
 	JobSchema string      `json:"job_schema"`
+}
+
+type Event struct {
+	Type      string  `json:"type"`
+	Message   string  `json:"message"`
+	TimeStamp string  `json:"timestamp"`
+	MetaData  *string `json:"metadata,omitempty"`
 }
 
 type JobServiceInterface interface {
@@ -59,15 +67,25 @@ func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *confi
 }
 
 func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) error {
-	statusUpdate := map[string]interface{}{"status": status}
-	statusData, err := json.Marshal(statusUpdate)
-	if err != nil {
-		return fmt.Errorf("error marshaling status update: %w", err)
+	// Create an event to represent the job status update
+	event := Event{
+		Type:      "job.status",
+		Message:   fmt.Sprintf("Job %s status updated to %s", jobID, status),
+		TimeStamp: time.Now().Format(time.RFC3339),
 	}
-	err = s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.subjectPrefix, jobID), statusData)
+
+	// Marshal the Event struct to JSON
+	eventData, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("error marshaling event data: %w", err)
+	}
+
+	// Publish the event data to the message queue
+	err = s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.subjectPrefix, jobID), eventData)
 	if err != nil {
 		return fmt.Errorf("error publishing job status: %w", err)
 	}
+
 	return nil
 }
 
