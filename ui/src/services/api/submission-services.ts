@@ -19,7 +19,6 @@ export const getSubmission = async (pb: PocketBase, id: string): Promise<Submiss
   const record = await pb.collection('submissions').getOne(id, {
     expand: "workflow, data"
   });
-  console.log(record)
   return mapRecordToSubmission(record);
 };
 

@@ -22,6 +22,19 @@ export const useColumns = () => {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Workflow" />
       ),
+      cell: ({ row }) => {
+        const workflow = row.original.workflow;
+
+        if (typeof workflow === 'string') {
+          return <div>{workflow}</div>;
+        }
+
+        return (
+          <div>
+            {workflow?.name}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "created",
@@ -47,13 +60,7 @@ export const useColumns = () => {
         );
       }
     },
-    {
-      accessorKey: "data",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Data" />
-      ),
-      
-    },
+
     {
       id: "actions",
       cell: ({ row }) => {
@@ -62,7 +69,7 @@ export const useColumns = () => {
         return (
           <div className="text-right">
             <Button variant={"icon"} onClick={(e) => {
-              e.stopPropagation(); updateSearchParams({"id" : submissionId}, routes.dashboard.submissions.submission);
+              e.stopPropagation(); updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
             }}> <ArrowRight /></Button>
           </div>
         )

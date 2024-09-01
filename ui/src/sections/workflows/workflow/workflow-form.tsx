@@ -19,6 +19,7 @@ import DOMPurify from "dompurify";
 import { useUploadFile } from "@/hooks/use-upload-file";
 import { useEffect, useState } from "react";
 import { Submission } from "@/types/submission";
+import { routes, useUpdateSearchParams } from "@/routes";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -51,7 +52,8 @@ function capitalizeWords(input: string): string {
 
 
 export default function WorkflowForm({ name, repository, description, id, jsonSchema }: WorkflowFormProps) {
-    const [submissionId, setSubmissionId] = useState<string>("")
+    const updateSearchParams = useUpdateSearchParams()
+
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
         const { default: defaultValue, type, format } = value as JsonSchemaProperty;
 
@@ -84,28 +86,6 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
     const { onUpload, progresses, isUploading } = useUploadFile({
         defaultUploadedFiles: [],
     });
-
-    useEffect(() => {
-        // Check if submissionId is not empty or null
-        if (submissionId) {
-            const handleSubmissionUpdate = (event: MessageEvent) => {
-                console.log('Received new submission update:', event);
-                console.table(JSON.parse(event.data));
-                // Handle the submission update as needed (e.g., update state)
-            };
-
-            // Subscribe to updates for the job
-            const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
-
-            // Clean up subscription on component unmount
-            return () => {
-                unsubscribe();
-            };
-        }
-
-        // If submissionId is empty or null, do nothing
-        return () => { };
-    }, [submissionId, subscribeToSubmission]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         const { name, ...rest } = values
@@ -161,8 +141,8 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
 
             await createSubmissionMutation.mutateAsync(submissionPayload, {
                 onSuccess: (data) => {
-                    setSubmissionId(data?.id)
                     toast.success("Form Submitted Successfully");
+                    updateSearchParams({"id" : data.id}, routes.dashboard.submissions.submission)
                 },
                 onError: (error) => {
                     toast.error("Form Submission Failed");
