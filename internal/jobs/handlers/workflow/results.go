@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/aligndx/aligndx/internal/config"
 )
@@ -38,19 +37,13 @@ func StoreResults(cfg *config.Config, userId string, submissionID string, result
 	}
 
 	// Traverse results directory to gather file and folder metadata
-	files, err := TraverseResultsDirectory(resultsDir, "", userId)
+	rootRecordID, err := TraverseResultsDirectory(cfg.API.URL, "data", adminToken, resultsDir, "", userId)
 	if err != nil {
 		return fmt.Errorf("failed to traverse results directory: %w", err)
 	}
 
-	// Upload files and insert records into PocketBase
-	recordIDs, err := InsertRecordsWithFiles(cfg.API.URL, adminToken, "data", files)
-	if err != nil {
-		return fmt.Errorf("failed to insert records into PocketBase: %w", err)
-	}
-
-	// Upload submission with records into PocketBase
-	err = UpdateSubmissionsCollection(cfg.API.URL, adminToken, submissionID, recordIDs)
+	// // Upload submission with records into PocketBase
+	err = UpdateSubmissionsCollection(cfg.API.URL, adminToken, submissionID, []string{rootRecordID})
 	if err != nil {
 		return fmt.Errorf("failed to update submissions collection: %w", err)
 	}
@@ -98,157 +91,121 @@ func AuthenticateAsAdmin(apiURL, email, password string) (string, error) {
 }
 
 // TraverseResultsDirectory traverses the results directory and gathers metadata.
-func TraverseResultsDirectory(basePath string, parentID string, userID string) ([]FileMetadata, error) {
-	var files []FileMetadata
+func TraverseResultsDirectory(apiUrl string, collectionName string, adminToken string, basePath string, parentID string, userID string) (string, error) {
+	var rootRecordID string
 
 	err := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("error accessing path %q: %w", path, err)
+			return err
 		}
 
+		// Determine the file type
 		fileType := "file"
 		if info.IsDir() {
 			fileType = "folder"
 		}
 
-		files = append(files, FileMetadata{
-			Name:   info.Name(),
-			Type:   fileType,
-			Size:   info.Size(),
-			Parent: parentID,
-			User:   userID,
-			Path:   path,
-		})
+		// Prepare the file metadata
+		file := FileMetadata{
+			Name: info.Name(),
+			Type: fileType,
+			Size: info.Size(),
+			Path: path,
+			User: userID, // Replace with actual user identification if needed
+		}
+
+		// Create record for the current file or folder
+		newParentID, err := createRecord(apiUrl, collectionName, adminToken, file, parentID)
+		if err != nil {
+			return fmt.Errorf("failed to create record for %s: %w", path, err)
+		}
+
+		// If the current entry is a folder, it becomes the parent for its children
+		if parentID == "" && rootRecordID == "" {
+			rootRecordID = newParentID
+		}
+
+		// If the current entry is a folder, it becomes the parent for its children
+		if info.IsDir() {
+			parentID = newParentID
+		}
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("error walking the path %q: %w", basePath, err)
+		return "", err
 	}
 
-	return files, nil
+	return rootRecordID, nil
 }
 
-// InsertRecordsWithFiles uploads files and inserts records into PocketBase.
-func InsertRecordsWithFiles(apiURL, adminToken, collectionName string, files []FileMetadata) ([]string, error) {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var firstErr error
-	var recordIDs []string
-
+// Helper function to create a record and retrieve its ID
+func createRecord(apiURL string, collectionName string, adminToken string, file FileMetadata, parentID string) (string, error) {
 	client := &http.Client{}
+	// Prepare the form data for record creation
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
 
-	for _, file := range files {
-		wg.Add(1)
+	// Add the regular fields
+	_ = writer.WriteField("name", file.Name)
+	_ = writer.WriteField("type", file.Type)
+	_ = writer.WriteField("size", fmt.Sprintf("%d", file.Size))
+	_ = writer.WriteField("parent", parentID)
+	_ = writer.WriteField("user", file.User)
 
-		go func(file FileMetadata) {
-			defer wg.Done()
+	// If the file is a file (not a folder), upload it
+	if file.Type == "file" {
+		fileWriter, err := writer.CreateFormFile("file", filepath.Base(file.Path))
+		if err != nil {
+			return "", fmt.Errorf("failed to create form file: %w", err)
+		}
 
-			// Prepare the form data for record creation
-			body := &bytes.Buffer{}
-			writer := multipart.NewWriter(body)
+		f, err := os.Open(file.Path)
+		if err != nil {
+			return "", fmt.Errorf("failed to open file: %w", err)
+		}
+		defer f.Close()
 
-			// Add the regular fields
-			_ = writer.WriteField("name", file.Name)
-			_ = writer.WriteField("type", file.Type)
-			_ = writer.WriteField("size", fmt.Sprintf("%d", file.Size))
-			_ = writer.WriteField("parent", file.Parent)
-			_ = writer.WriteField("user", file.User)
-
-			// If the file is a file (not a folder), upload it
-			if file.Type == "file" {
-				fileWriter, err := writer.CreateFormFile("file", filepath.Base(file.Path))
-				if err != nil {
-					mu.Lock()
-					if firstErr == nil {
-						firstErr = fmt.Errorf("failed to create form file: %w", err)
-					}
-					mu.Unlock()
-					return
-				}
-
-				f, err := os.Open(file.Path)
-				if err != nil {
-					mu.Lock()
-					if firstErr == nil {
-						firstErr = fmt.Errorf("failed to open file: %w", err)
-					}
-					mu.Unlock()
-					return
-				}
-				defer f.Close()
-
-				if _, err = io.Copy(fileWriter, f); err != nil {
-					mu.Lock()
-					if firstErr == nil {
-						firstErr = fmt.Errorf("failed to copy file to form file: %w", err)
-					}
-					mu.Unlock()
-					return
-				}
-			}
-
-			writer.Close()
-
-			// Create the HTTP request to insert the record
-			req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/collections/%s/records", apiURL, collectionName), body)
-			if err != nil {
-				mu.Lock()
-				if firstErr == nil {
-					firstErr = fmt.Errorf("failed to create HTTP request: %w", err)
-				}
-				mu.Unlock()
-				return
-			}
-
-			req.Header.Set("Content-Type", writer.FormDataContentType())
-			req.Header.Set("Authorization", "Admin "+adminToken)
-
-			// Send the HTTP request
-			resp, err := client.Do(req)
-			if err != nil {
-				mu.Lock()
-				if firstErr == nil {
-					firstErr = fmt.Errorf("failed to send HTTP request: %w", err)
-				}
-				mu.Unlock()
-				return
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != http.StatusOK {
-				mu.Lock()
-				if firstErr == nil {
-					firstErr = fmt.Errorf("unexpected response status: %s", resp.Status)
-				}
-				mu.Unlock()
-				return
-			}
-
-			// Decode response to get the record ID
-			var recordResponse map[string]interface{}
-			if err := json.NewDecoder(resp.Body).Decode(&recordResponse); err != nil {
-				mu.Lock()
-				if firstErr == nil {
-					firstErr = fmt.Errorf("failed to decode record response: %w", err)
-				}
-				mu.Unlock()
-				return
-			}
-
-			// Collect the record ID
-			if id, ok := recordResponse["id"].(string); ok {
-				mu.Lock()
-				recordIDs = append(recordIDs, id)
-				mu.Unlock()
-			}
-		}(file)
+		if _, err = io.Copy(fileWriter, f); err != nil {
+			return "", fmt.Errorf("failed to copy file to form file: %w", err)
+		}
 	}
 
-	wg.Wait()
+	writer.Close()
 
-	return recordIDs, firstErr
+	// Create the HTTP request to insert the record
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/collections/%s/records", apiURL, collectionName), body)
+	if err != nil {
+		return "", fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Admin "+adminToken)
+
+	// Send the HTTP request
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send HTTP request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected response status: %s", resp.Status)
+	}
+
+	// Decode response to get the record ID
+	var recordResponse map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&recordResponse); err != nil {
+		return "", fmt.Errorf("failed to decode record response: %w", err)
+	}
+
+	// Collect the record ID
+	if id, ok := recordResponse["id"].(string); ok {
+		return id, nil
+	}
+
+	return "", fmt.Errorf("record ID not found in response")
 }
 
 // UpdateSubmissionsCollection updates the submissions collection with the provided record IDs.
