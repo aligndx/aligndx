@@ -48,7 +48,6 @@ export const _getDataURL = async (pb: PocketBase, id: string): Promise<string> =
 export const _getPrivateDataURL = async (pb: PocketBase, id: string): Promise<string> => {
   try {
     const fileToken = await pb.files.getToken();
-    console.log("File Token:", fileToken);
 
     const record = await pb.collection('data').getOne(id);
     if (!record) {
@@ -57,7 +56,6 @@ export const _getPrivateDataURL = async (pb: PocketBase, id: string): Promise<st
     }
 
     const url = pb.files.getUrl(record, record.file, { "token": fileToken });
-    console.log("Generated URL:", url);
 
     return url;
   } catch (error) {

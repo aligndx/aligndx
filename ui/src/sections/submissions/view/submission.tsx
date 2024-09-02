@@ -104,7 +104,11 @@ export default function Submission() {
                                         <TableCell colSpan={4} className="p-4 bg-muted">
                                             {Object.entries(event.metadata).map(([key, value]) => (
                                                 <div key={key}>
-                                                    <strong>{key.charAt(0).toUpperCase() + key.slice(1)}</strong>: {value}
+                                                    <pre>
+                                                        <code>
+                                                            <strong>{key.charAt(0).toUpperCase() + key.slice(1)}</strong>: {value}
+                                                        </code>
+                                                    </pre>
                                                 </div>
                                             ))}
                                         </TableCell>
@@ -119,7 +123,7 @@ export default function Submission() {
     );
 }
 
-function generateTrackerData(events : Event[]) {
+function generateTrackerData(events: Event[]) {
     // Define a color map for different statuses
     const statusColorMap = {
         NEW: "bg-gray-500",
@@ -134,7 +138,7 @@ function generateTrackerData(events : Event[]) {
     const taskMap = new Map();
 
     // Iterate through each event
-    events.forEach((event : Event) => {
+    events.forEach((event: Event) => {
         // Check if the event is related to a process (task)
         if (event.type && event.type.startsWith("process.") && event.metadata) {
             const task = event.metadata;
