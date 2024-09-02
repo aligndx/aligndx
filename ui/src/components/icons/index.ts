@@ -22,3 +22,5 @@ export { PiGridFour as GridFour, PiTable as Table } from "react-icons/pi"
 export { default as Trash} from './trash'
 export { default as Upload} from './upload'
 export { Archive as Archive} from 'lucide-react'
+export { FolderIcon as FolderIcon } from 'lucide-react'
+export { FileIcon as FileIcon} from 'lucide-react'
