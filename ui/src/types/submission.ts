@@ -7,7 +7,7 @@ export type Submission = {
     workflow: string | Workflow;
     name: string;
     inputs: any;
-    data: string[]  | Data[];
+    outputs: string[]  | Data[];
     created: Date;
     updated: Date
 };

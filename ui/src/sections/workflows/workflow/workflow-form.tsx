@@ -133,10 +133,9 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
             const workflow = id;
             const submissionPayload = {
                 name,
-                inputs: mergedInputs,
+                params: mergedInputs,
                 workflow,
                 user: currentUser?.id || "",
-                data: attachedData
             };
 
             await createSubmissionMutation.mutateAsync(submissionPayload, {

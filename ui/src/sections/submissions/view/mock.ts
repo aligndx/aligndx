@@ -8,7 +8,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:16.894464890Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 1,
           "name": "MSHUNJAN_METASENSE:METASENSE:INPUT_CHECK:SAMPLESHEET_CHECK (samplesheet_test_illumina_amplicon.csv)",
           "status": "RUNNING",
@@ -21,7 +21,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:18.795719016Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 1,
           "name": "MSHUNJAN_METASENSE:METASENSE:INPUT_CHECK:SAMPLESHEET_CHECK (samplesheet_test_illumina_amplicon.csv)",
           "status": "COMPLETED",
@@ -34,7 +34,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:31.962965787Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 2,
           "name": "MSHUNJAN_METASENSE:METASENSE:UNPACK_DATABASE (k2_viral_20220908.tar.gz)",
           "status": "RUNNING",
@@ -47,7 +47,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:35.237598496Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 2,
           "name": "MSHUNJAN_METASENSE:METASENSE:UNPACK_DATABASE (k2_viral_20220908.tar.gz)",
           "status": "COMPLETED",
@@ -60,7 +60,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:35.928584425Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 5,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE3_SE_T1)",
           "status": "RUNNING",
@@ -73,7 +73,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:36.329805530Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 6,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE3_SE_T2)",
           "status": "RUNNING",
@@ -86,7 +86,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:37.700408467Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 4,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE2_PE_T1)",
           "status": "RUNNING",
@@ -99,7 +99,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:37.748625101Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 5,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE3_SE_T1)",
           "status": "COMPLETED",
@@ -112,7 +112,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:37.844956124Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 6,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE3_SE_T2)",
           "status": "COMPLETED",
@@ -125,7 +125,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:37.904827267Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 3,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE1_PE_T1)",
           "status": "RUNNING",
@@ -138,7 +138,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:39.710118171Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 4,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE2_PE_T1)",
           "status": "COMPLETED",
@@ -151,7 +151,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:39.790589124Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 7,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE3_SE_T1)",
           "status": "RUNNING",
@@ -164,7 +164,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:39.968720617Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 3,
           "name": "MSHUNJAN_METASENSE:METASENSE:KRAKEN2_KRAKEN2 (SAMPLE1_PE_T1)",
           "status": "COMPLETED",
@@ -177,7 +177,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:40.022939323Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 8,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE3_SE_T2)",
           "status": "RUNNING",
@@ -190,7 +190,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:40.866067654Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 7,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE3_SE_T1)",
           "status": "COMPLETED",
@@ -203,7 +203,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:40.956911352Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 9,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE2_PE_T1)",
           "status": "RUNNING",
@@ -216,7 +216,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:41.144755311Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 8,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE3_SE_T2)",
           "status": "COMPLETED",
@@ -229,7 +229,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:41.236666893Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 10,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE1_PE_T1)",
           "status": "RUNNING",
@@ -242,7 +242,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:41.697041349Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 9,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE2_PE_T1)",
           "status": "COMPLETED",
@@ -255,7 +255,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:41.773991980Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 11,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE3_SE_T1.tsv)",
           "status": "RUNNING",
@@ -268,7 +268,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:41.775441507Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 12,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE3_SE_T2.tsv)",
           "status": "RUNNING",
@@ -281,7 +281,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:41.966176292Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 10,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_BRACKEN (SAMPLE1_PE_T1)",
           "status": "COMPLETED",
@@ -294,7 +294,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:42.052477712Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 13,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE2_PE_T1.tsv)",
           "status": "RUNNING",
@@ -307,7 +307,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:43.012514684Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 12,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE3_SE_T2.tsv)",
           "status": "COMPLETED",
@@ -320,7 +320,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:43.107055189Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 14,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE1_PE_T1.tsv)",
           "status": "RUNNING",
@@ -333,7 +333,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:43.167043271Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 11,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE3_SE_T1.tsv)",
           "status": "COMPLETED",
@@ -346,7 +346,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:43.299406637Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 13,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE2_PE_T1.tsv)",
           "status": "COMPLETED",
@@ -359,7 +359,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:43.750246367Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 14,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_FILTER (SAMPLE1_PE_T1.tsv)",
           "status": "COMPLETED",
@@ -372,7 +372,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:43.846348372Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 15,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_COMBINEBRACKENOUTPUTS",
           "status": "RUNNING",
@@ -385,7 +385,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:44.838287007Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 15,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_COMBINEBRACKENOUTPUTS",
           "status": "COMPLETED",
@@ -398,7 +398,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:44.933742482Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 16,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_PLOT (bracken_combined.filtered.tsv)",
           "status": "RUNNING",
@@ -411,7 +411,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:46.871944768Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 16,
           "name": "MSHUNJAN_METASENSE:METASENSE:BRACKEN_PLOT (bracken_combined.filtered.tsv)",
           "status": "COMPLETED",
@@ -424,7 +424,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:46.967687406Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 17,
           "name": "MSHUNJAN_METASENSE:METASENSE:CUSTOM_DUMPSOFTWAREVERSIONS (1)",
           "status": "RUNNING",
@@ -437,7 +437,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:47.741871566Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 17,
           "name": "MSHUNJAN_METASENSE:METASENSE:CUSTOM_DUMPSOFTWAREVERSIONS (1)",
           "status": "COMPLETED",
@@ -450,7 +450,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:47.837557402Z",
         "type": "process.start",
         "message": "Started task",
-        "task": {
+        "metadata": {
           "id": 18,
           "name": "MSHUNJAN_METASENSE:METASENSE:MULTIQC",
           "status": "RUNNING",
@@ -463,7 +463,7 @@ export const events = [
         "timestamp": "2024-09-01T15:40:51.216673994Z",
         "type": "process.complete",
         "message": "Completed task",
-        "task": {
+        "metadata": {
           "id": 18,
           "name": "MSHUNJAN_METASENSE:METASENSE:MULTIQC",
           "status": "COMPLETED",

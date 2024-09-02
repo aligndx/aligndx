@@ -8,7 +8,7 @@ export const mapRecordToSubmission = (record: RecordModel): Submission => {
     name: record.name,
     inputs: record.inputs,
     user: record.user,
-    data: record.expand?.data || record.data,  // Use expanded data if available
+    outputs: record.expand?.outputs || record.outputs,  // Use expanded data if available
     workflow: record.expand?.workflow || record.workflow, 
     created: new Date(record.created),
     updated: new Date(record.updated)
@@ -17,14 +17,14 @@ export const mapRecordToSubmission = (record: RecordModel): Submission => {
 
 export const getSubmission = async (pb: PocketBase, id: string): Promise<Submission> => {
   const record = await pb.collection('submissions').getOne(id, {
-    expand: "workflow, data"
+    expand: "workflow, outputs"
   });
   return mapRecordToSubmission(record);
 };
 
 export const getSubmissions = async (pb: PocketBase): Promise<Submission[]> => {
   const records = await pb.collection('submissions').getFullList({
-    expand: "workflow, data"
+    expand: "workflow, outputs"
   });
   return records.map(mapRecordToSubmission);
 };
@@ -61,7 +61,7 @@ export const _subscribeToSubmission = (pb: PocketBase, id: string, onMessage: (e
 
 type CreateSubmissionData = {
   name: string;
-  inputs: any;
+  params: any;
   workflow: string;
   user: string;
 }

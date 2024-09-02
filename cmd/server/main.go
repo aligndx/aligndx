@@ -52,9 +52,9 @@ func main() {
 		jobID := e.Record.Id
 
 		result := map[string]interface{}{}
-		record.UnmarshalJSONField("inputs", &result)
+		record.UnmarshalJSONField("params", &result)
 		if err != nil {
-			log.Error("Failed to unmarshal inputs field", map[string]interface{}{"error": err})
+			log.Error("Failed to unmarshal params field", map[string]interface{}{"error": err})
 			return err
 		}
 

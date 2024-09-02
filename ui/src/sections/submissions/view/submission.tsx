@@ -42,10 +42,10 @@ export default function Submission() {
         const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
 
         return () => {
-            unsubscribe();  
+            unsubscribe();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [submissionId]); 
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [submissionId]);
 
     return (
         <div className="flex flex-col gap-4 h-full flex-grow">
@@ -73,7 +73,7 @@ export default function Submission() {
                             <>
                                 <TableRow
                                     className={cn("",
-                                        event.task ? "cursor-pointer" : null
+                                        event.metdata ? "cursor-pointer" : null
                                     )}
                                     key={index}
                                     onClick={() => toggleRowExpansion(index)}
@@ -82,27 +82,30 @@ export default function Submission() {
                                     <TableCell>{event.message}</TableCell>
                                     <TableCell>{event.timestamp}</TableCell>
                                     <TableCell>
-                                        {event.task ?
+                                        {event.metadata ?
 
                                             <Button
                                                 variant="icon"
                                                 size="sm"
-                                                onClick={() => toggleRowExpansion(index)}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    toggleRowExpansion(index);
+                                                }}
                                             >
                                                 <ChevronDown className={`h-4 w-4 transform transition-transform duration-200 ${expandedRows[index] ? 'rotate-180' : 'rotate-0'}`} />
                                             </Button>
                                             : null}
                                     </TableCell>
                                 </TableRow>
-                                {expandedRows[index] && event.task && (
+                                {expandedRows[index] && event.metadata && (
                                     <TableRow key={`${index}-expanded`}>
                                         <TableCell colSpan={4} className="p-4 bg-muted">
-                                            <div><strong>Task ID:</strong> {event.task.id}</div>
-                                            <div><strong>Task Name:</strong> {event.task.name}</div>
-                                            <div><strong>Status:</strong> {event.task.status}</div>
-                                            <div><strong>Start:</strong> {event.task.start}</div>
-                                            <div><strong>Complete:</strong> {event.task.complete}</div>
-                                            <div><strong>Realtime:</strong> {event.task.realtime}</div>
+                                            {Object.entries(event.metadata).map(([key, value]) => (
+                                                <div key={key}>
+                                                    <strong>{key.charAt(0).toUpperCase() + key.slice(1)}</strong>: {value}
+                                                </div>
+                                            ))}
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -132,8 +135,8 @@ function generateTrackerData(events) {
     // Iterate through each event
     events.forEach((event) => {
         // Check if the event is related to a process (task)
-        if (event.type.startsWith("process.") && event.task) {
-            const task = event.task;
+        if (event.type.startsWith("process.") && event.metadata) {
+            const task = event.metadata;
             const status = task.status.toUpperCase();
 
             // Determine the color based on the status

@@ -257,7 +257,7 @@ func UpdateSubmissionsCollection(apiURL, adminToken, submissionID string, record
 
 	// Prepare the JSON body for the update
 	updateData := map[string]interface{}{
-		"data": recordIDs,
+		"outputs": recordIDs,
 	}
 	bodyBytes, err := json.Marshal(updateData)
 	if err != nil {
