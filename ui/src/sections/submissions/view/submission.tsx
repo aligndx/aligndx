@@ -10,9 +10,10 @@ import { events } from "./mock";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Event } from "@/types/event";
 
 export default function Submission() {
-    const [submissionUpdates, setSubmissionUpdates] = useState<any>([]);
+    const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
     const searchParams = useSearchParams();
     const submissionId = searchParams.get('id');
     const { submissions } = useApiService();
@@ -54,7 +55,7 @@ export default function Submission() {
                     <h1 className="text-lg">
                         {data?.name}
                     </h1>
-                    <Badge>Status {data?.status}</Badge>
+                    {/* <Badge>Status {data?.status}</Badge> */}
                 </div>
                 <Tracker data={generateTrackerData(submissionUpdates)} />
             </div>
@@ -73,7 +74,7 @@ export default function Submission() {
                             <>
                                 <TableRow
                                     className={cn("",
-                                        event.metdata ? "cursor-pointer" : null
+                                        event.metadata ? "cursor-pointer" : null
                                     )}
                                     key={index}
                                     onClick={() => toggleRowExpansion(index)}
@@ -118,7 +119,7 @@ export default function Submission() {
     );
 }
 
-function generateTrackerData(events) {
+function generateTrackerData(events : Event[]) {
     // Define a color map for different statuses
     const statusColorMap = {
         NEW: "bg-gray-500",
@@ -133,11 +134,13 @@ function generateTrackerData(events) {
     const taskMap = new Map();
 
     // Iterate through each event
-    events.forEach((event) => {
+    events.forEach((event : Event) => {
         // Check if the event is related to a process (task)
-        if (event.type.startsWith("process.") && event.metadata) {
+        if (event.type && event.type.startsWith("process.") && event.metadata) {
             const task = event.metadata;
-            const status = task.status.toUpperCase();
+            type Status = keyof typeof statusColorMap;
+
+            const status = task?.status.toUpperCase() as Status;
 
             // Determine the color based on the status
             const color = statusColorMap[status] || "bg-gray-400"; // Default color if status is not recognized
