@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApiService } from '@/services/api';
-import FileGrid from './file-grid';
 import { Data } from '@/types/data';
 import { toast } from 'sonner';
 import { routes, useSearchParams, useUpdateSearchParams } from '@/routes';
 import { Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
+import { FileGrid } from './file-grid';
 
 const ITEMS_TO_DISPLAY = 3;
 
@@ -142,75 +142,69 @@ export default function FileManager() {
     }
 
     return (
-        <div className="p-4">
-            <div className="p-2">
-                <Breadcrumb className="flex items-center space-x-2">
-                    <BreadcrumbList className=' text-1xl'>
-                        {/* Display the first breadcrumb if there are more than ITEMS_TO_DISPLAY */}
-                        {breadcrumbs.length > ITEMS_TO_DISPLAY && (
-                            <>
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink
-                                        href={routes.dashboard.data}
-                                        className="max-w-20 truncate md:max-w-none"
-                                    >
-                                        {breadcrumbs[0].name}
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
+        <div className="flex flex-col gap-4 p-6">
+            <Breadcrumb className="flex items-center space-x-2">
+                <BreadcrumbList className=' text-1xl'>
+                    {/* Display the first breadcrumb if there are more than ITEMS_TO_DISPLAY */}
+                    {breadcrumbs.length > ITEMS_TO_DISPLAY && (
+                        <>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink
+                                    href={routes.dashboard.data}
+                                    className="max-w-20 truncate md:max-w-none"
+                                >
+                                    {breadcrumbs[0].name}
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
 
-                                {/* Display ellipsis and dropdown for intermediate items */}
-                                <BreadcrumbItem>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger className="flex items-center gap-1">
-                                            <BreadcrumbEllipsis className="h-4 w-4" />
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start">
-                                            {breadcrumbs.slice(1, -2).map((item, index) => (
-                                                <DropdownMenuItem key={item.id}>
-                                                    <Link href={item.id ? `${routes.dashboard.data}?id=${item.id}` : "#"}>
-                                                        {item.name}
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                            </>
-                        )}
+                            {/* Display ellipsis and dropdown for intermediate items */}
+                            <BreadcrumbItem>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger className="flex items-center gap-1">
+                                        <BreadcrumbEllipsis className="h-4 w-4" />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        {breadcrumbs.slice(1, -2).map((item, index) => (
+                                            <DropdownMenuItem key={item.id}>
+                                                <Link href={item.id ? `${routes.dashboard.data}?id=${item.id}` : "#"}>
+                                                    {item.name}
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                        </>
+                    )}
 
-                        {/* Display the remaining breadcrumbs when the count is less than or equal to ITEMS_TO_DISPLAY */}
-                        {(breadcrumbs.length <= ITEMS_TO_DISPLAY ? breadcrumbs : breadcrumbs.slice(-2)).map((item, index) => (
-                            <React.Fragment key={item.id}>
-                                <BreadcrumbItem>
-                                    {index === (breadcrumbs.length <= ITEMS_TO_DISPLAY ? breadcrumbs.length : 2) - 1 ? (
-                                        <BreadcrumbPage className="max-w-20 truncate md:max-w-none">
+                    {/* Display the remaining breadcrumbs when the count is less than or equal to ITEMS_TO_DISPLAY */}
+                    {(breadcrumbs.length <= ITEMS_TO_DISPLAY ? breadcrumbs : breadcrumbs.slice(-2)).map((item, index) => (
+                        <React.Fragment key={item.id}>
+                            <BreadcrumbItem>
+                                {index === (breadcrumbs.length <= ITEMS_TO_DISPLAY ? breadcrumbs.length : 2) - 1 ? (
+                                    <BreadcrumbPage className="max-w-20 truncate md:max-w-none">
+                                        {item.name}
+                                    </BreadcrumbPage>
+                                ) : (
+                                    <>
+                                        <Link
+                                            href={item.id ? `${routes.dashboard.data}?id=${item.id}` : routes.dashboard.data}
+                                            className="max-w-20 truncate md:max-w-none"
+                                        >
                                             {item.name}
-                                        </BreadcrumbPage>
-                                    ) : (
-                                        <>
-                                            <Link
-                                                href={item.id ? `${routes.dashboard.data}?id=${item.id}` : routes.dashboard.data}
-                                                className="max-w-20 truncate md:max-w-none"
-                                            >
-                                                {item.name}
-                                            </Link>
-                                            <BreadcrumbSeparator />
-                                        </>
-                                    )}
-                                </BreadcrumbItem>
-                            </React.Fragment>
-                        ))}
-                    </BreadcrumbList>
-                </Breadcrumb>
+                                        </Link>
+                                        <BreadcrumbSeparator />
+                                    </>
+                                )}
+                            </BreadcrumbItem>
+                        </React.Fragment>
+                    ))}
+                </BreadcrumbList>
+            </Breadcrumb>
 
-            </div>
             <FileGrid data={currentData ?? []} isLoading={isLoading} onDownload={onDownload} onRename={onRename} onDelete={onDelete} onOpen={onOpen} />
         </div>
     );
-}
-
-function generateThumbnail(id: string) {
-
-}
+} 
