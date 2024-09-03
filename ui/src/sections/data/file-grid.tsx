@@ -71,7 +71,7 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
         <div className="flex flex-col gap-4 p-2">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold">
-                    {currentPath ? `Folder: ${currentPath}` : "My Data"}
+                    {currentPath ? `${data.find((item) => item.id === currentPath)?.name}` : "My Data"}
                 </h2>
                 {currentPath && (
                     <Button
@@ -156,7 +156,7 @@ const DataCard = ({ file, handleFolderClick, onDownload, onRename, onDelete }: D
     return (
         <Card
             className="hover:bg-muted hover:scale-[1.03]"
-        // onClick={() => file.type === "folder" && handleFolderClick(file.id)}
+            onDoubleClick={() => file.type === "folder" && handleFolderClick(file.id || '')}
         >
             <CardHeader>
                 <CardTitle>
