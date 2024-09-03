@@ -27,34 +27,12 @@ type FileGridProps = {
     onDownload: (file: Data) => void;
     onRename: (file: Data, newName: string) => void;
     onDelete: (id: string) => void;
+    onOpen: (file: Data) => void;
 };
 
-const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRename, onDelete }) => {
-    const [currentPath, setCurrentPath] = useState<string | null>(''); // Track the current folder path
-    const [currentData, setCurrentData] = useState<Data[]>([]);
-
-    // Update the current files to display based on the current path
-    useEffect(() => {
-        if (!isLoading) {
-            const filteredFiles = data.filter((item) => item.parent === currentPath);
-            setCurrentData(filteredFiles);
-        }
-    }, [currentPath, data, isLoading]);
-
-    const folders = currentData.filter((file: Data) => file.type === 'folder');
-    const files = currentData.filter((file: Data) => file.type === 'file');
-
-    const handleFolderClick = (folderId: string | undefined) => {
-        if (folderId) {
-            setCurrentPath(folderId); // Update the current path to the selected folder's ID
-        }
-    };
-
-    const handleBackClick = () => {
-        // Find the parent of the current folder and navigate back
-        const parentFolder = data.find((item) => item.id === currentPath)?.parent;
-        setCurrentPath(parentFolder || null); // If no parent, go back to root (null)
-    };
+const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRename, onDelete, onOpen }) => {
+    const folders = data.filter((file: Data) => file.type === 'folder');
+    const files = data.filter((file: Data) => file.type === 'file');
 
     // Show loading skeletons if data is loading
     if (isLoading) {
@@ -69,56 +47,41 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
 
     return (
         <div className="flex flex-col gap-4 p-2">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">
-                    {currentPath ? `${data.find((item) => item.id === currentPath)?.name}` : "My Data"}
-                </h2>
-                {currentPath && (
-                    <Button
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                        onClick={handleBackClick}
-                    >
-                        Back
-                    </Button>
+            <div className="flex flex-col gap-4">
+                {folders.length > 0 && (
+                    <div className="flex flex-col gap-4">
+                        <h3>Folders</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {folders.map((file) => (
+                                <DataCard
+                                    key={file.id}
+                                    file={file}
+                                    onOpen={onOpen}
+                                    onDownload={onDownload}
+                                    onRename={onRename}
+                                    onDelete={onDelete}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 )}
-            </div>
-            <div>
-                <div className="flex flex-col gap-4">
-                    {folders.length > 0 && (
-                        <div className="flex flex-col gap-4">
-                            <h3>Folders</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {folders.map((file) => (
-                                    <DataCard
-                                        key={file.id}
-                                        file={file}
-                                        handleFolderClick={handleFolderClick}
-                                        onDownload={onDownload}
-                                        onRename={onRename}
-                                        onDelete={onDelete}
-                                    />
-                                ))}
-                            </div>
+                {files.length > 0 && (
+                    <div className="flex flex-col gap-4">
+                        <h3>Files</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {files.map((file) => (
+                                <DataCard
+                                    key={file.id}
+                                    file={file}
+                                    onOpen={onOpen}
+                                    onDownload={onDownload}
+                                    onRename={onRename}
+                                    onDelete={onDelete}
+                                />
+                            ))}
                         </div>
-                    )}
-                    {files.length > 0 && (
-                        <div className="flex flex-col gap-4">
-                            <h3>Files</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {files.map((file) => (
-                                    <DataCard
-                                        key={file.id}
-                                        file={file}
-                                        handleFolderClick={handleFolderClick}
-                                        onDownload={onDownload}
-                                        onRename={onRename}
-                                        onDelete={onDelete}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -126,13 +89,13 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
 
 interface DataCardProps {
     file: Data;
-    handleFolderClick: (id: string) => void;
     onDownload: (file: Data) => void;
     onRename: (file: Data, newName: string) => void;
     onDelete: (id: string) => void;
+    onOpen: (file: Data) => void;
 }
 
-const DataCard = ({ file, handleFolderClick, onDownload, onRename, onDelete }: DataCardProps) => {
+const DataCard = ({ file, onDownload, onRename, onDelete, onOpen }: DataCardProps) => {
     const [renameDialog, setRenameDialog] = useState<boolean>(false);
     const [deleteDialog, setDeleteDialog] = useState<boolean>(false);
     const [newFileName, setNewFileName] = useState<string>(file.name || '');
@@ -148,7 +111,7 @@ const DataCard = ({ file, handleFolderClick, onDownload, onRename, onDelete }: D
         }
     };
 
-    const handleDelete  = () => {
+    const handleDelete = () => {
         onDelete(file.id || '');
         setDeleteDialog(false)
     }
@@ -156,7 +119,7 @@ const DataCard = ({ file, handleFolderClick, onDownload, onRename, onDelete }: D
     return (
         <Card
             className="hover:bg-muted hover:scale-[1.03]"
-            onDoubleClick={() => file.type === "folder" && handleFolderClick(file.id || '')}
+            onDoubleClick={() => file.type === "folder" && onOpen(file)}
         >
             <CardHeader>
                 <CardTitle>
