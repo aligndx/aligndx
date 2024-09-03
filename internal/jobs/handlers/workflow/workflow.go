@@ -49,6 +49,10 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 
 	baseDir := fmt.Sprintf("%s/pb_data/workflows", currentDir)
 	jobDir := fmt.Sprintf("%s/pb_data/workflows/%s", currentDir, inputs.JobID)
+
+	// Defer the cleanup immediately after jobDir creation
+	defer os.RemoveAll(jobDir)
+
 	nxfDir := fmt.Sprintf("%s/nxf", jobDir)
 	resultsdir := fmt.Sprintf("%s/%s_results", jobDir, inputs.Name)
 
@@ -81,8 +85,6 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	}
 
 	StoreResults(cfg, inputs.UserID, inputs.JobID, resultsdir)
-
-	defer os.RemoveAll(jobDir)
 
 	return nil
 }
