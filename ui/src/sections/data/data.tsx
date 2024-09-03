@@ -11,11 +11,13 @@ export default function FileManager() {
     const {
         useGetDatasQuery,
         useUpdateDataMutation,
+        useDeleteDataMutation,
         getPrivateDataURLQuery,
     } = dataService
 
     const { data, refetch, isLoading } = useGetDatasQuery()
     const updateData = useUpdateDataMutation()
+    const deleteData = useDeleteDataMutation()
 
     useEffect(() => {
         refetch()
@@ -55,22 +57,36 @@ export default function FileManager() {
 
     const onRename = async (file: Data, newName: string) => {
         const data = {
-            name : newName
+            name: newName
         }
         await updateData.mutateAsync({ id: file.id || '', data }, {
             onSuccess: (data) => {
-                toast.success("File was renamed");
+                toast.success("Item was renamed");
                 refetch();
             },
             onError: (error) => {
-                toast.error("Couldn't rename that file");
+                toast.error("Couldn't rename that item");
             },
         })
     }
 
+
+    const onDelete = async (id: string) => {
+        await deleteData.mutateAsync({ id }, {
+            onSuccess: (data) => {
+                toast.success("Item Deleted");
+                refetch();
+            },
+            onError: (error) => {
+                toast.error("Couldn't delete that item");
+            },
+        })
+    }
+
+
     return (
         <div className="p-4">
-            <FileGrid data={data ?? []} isLoading={isLoading} onDownload={onDownload} onRename={onRename} />
+            <FileGrid data={data ?? []} isLoading={isLoading} onDownload={onDownload} onRename={onRename} onDelete={onDelete} />
         </div>
     );
 }

@@ -5,7 +5,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { FileIcon, FolderIcon, MoreVerticalIcon, DownloadIcon, EditIcon } from "@/components/icons";
+import { FileIcon, FolderIcon, MoreVerticalIcon, DownloadIcon, EditIcon, Trash } from "@/components/icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Data } from "@/types/data";
@@ -26,9 +26,10 @@ type FileGridProps = {
     isLoading: boolean;
     onDownload: (file: Data) => void;
     onRename: (file: Data, newName: string) => void;
+    onDelete: (id: string) => void;
 };
 
-const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRename }) => {
+const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRename, onDelete }) => {
     const [currentPath, setCurrentPath] = useState<string | null>(''); // Track the current folder path
     const [currentData, setCurrentData] = useState<Data[]>([]);
 
@@ -94,6 +95,7 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
                                         handleFolderClick={handleFolderClick}
                                         onDownload={onDownload}
                                         onRename={onRename}
+                                        onDelete={onDelete}
                                     />
                                 ))}
                             </div>
@@ -110,6 +112,7 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
                                         handleFolderClick={handleFolderClick}
                                         onDownload={onDownload}
                                         onRename={onRename}
+                                        onDelete={onDelete}
                                     />
                                 ))}
                             </div>
@@ -126,10 +129,12 @@ interface DataCardProps {
     handleFolderClick: (id: string) => void;
     onDownload: (file: Data) => void;
     onRename: (file: Data, newName: string) => void;
+    onDelete: (id: string) => void;
 }
 
-const DataCard = ({ file, handleFolderClick, onDownload, onRename }: DataCardProps) => {
+const DataCard = ({ file, handleFolderClick, onDownload, onRename, onDelete }: DataCardProps) => {
     const [renameDialog, setRenameDialog] = useState<boolean>(false);
+    const [deleteDialog, setDeleteDialog] = useState<boolean>(false);
     const [newFileName, setNewFileName] = useState<string>(file.name || '');
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,6 +147,12 @@ const DataCard = ({ file, handleFolderClick, onDownload, onRename }: DataCardPro
             setRenameDialog(false);
         }
     };
+
+    const handleDelete  = () => {
+        onDelete(file.id || '');
+        setDeleteDialog(false)
+    }
+
     return (
         <Card
             className="hover:bg-muted hover:scale-[1.03]"
@@ -220,7 +231,36 @@ const DataCard = ({ file, handleFolderClick, onDownload, onRename }: DataCardPro
                                                 </DialogHeader>
                                             </DialogContent>
                                         </Dialog>
-
+                                        <DropdownMenuSeparator />
+                                        <Dialog open={deleteDialog} onOpenChange={() => setDeleteDialog(!deleteDialog)}>
+                                            <DialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => {
+                                                    e.preventDefault();
+                                                }}>
+                                                    <div className="flex flex-row items-center gap-4 text-sm"
+                                                    >
+                                                        <Trash className="h-4 w-4" />
+                                                        Delete
+                                                    </div>
+                                                </DropdownMenuItem>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle className="py-2">Delete</DialogTitle>
+                                                    <DialogDescription>Are you sure you want to proceed? This is a destructive action.</DialogDescription>
+                                                    <div className="flex flex-col gap-4">
+                                                        <div className="flex flex-row gap-2 justify-end">
+                                                            <Button variant="outline" onClick={() => setDeleteDialog(false)}>
+                                                                Cancel
+                                                            </Button>
+                                                            <Button variant="destructive" onClick={handleDelete}>
+                                                                Delete
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </DialogHeader>
+                                            </DialogContent>
+                                        </Dialog>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
