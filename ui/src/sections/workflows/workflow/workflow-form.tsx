@@ -82,7 +82,7 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
     });
 
     const { submissions } = useApiService()
-    const { createSubmissionMutation, subscribeToSubmission } = submissions
+    const { createSubmissionMutation } = submissions
     const { onUpload, progresses, isUploading } = useUploadFile({
         defaultUploadedFiles: [],
     });

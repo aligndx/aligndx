@@ -22,10 +22,9 @@ export function useUploadFile(
     const [uploadedFiles, setUploadedFiles] = React.useState<Data[]>(defaultUploadedFiles);
     const [progresses, setProgresses] = React.useState<Record<string, number>>({});
     const [isUploading, setIsUploading] = React.useState(false);
-    const { data: { createDataMutation } } = useApiService();
-    const resetUploadedFiles = React.useCallback(() => {
-        setUploadedFiles([]);
-    }, []);
+    const { data: { useCreateDataMutation } } = useApiService();
+    const createDataMutation = useCreateDataMutation(); 
+    
     async function onUpload(files: FileWithOptionalId[], additionalData: AdditionalFormData = {}) {
         setIsUploading(true);
         const uploadResults: any[] = []; // Local variable to accumulate uploaded files
@@ -67,7 +66,7 @@ export function useUploadFile(
                 });
             }
         } catch (err) {
-            toast.error(`Error: ${err?.message}`);
+            toast.error(`Error: ${err}`);
         } finally {
             setIsUploading(false);
         }
