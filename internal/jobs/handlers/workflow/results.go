@@ -93,6 +93,10 @@ func AuthenticateAsAdmin(apiURL, email, password string) (string, error) {
 // TraverseResultsDirectory traverses the results directory and gathers metadata.
 func TraverseResultsDirectory(apiUrl string, collectionName string, adminToken string, basePath string, parentID string, userID string) (string, error) {
 	var rootRecordID string
+	parentIDMap := make(map[string]string) // Map to maintain parent IDs for directories
+
+	// Initialize stack with the initial parent ID
+	parentIDMap[basePath] = parentID
 
 	err := filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -114,22 +118,30 @@ func TraverseResultsDirectory(apiUrl string, collectionName string, adminToken s
 			User: userID, // Replace with actual user identification if needed
 		}
 
+		// Determine the parent ID
+		parentDir := filepath.Dir(path)
+		currentParentID, ok := parentIDMap[parentDir]
+		if !ok {
+			currentParentID = parentID // Default to the initial parent ID if not found
+		}
+
 		// Create record for the current file or folder
-		newParentID, err := createRecord(apiUrl, collectionName, adminToken, file, parentID)
+		newParentID, err := createRecord(apiUrl, collectionName, adminToken, file, currentParentID)
 		if err != nil {
 			return fmt.Errorf("failed to create record for %s: %w", path, err)
 		}
 
-		// If the current entry is a folder, it becomes the parent for its children
-		if parentID == "" && rootRecordID == "" {
+		// If this is the root directory (basePath), save the root record ID
+		if parentIDMap[basePath] == parentID && rootRecordID == "" {
 			rootRecordID = newParentID
 		}
 
-		// If the current entry is a folder, it becomes the parent for its children
+		// If the current entry is a directory, add its ID to the map
 		if info.IsDir() {
-			parentID = newParentID
+			parentIDMap[path] = newParentID
 		}
 
+		// Return to process the next file or folder. filepath.Walk will handle the rest.
 		return nil
 	})
 
