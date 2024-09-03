@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { ArrowRight, GitBranch } from "@/components/icons"
 import { routes, useUpdateSearchParams } from "@/routes"
 import { Submission } from "@/types/submission"
+import { Data } from "@/types/data"
 
 export const useColumns = () => {
   const updateSearchParams = useUpdateSearchParams();
@@ -60,6 +61,35 @@ export const useColumns = () => {
         );
       }
     },
+    {
+      accessorKey: "outputs",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Outputs" />
+      ),
+      cell: ({ row }) => {
+        const outputs = row.original.outputs;
+
+        if (typeof outputs === 'string') {
+          return <div>{outputs}</div>;
+        }
+
+        return (
+          <div>
+            {outputs.map((output: Data, index: number) => (
+              <Button
+                key={index}
+                variant="linkHover2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateSearchParams({ "id": output.id }, routes.dashboard.data);
+                }}>
+                {output?.name}
+              </Button>
+            ))}
+          </div>
+        );
+      },
+    },
 
     {
       id: "actions",
@@ -69,7 +99,8 @@ export const useColumns = () => {
         return (
           <div className="text-right">
             <Button variant={"icon"} onClick={(e) => {
-              e.stopPropagation(); updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
+              e.stopPropagation();
+              updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
             }}> <ArrowRight /></Button>
           </div>
         )
