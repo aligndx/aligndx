@@ -11,12 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Data } from "@/types/data";
 import createHumanReadableDate from "@/lib/date";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input";
 
 type FileGridProps = {
     data: Data[];
     isLoading: boolean;
     onDownload: (file: Data) => void;
-    onRename: (id: string, newName: string) => void;
+    onRename: (file: Data, newName: string) => void;
 };
 
 const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRename }) => {
@@ -71,7 +80,7 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
                         Back
                     </Button>
                 )}
-            </div> 
+            </div>
             <div>
                 <div className="flex flex-col gap-4">
                     {folders.length > 0 && (
@@ -84,6 +93,7 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
                                         file={file}
                                         handleFolderClick={handleFolderClick}
                                         onDownload={onDownload}
+                                        onRename={onRename}
                                     />
                                 ))}
                             </div>
@@ -99,6 +109,7 @@ const FileGrid: React.FC<FileGridProps> = ({ data, isLoading, onDownload, onRena
                                         file={file}
                                         handleFolderClick={handleFolderClick}
                                         onDownload={onDownload}
+                                        onRename={onRename}
                                     />
                                 ))}
                             </div>
@@ -114,13 +125,27 @@ interface DataCardProps {
     file: Data;
     handleFolderClick: (id: string) => void;
     onDownload: (file: Data) => void;
+    onRename: (file: Data, newName: string) => void;
 }
 
-const DataCard = ({ file, handleFolderClick, onDownload }: DataCardProps) => {
+const DataCard = ({ file, handleFolderClick, onDownload, onRename }: DataCardProps) => {
+    const [renameDialog, setRenameDialog] = useState<boolean>(false);
+    const [newFileName, setNewFileName] = useState<string>(file.name || '');
+    const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewFileName(e.target.value);
+    };
+
+    const handleRename = () => {
+        if (newFileName && newFileName !== file.name) {
+            onRename(file, newFileName);
+            setRenameDialog(false);
+        }
+    };
     return (
         <Card
-            className="hover:bg-muted hover:scale-[1.03] cursor-pointer"
-            onClick={() => file.type === "folder" && handleFolderClick(file.id)}
+            className="hover:bg-muted hover:scale-[1.03]"
+        // onClick={() => file.type === "folder" && handleFolderClick(file.id)}
         >
             <CardHeader>
                 <CardTitle>
@@ -135,7 +160,11 @@ const DataCard = ({ file, handleFolderClick, onDownload }: DataCardProps) => {
                                 </div>
                             </div>
                             <div>
-                                <DropdownMenu key={file.id}>
+                                <DropdownMenu
+                                    key={file.id}
+                                    open={dropdownOpen}
+                                    onOpenChange={setDropdownOpen}
+                                >
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="icon" size="icon">
                                             <MoreVerticalIcon className="h-4 w-4" />
@@ -155,12 +184,43 @@ const DataCard = ({ file, handleFolderClick, onDownload }: DataCardProps) => {
                                                 </div>
                                             </div>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            <div className="flex flex-row items-center gap-4 text-sm">
-                                                <EditIcon className="h-4 w-4" />
-                                                Rename
-                                            </div>
-                                        </DropdownMenuItem>
+
+
+                                        <Dialog open={renameDialog} onOpenChange={() => setRenameDialog(!renameDialog)}>
+                                            <DialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => {
+                                                    e.preventDefault();
+                                                }}>
+                                                    <div className="flex flex-row items-center gap-4 text-sm"
+                                                    >
+                                                        <EditIcon className="h-4 w-4" />
+                                                        Rename
+                                                    </div>
+                                                </DropdownMenuItem>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle className="py-2">Rename</DialogTitle>
+                                                    <DialogDescription />
+                                                    <div className="flex flex-col gap-4">
+                                                        <Input
+                                                            placeholder={file.name}
+                                                            value={newFileName}
+                                                            onChange={handleNameChange}
+                                                        />
+                                                        <div className="flex flex-row gap-2 justify-end">
+                                                            <Button variant="outline" onClick={() => setRenameDialog(false)}>
+                                                                Cancel
+                                                            </Button>
+                                                            <Button variant="default" onClick={handleRename}>
+                                                                Save
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </DialogHeader>
+                                            </DialogContent>
+                                        </Dialog>
+
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>

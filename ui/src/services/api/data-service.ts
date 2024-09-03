@@ -12,7 +12,7 @@ export const mapRecordToData = (record: RecordModel): Data => {
     parent: record.parent,
     user: record.user,
     created: new Date(record.created),
-    updated: new Date(record.updated)
+    updated: new Date(record.updated),
   };
 };
 
@@ -41,8 +41,8 @@ export const deleteData = async (pb: PocketBase, id: string): Promise<void> => {
 
 export const _getDataURL = async (pb: PocketBase, id: string): Promise<string> => {
   const record = await pb.collection('data').getOne(id);
-  const url = await pb.files.getUrl(record, record.file)
-  return url
+  const url = await pb.files.getUrl(record, record.file);
+  return url;
 };
 
 export const _getPrivateDataURL = async (pb: PocketBase, id: string): Promise<string> => {
@@ -55,7 +55,7 @@ export const _getPrivateDataURL = async (pb: PocketBase, id: string): Promise<st
       return '';
     }
 
-    const url = pb.files.getUrl(record, record.file, { "token": fileToken });
+    const url = pb.files.getUrl(record, record.file, { token: fileToken });
 
     return url;
   } catch (error) {
@@ -64,16 +64,15 @@ export const _getPrivateDataURL = async (pb: PocketBase, id: string): Promise<st
   }
 };
 
-
-
 type UpdateDataData = {
   id: string;
   data: any;
-}
+};
 
 interface DeleteDataData {
   id: string;
 }
+
 const useDataService = (pb: PocketBase) => {
   const queryClient = useQueryClient();
 
@@ -97,39 +96,39 @@ const useDataService = (pb: PocketBase) => {
     });
   };
 
-  const createDataMutation: UseMutationResult<Data, Error, FormData> = useMutation(
-    {
+  const useCreateDataMutation = (): UseMutationResult<Data, Error, FormData> => {
+    return useMutation({
       mutationFn: (data: FormData) => createData(pb, data),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['datas'] });
       },
-    }
-  );
+    });
+  };
 
-  const updateDataMutation: UseMutationResult<void, Error, UpdateDataData> = useMutation(
-    {
+  const useUpdateDataMutation = (): UseMutationResult<void, Error, UpdateDataData> => {
+    return useMutation({
       mutationFn: (data: UpdateDataData) => updateData(pb, data.id, data.data),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['datas'] });
       },
-    }
-  );
+    });
+  };
 
-  const deleteDataMutation: UseMutationResult<void, Error, DeleteDataData> = useMutation(
-    {
+  const useDeleteDataMutation = (): UseMutationResult<void, Error, DeleteDataData> => {
+    return useMutation({
       mutationFn: (data: DeleteDataData) => deleteData(pb, data.id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['datas'] });
       },
-    }
-  );
-
-  const getPrivateDataURLQuery = async(id: string) => {
-    return await _getPrivateDataURL(pb, id)
+    });
   };
 
-  const getDataURLQuery = async(id: string) => {
-    return await _getDataURL(pb, id)
+  const getPrivateDataURLQuery = async (id: string) => {
+    return await _getPrivateDataURL(pb, id);
+  };
+
+  const getDataURLQuery = async (id: string) => {
+    return await _getDataURL(pb, id);
   };
 
   return {
@@ -137,9 +136,9 @@ const useDataService = (pb: PocketBase) => {
     getPrivateDataURLQuery,
     useGetDataQuery,
     useGetDatasQuery,
-    createDataMutation,
-    updateDataMutation,
-    deleteDataMutation,
+    useCreateDataMutation,
+    useUpdateDataMutation,
+    useDeleteDataMutation,
   };
 };
 

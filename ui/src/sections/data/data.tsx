@@ -4,24 +4,25 @@ import React, { useEffect } from 'react';
 import { useApiService } from '@/services/api';
 import FileGrid from './file-grid';
 import { Data } from '@/types/data';
+import { toast } from 'sonner';
 
 export default function FileManager() {
     const { data: dataService } = useApiService();
     const {
         useGetDatasQuery,
-        deleteDataMutation,
-        getDataURLQuery,
+        useUpdateDataMutation,
         getPrivateDataURLQuery,
     } = dataService
 
-    const { data, refetch, isLoading} = useGetDatasQuery()
+    const { data, refetch, isLoading } = useGetDatasQuery()
+    const updateData = useUpdateDataMutation()
 
     useEffect(() => {
         refetch()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    const onDownload = async (file : Data) => {
+    const onDownload = async (file: Data) => {
         try {
             if (file.type === "folder") {
                 return
@@ -52,9 +53,24 @@ export default function FileManager() {
         }
     }
 
+    const onRename = async (file: Data, newName: string) => {
+        const data = {
+            name : newName
+        }
+        await updateData.mutateAsync({ id: file.id || '', data }, {
+            onSuccess: (data) => {
+                toast.success("File was renamed");
+                refetch();
+            },
+            onError: (error) => {
+                toast.error("Couldn't rename that file");
+            },
+        })
+    }
+
     return (
         <div className="p-4">
-            <FileGrid data={data ?? []} isLoading={isLoading} onDownload={onDownload} />
+            <FileGrid data={data ?? []} isLoading={isLoading} onDownload={onDownload} onRename={onRename} />
         </div>
     );
 }
