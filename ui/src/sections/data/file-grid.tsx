@@ -185,7 +185,7 @@ const DataCard = ({ file, handleFolderClick, onDownload, onRename, onDelete }: D
                                     <DropdownMenuContent>
                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => onDownload(file)}>
+                                        <DropdownMenuItem disabled={file.type === "folder"} onClick={() => onDownload(file)}>
                                             <div className="flex flex-row items-center gap-4 text-sm">
                                                 <div>
                                                     <DownloadIcon className="h-4 w-4" />
