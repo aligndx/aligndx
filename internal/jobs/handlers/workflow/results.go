@@ -43,7 +43,7 @@ func StoreResults(cfg *config.Config, userId string, submissionID string, result
 	}
 
 	// // Upload submission with records into PocketBase
-	err = UpdateSubmissionsCollection(cfg.API.URL, adminToken, submissionID, []string{rootRecordID})
+	err = UpdateSubmissionsCollection(cfg.API.URL, adminToken, submissionID, rootRecordID)
 	if err != nil {
 		return fmt.Errorf("failed to update submissions collection: %w", err)
 	}
@@ -193,7 +193,7 @@ func createRecord(apiURL string, collectionName string, adminToken string, file 
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Authorization", "Admin "+adminToken)
+	req.Header.Set("Authorization", adminToken)
 
 	// Send the HTTP request
 	resp, err := client.Do(req)
@@ -221,12 +221,12 @@ func createRecord(apiURL string, collectionName string, adminToken string, file 
 }
 
 // UpdateSubmissionsCollection updates the submissions collection with the provided record IDs.
-func UpdateSubmissionsCollection(apiURL, adminToken, submissionID string, recordIDs []string) error {
+func UpdateSubmissionsCollection(apiURL, adminToken, submissionID string, recordID string) error {
 	client := &http.Client{}
 
 	// Prepare the JSON body for the update
 	updateData := map[string]interface{}{
-		"outputs": recordIDs,
+		"outputs": recordID,
 	}
 	bodyBytes, err := json.Marshal(updateData)
 	if err != nil {
@@ -240,7 +240,7 @@ func UpdateSubmissionsCollection(apiURL, adminToken, submissionID string, record
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Admin "+adminToken)
+	req.Header.Set("Authorization", adminToken)
 
 	// Send the HTTP request
 	resp, err := client.Do(req)
