@@ -182,7 +182,6 @@ export default function FileManager() {
                     {/* Display the remaining breadcrumbs when the count is less than or equal to ITEMS_TO_DISPLAY */}
                     {(breadcrumbs.length <= ITEMS_TO_DISPLAY ? breadcrumbs : breadcrumbs.slice(-2)).map((item, index) => (
                         <React.Fragment key={item.id}>
-                            <BreadcrumbItem>
                                 {index === (breadcrumbs.length <= ITEMS_TO_DISPLAY ? breadcrumbs.length : 2) - 1 ? (
                                     <BreadcrumbPage className="max-w-20 truncate md:max-w-none">
                                         {item.name}
@@ -198,7 +197,6 @@ export default function FileManager() {
                                         <BreadcrumbSeparator />
                                     </>
                                 )}
-                            </BreadcrumbItem>
                         </React.Fragment>
                     ))}
                 </BreadcrumbList>
