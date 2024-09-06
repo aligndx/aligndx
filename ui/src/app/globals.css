@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -30,6 +29,11 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    
+    /* Tooltip specific variables */
+    --tooltip-bg: hsl(var(--popover)); /* Light mode background */
+    --tooltip-text: hsl(var(--popover-foreground)); /* Light mode text */
+    --tooltip-shadow: rgba(0, 0, 0, 0.1); /* Light mode shadow */
   }
 
   .dark {
@@ -57,14 +61,28 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    
+    /* Dark mode tooltip variables */
+    --tooltip-bg: hsl(var(--card)); /* Dark mode background */
+    --tooltip-text: hsl(var(--card-foreground)); /* Dark mode text */
+    --tooltip-shadow: rgba(0, 0, 0, 0.5); /* Dark mode shadow */
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Tooltip styles for SVG elements */
+  [aria-label="tip"] path {
+    fill: var(--tooltip-bg) !important;
+    filter: drop-shadow(0 3px 4px var(--tooltip-shadow)) !important;
+  }
+
+  [aria-label="tip"] text {
+    fill: var(--tooltip-text) !important;
   }
 }
