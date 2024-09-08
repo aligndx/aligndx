@@ -50,6 +50,9 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	baseDir := fmt.Sprintf("%s/pb_data/workflows", currentDir)
 	jobDir := fmt.Sprintf("%s/pb_data/workflows/%s", currentDir, inputs.JobID)
 
+	os.MkdirAll(baseDir, 0777)
+	os.MkdirAll(jobDir, 0777)
+
 	// Defer the cleanup immediately after jobDir creation
 	defer os.RemoveAll(jobDir)
 
