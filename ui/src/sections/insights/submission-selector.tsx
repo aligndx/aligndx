@@ -87,7 +87,7 @@ export function SubmissionSelector({
                     <Button
                         variant="outline"
                         role="combobox"
-                        className="w-[200px] justify-between"
+                        className="justify-between"
                     >
                         {/* If more than 1 item is selected, show the badge, otherwise show the selected name */}
                         {value.length > 1 ? (
@@ -101,40 +101,48 @@ export function SubmissionSelector({
                     </Button>
                 </div>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
+            <PopoverContent className="p-0">
                 <Command>
                     <CommandInput placeholder="Search submissions..." className="h-9" />
                     <CommandList>
-                        <CommandEmpty>No submission found.</CommandEmpty>
-                        <CommandGroup>
-                            {/* Select All and Clear All options */}
-                            <CommandItem onSelect={handleSelectAll}>
-                                Select All
-                            </CommandItem>
-                            <CommandItem onSelect={handleClearAll}>
-                                Clear All
-                            </CommandItem>
-                        </CommandGroup>
-                        <CommandSeparator />
-                        <CommandGroup>
-                            {(data || []).map((submission: Submission) => (
-                                <CommandItem
-                                    key={submission.id}
-                                    value={submission.name}
-                                    onSelect={() => handleChange(submission)}
-                                >
-                                    {submission.name}
-                                    <CheckIcon
-                                        className={cn(
-                                            "ml-auto h-4 w-4",
-                                            value.some((val) => val.id === submission.id)
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                        )}
-                                    />
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
+                        {/* Show message if no data is available */}
+                        {isLoading ? (
+                            <CommandEmpty>Loading submissions...</CommandEmpty>
+                        ) : data?.length === 0 ? (
+                            <CommandEmpty>No submissions available</CommandEmpty>
+                        ) : (
+                            <>
+                                <CommandGroup>
+                                    {/* Select All and Clear All options */}
+                                    <CommandItem onSelect={handleSelectAll}>
+                                        Select All
+                                    </CommandItem>
+                                    <CommandItem onSelect={handleClearAll}>
+                                        Clear All
+                                    </CommandItem>
+                                </CommandGroup>
+                                <CommandSeparator />
+                                <CommandGroup>
+                                    {(data || []).map((submission: Submission) => (
+                                        <CommandItem
+                                            key={submission.id}
+                                            value={submission.name}
+                                            onSelect={() => handleChange(submission)}
+                                        >
+                                            {submission.name}
+                                            <CheckIcon
+                                                className={cn(
+                                                    "ml-auto h-4 w-4",
+                                                    value.some((val) => val.id === submission.id)
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
+                                                )}
+                                            />
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </>
+                        )}
                     </CommandList>
                 </Command>
             </PopoverContent>
