@@ -37,7 +37,7 @@ func StoreResults(cfg *config.Config, userId string, submissionID string, result
 	}
 
 	// Traverse results directory to gather file and folder metadata
-	rootRecordID, err := TraverseResultsDirectory(cfg.API.URL, "data", adminToken, resultsDir, "", userId)
+	rootRecordID, err := TraverseResultsDirectory(cfg.API.URL, "data", adminToken, resultsDir, "", userId, submissionID)
 	if err != nil {
 		return fmt.Errorf("failed to traverse results directory: %w", err)
 	}
@@ -91,7 +91,7 @@ func AuthenticateAsAdmin(apiURL, email, password string) (string, error) {
 }
 
 // TraverseResultsDirectory traverses the results directory and gathers metadata.
-func TraverseResultsDirectory(apiUrl string, collectionName string, adminToken string, basePath string, parentID string, userID string) (string, error) {
+func TraverseResultsDirectory(apiUrl string, collectionName string, adminToken string, basePath string, parentID string, userID string, submissionID string) (string, error) {
 	var rootRecordID string
 	parentIDMap := make(map[string]string) // Map to maintain parent IDs for directories
 
@@ -126,7 +126,7 @@ func TraverseResultsDirectory(apiUrl string, collectionName string, adminToken s
 		}
 
 		// Create record for the current file or folder
-		newParentID, err := createRecord(apiUrl, collectionName, adminToken, file, currentParentID)
+		newParentID, err := createRecord(apiUrl, collectionName, adminToken, file, currentParentID, submissionID)
 		if err != nil {
 			return fmt.Errorf("failed to create record for %s: %w", path, err)
 		}
@@ -153,7 +153,7 @@ func TraverseResultsDirectory(apiUrl string, collectionName string, adminToken s
 }
 
 // Helper function to create a record and retrieve its ID
-func createRecord(apiURL string, collectionName string, adminToken string, file FileMetadata, parentID string) (string, error) {
+func createRecord(apiURL string, collectionName string, adminToken string, file FileMetadata, parentID string, submissionId string) (string, error) {
 	client := &http.Client{}
 	// Prepare the form data for record creation
 	body := &bytes.Buffer{}
@@ -165,6 +165,7 @@ func createRecord(apiURL string, collectionName string, adminToken string, file 
 	_ = writer.WriteField("size", fmt.Sprintf("%d", file.Size))
 	_ = writer.WriteField("parent", parentID)
 	_ = writer.WriteField("user", file.User)
+	_ = writer.WriteField("submission", submissionId)
 
 	// If the file is a file (not a folder), upload it
 	if file.Type == "file" {
