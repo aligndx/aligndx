@@ -1,13 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, MenuOpenIcon } from '@/components/icons';
+import { MenuOpenIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import Chart from './chart';
 import SpreadSheet from './spread-sheet';
+import { Submission } from '@/types/submission'; // Ensure the type is imported
+import { SubmissionSelector } from './submission-selector';
 
 export default function InsightsView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State to toggle sidebar
+    const [selectedSubmissions, setSelectedSubmissions] = useState<Submission[]>([]); // State to store the selected submissions (Submission objects)
 
     return (
         <div className="flex h-full transition-all duration-300 overflow-hidden">
@@ -35,13 +38,19 @@ export default function InsightsView() {
 
             {/* Sidebar */}
             <div
-                className={`transition-all duration-300 ${isSidebarOpen ? 'border w-[300px]' : 'w-0'
+                className={`transition-all duration-300 ${isSidebarOpen ? 'border w-[350px]' : 'w-0'
                     } overflow-hidden`}
             >
                 {isSidebarOpen && (
-                    <div className="p-4 ">
-                        <h1 className="text-2xl font-bold">Sidebar</h1>
-                        <p>This is the sidebar content.</p>
+                    <div className="flex flex-col gap-4 p-4 pt-10 ">
+                        <h1 className="text-xl font-bold">Data</h1>
+                        <SubmissionSelector
+                            value={selectedSubmissions}
+                            onChange={(newValues) => setSelectedSubmissions(newValues)}
+                            multiple />
+                        <p>
+                            Selected Submissions: {selectedSubmissions.length ? selectedSubmissions.map(sub => sub.name).join(", ") : "None"}
+                        </p>
                     </div>
                 )}
             </div>
