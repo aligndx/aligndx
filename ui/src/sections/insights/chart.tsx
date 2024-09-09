@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 import { HTMLAttributes } from "react"
 
 interface ChartProps extends HTMLAttributes<HTMLDivElement>{
-    data?: string
+    data?: any
     config?: string
 }
 
