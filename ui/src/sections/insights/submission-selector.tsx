@@ -18,7 +18,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { Drawer, DrawerContent, DrawerTrigger, DrawerDescription, DrawerTitle } from "@/components/ui/drawer" // Import Drawer from shadcn
-import { CaretUpDown, CheckIcon } from "@/components/icons"
+import { CaretUpDown, CheckBoxIcon, CheckBoxOutlineBlankIcon, CheckIcon } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { useApiService } from "@/services/api"
 import { Submission } from "@/types/submission"
@@ -97,11 +97,13 @@ export function SubmissionSelector({
     const DropdownContent = () => (
         <Command>
             <div className="flex flex-row items-center justify-between p-2">
-                <Button onClick={handleSelectAll} variant="ghost" size="sm">
-                    Select All
+                <Button className="flex items-center gap-2" onClick={handleSelectAll} variant="ghost" size="sm">
+                   <CheckBoxIcon />  
+                   Select All
                 </Button>
-                <Button onClick={handleClearAll} variant="ghost" size="sm">
-                    Clear All
+                <Button className="flex items-center gap-2" onClick={handleClearAll} variant="ghost" size="sm">
+                   <CheckBoxOutlineBlankIcon />  
+                   Clear All
                 </Button>
             </div>
             <CommandSeparator />
@@ -145,7 +147,7 @@ export function SubmissionSelector({
                         <Button
                             variant="outline"
                             role="combobox"
-                            className="w-[200px] justify-between"
+                            className="justify-between"
                             onClick={() => setDrawerOpen(true)} // Open drawer on mobile
                         >
                             {value.length > 1 ? (
@@ -174,7 +176,7 @@ export function SubmissionSelector({
                             <Button
                                 variant="outline"
                                 role="combobox"
-                                className="w-[200px] justify-between"
+                                className="justify-between"
                             >
                                 {value.length > 1 ? (
                                     <Badge>{value.length} selected</Badge>
@@ -187,7 +189,7 @@ export function SubmissionSelector({
                             </Button>
                         </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
+                    <PopoverContent className="p-0">
                         <DropdownContent />
                     </PopoverContent>
                 </Popover>
