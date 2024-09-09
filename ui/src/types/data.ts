@@ -6,6 +6,7 @@ export type Data = {
     size?: string;
     parent?: string;
     user?: string;
+    submission?: string;
     readonly created?: Date;
     readonly updated?: Date
 };

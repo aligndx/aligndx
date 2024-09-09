@@ -87,7 +87,7 @@ export function SubmissionSelector({
                     <Button
                         variant="outline"
                         role="combobox"
-                        className="justify-between"
+                        className="w-[200px] justify-between"
                     >
                         {/* If more than 1 item is selected, show the badge, otherwise show the selected name */}
                         {value.length > 1 ? (
@@ -101,47 +101,45 @@ export function SubmissionSelector({
                     </Button>
                 </div>
             </PopoverTrigger>
-            <PopoverContent className="p-0">
+            <PopoverContent className="w-[200px] p-0">
                 <Command>
+                    {/* Non-searchable options */}
+                    <div className="p-2">
+                        <Button onClick={handleSelectAll} variant="ghost" size="sm">
+                            Select All
+                        </Button>
+                        <Button onClick={handleClearAll} variant="ghost" size="sm">
+                            Clear All
+                        </Button>
+                    </div>
+                    <CommandSeparator />
+                    {/* Searchable submissions */}
                     <CommandInput placeholder="Search submissions..." className="h-9" />
                     <CommandList>
-                        {/* Show message if no data is available */}
                         {isLoading ? (
                             <CommandEmpty>Loading submissions...</CommandEmpty>
                         ) : data?.length === 0 ? (
                             <CommandEmpty>No submissions available</CommandEmpty>
                         ) : (
-                            <>
-                                <CommandGroup>
-                                    {/* Select All and Clear All options */}
-                                    <CommandItem onSelect={handleSelectAll}>
-                                        Select All
+                            <CommandGroup>
+                                {(data || []).map((submission: Submission) => (
+                                    <CommandItem
+                                        key={submission.id}
+                                        value={submission.name}
+                                        onSelect={() => handleChange(submission)}
+                                    >
+                                        {submission.name}
+                                        <CheckIcon
+                                            className={cn(
+                                                "ml-auto h-4 w-4",
+                                                value.some((val) => val.id === submission.id)
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                            )}
+                                        />
                                     </CommandItem>
-                                    <CommandItem onSelect={handleClearAll}>
-                                        Clear All
-                                    </CommandItem>
-                                </CommandGroup>
-                                <CommandSeparator />
-                                <CommandGroup>
-                                    {(data || []).map((submission: Submission) => (
-                                        <CommandItem
-                                            key={submission.id}
-                                            value={submission.name}
-                                            onSelect={() => handleChange(submission)}
-                                        >
-                                            {submission.name}
-                                            <CheckIcon
-                                                className={cn(
-                                                    "ml-auto h-4 w-4",
-                                                    value.some((val) => val.id === submission.id)
-                                                        ? "opacity-100"
-                                                        : "opacity-0"
-                                                )}
-                                            />
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </>
+                                ))}
+                            </CommandGroup>
                         )}
                     </CommandList>
                 </Command>

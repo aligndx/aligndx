@@ -11,6 +11,7 @@ export const mapRecordToData = (record: RecordModel): Data => {
     size: record.size,
     parent: record.parent,
     user: record.user,
+    submission: record.submission,
     created: new Date(record.created),
     updated: new Date(record.updated),
   };
