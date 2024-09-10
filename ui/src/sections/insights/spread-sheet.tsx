@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { HTMLAttributes, useEffect } from "react";
-import { useDuckDb } from "duckdb-wasm-kit";
+import { useDuckDb, exportCsv } from "duckdb-wasm-kit";
 import { insertRemoteFile } from "./insert-file";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -12,7 +12,8 @@ import {
     TableRow,
 } from "@/components/ui/table"; // Importing shadcn table components
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Importing shadcn scrollarea
-
+import { Button } from "@/components/ui/button";
+import { DownloadIcon } from '@/components/icons'
 export interface Source {
     id: string;  // Table name
     url: string; // URL for the source file
@@ -26,7 +27,7 @@ interface SpreadSheetProps extends HTMLAttributes<HTMLDivElement> {
 
 export default function SpreadSheet({
     sources,
-    data,
+    data = [],  // Default data to an empty array
     onDataChange,
     className,
 }: SpreadSheetProps) {
@@ -63,9 +64,8 @@ export default function SpreadSheet({
                     console.error(err);
                     toast.error("Couldn't load or join the data");
                 }
-            }
-            else {
-                onDataChange([])
+            } else {
+                onDataChange([]);
             }
         };
 
@@ -84,17 +84,49 @@ export default function SpreadSheet({
         return `SELECT * FROM ${sources[0].id} AS table1 ${joinClauses} LIMIT 100`;
     };
 
+    const handleExport = async () => {
+        if (db && sources?.length) {
+            try {
+                // Call exportCsv to get the File object
+                const file = await exportCsv(db, sources[0].id);
+
+                // Create a URL for the File object
+                const url = URL.createObjectURL(file);
+
+                // Create an anchor element and trigger a download
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = file.name; // The filename from exportCsv
+                document.body.appendChild(link);
+                link.click();
+
+                // Clean up the DOM and revoke the object URL
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error("Error exporting data:", err);
+                toast.error("Couldn't export the data");
+            }
+        }
+    };
+
+
     if (loading) return <p>Loading ...</p>;
 
-
-    return (
-        <div className={cn("flex ", className)}>
-            {data.length > 0 ? (
-                <ScrollArea  className="w-0 flex-1 whitespace-nowrap ">
-                    <Table > {/* Ensures table fills available width */}
+    const renderContent = (
+        <>
+            <header className="flex justify-end px-4">
+                <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={handleExport}>
+                    <DownloadIcon className="h-4 w-4" />
+                    Export
+                </Button>
+            </header>
+            <div className="flex h-full">
+                <ScrollArea className="w-0 flex-1 whitespace-nowrap ">
+                    <Table> {/* Ensures table fills available width */}
                         <TableHeader>
                             <TableRow>
-                                {Object.keys(data[0]).map((col) => (
+                                {data.length > 0 && Object.keys(data[0]).map((col) => (
                                     <TableHead key={col}>{col}</TableHead>
                                 ))}
                             </TableRow>
@@ -105,7 +137,6 @@ export default function SpreadSheet({
                                     {Object.values(row).map((value: any, colIndex: number) => (
                                         <TableCell key={colIndex}>
                                             {typeof value === 'bigint' ? value.toString() : value}
-
                                         </TableCell>
                                     ))}
                                 </TableRow>
@@ -114,9 +145,14 @@ export default function SpreadSheet({
                     </Table>
                     <ScrollBar orientation="horizontal" />
                 </ScrollArea>
-            ) : (
-                null
-            )}
+            </div>
+        </>
+    );
+
+    // Only render the content if there is data to display
+    return (
+        <div className={cn("flex flex-col h-full ", className)}>
+            {data.length > 0 ? renderContent : <p>No data available</p>}
         </div>
     );
 }
