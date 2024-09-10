@@ -9,6 +9,7 @@ import { Submission } from '@/types/submission';
 import { SubmissionSelector } from './submission-selector';
 import { Data } from '@/types/data';
 import { useApiService } from '@/services/api';
+import { Separator } from "@/components/ui/separator"
 
 export default function InsightsView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -71,7 +72,7 @@ export default function InsightsView() {
             </button>
 
             <div
-                className={`transition-all duration-300 ${isSidebarOpen ? 'border w-[350px]' : 'w-0'
+                className={`transition-all duration-300 ${isSidebarOpen ? 'border w-[400px]' : 'w-0'
                     } overflow-hidden`}
             >
                 {isSidebarOpen && (
@@ -81,6 +82,8 @@ export default function InsightsView() {
                             value={selectedSubmissions}
                             onChange={handleSubmissionSelectionChange}
                             multiple />
+                        <Separator />
+                        <h1 className="text-xl font-bold">Chart</h1>
                     </div>
                 )}
             </div>

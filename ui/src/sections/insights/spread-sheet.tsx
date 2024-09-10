@@ -152,7 +152,7 @@ export default function SpreadSheet({
     // Only render the content if there is data to display
     return (
         <div className={cn("flex flex-col h-full ", className)}>
-            {data.length > 0 ? renderContent : <p>No data available</p>}
+            {data.length > 0 ? renderContent : null}
         </div>
     );
 }

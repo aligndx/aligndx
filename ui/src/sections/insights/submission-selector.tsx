@@ -162,7 +162,7 @@ export function SubmissionSelector({
                     </DrawerTrigger>
                     <DrawerContent>
                         <div className="flex flex-col gap-4 p-4">
-                            <DrawerTitle >Source</DrawerTitle>
+                            <DrawerTitle >Source(s)</DrawerTitle>
                             <DrawerDescription>The submissions you want to analyze </DrawerDescription>
                         </div>
                         <DropdownContent />
@@ -172,7 +172,7 @@ export function SubmissionSelector({
                 <Popover>
                     <PopoverTrigger asChild>
                         <div className="flex items-center gap-4">
-                            <h1>Source</h1>
+                            <h1>Source(s)</h1>
                             <Button
                                 variant="outline"
                                 role="combobox"
