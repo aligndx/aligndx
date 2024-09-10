@@ -88,9 +88,9 @@ export default function SpreadSheet({
 
 
     return (
-        <div className={cn("h-full", className)}>
+        <div className={cn("flex ", className)}>
             {data.length > 0 ? (
-                <ScrollArea className="whitespace-nowrap">
+                <ScrollArea  className="w-0 flex-1 whitespace-nowrap ">
                     <Table > {/* Ensures table fills available width */}
                         <TableHeader>
                             <TableRow>
@@ -115,7 +115,7 @@ export default function SpreadSheet({
                     <ScrollBar orientation="horizontal" />
                 </ScrollArea>
             ) : (
-                "No data yet"
+                null
             )}
         </div>
     );

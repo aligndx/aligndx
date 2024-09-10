@@ -53,7 +53,6 @@ export default function InsightsView() {
                 <Chart data={data} />
 
                 <SpreadSheet
-                    className='border-t'
                     sources={dataSources}
                     data={data}
                     onDataChange={(value) => setData(value)}
