@@ -59,9 +59,6 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
 
         let formDefault = defaultValue;
 
-        if (format === "name") {
-            formDefault = getRandomName();
-        }
         acc[key] = formDefault ?? (type === 'string' ? '' : undefined);
 
         return acc;
@@ -76,8 +73,11 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
     }
 
     const formSchema = generateZodSchema(jsonSchema);
+    const extendedFormSchema = formSchema.extend({
+        name: z.string().min(1, 'Name is required'),  // Example: `name` as a required string
+      });
     const form = useForm({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(extendedFormSchema),
         defaultValues
     });
 
@@ -87,17 +87,17 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
         defaultUploadedFiles: [],
     });
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof extendedFormSchema>) {
         const { name, ...rest } = values
         const inputs = { ...rest }
 
         // Todo fix typigns
-        function transformInputsToFiles(inputs : any) {
+        function transformInputsToFiles(inputs: any) {
             const filePathKeys = getFilePathKeys(jsonSchema);
             return Object.entries(inputs)
                 .filter(([id]) => filePathKeys.includes(id)) // Filter to include only keys present in filePathKeys
-                .flatMap(([id, files] : any) =>
-                    files.map((file : any) => ({
+                .flatMap(([id, files]: any) =>
+                    files.map((file: any) => ({
                         id,
                         file,
                     }))
@@ -131,6 +131,10 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
 
             // Proceed with the rest of the form submission
             const workflow = id;
+            if (typeof name !== 'string') {
+                throw new Error('Name must be a string');
+              }
+
             const submissionPayload = {
                 name,
                 params: mergedInputs,
@@ -141,7 +145,7 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
             await createSubmissionMutation.mutateAsync(submissionPayload, {
                 onSuccess: (data) => {
                     toast.success("Form Submitted Successfully");
-                    updateSearchParams({"id" : data.id}, routes.dashboard.submissions.submission)
+                    updateSearchParams({ "id": data.id }, routes.dashboard.submissions.submission)
                 },
                 onError: (error) => {
                     toast.error("Form Submission Failed");
@@ -157,12 +161,31 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
         <div className="flex flex-grow flex-row gap-2">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 p-4 gap-4">
+                    <FormField
+                        control={form.control}
+                        name={"name"}
+                        defaultValue={getRandomName()}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>
+                                    Name
+                                </FormLabel>
+                                <FormDescription>A run name for this submission.</FormDescription>
+                                <FormControl>
+                                    <Input type="text" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     {Object.entries(jsonSchema.properties).map(([key, value]) => {
                         const { type, description, pattern, default: defaultValue, format, contentMediaType, maxItems } = value as JsonSchemaProperty;
-                        const acceptKey = contentMediaType || "application/octet-stream";
-                        const accept = {
-                            [acceptKey]: [],
+                        const acceptKey = contentMediaType;
+                        const accept: Record<string, any> = {};
+                        if (acceptKey && typeof acceptKey === "string") {
+                            accept[acceptKey] = [];
                         }
+
                         const maxFileCount = maxItems || undefined
 
                         return (
