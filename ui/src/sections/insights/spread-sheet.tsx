@@ -115,7 +115,7 @@ export default function SpreadSheet({
 
     const renderContent = (
         <>
-            <header className="flex justify-end px-4">
+            <header className="flex justify-start px-4">
                 <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={handleExport}>
                     <DownloadIcon className="h-4 w-4" />
                     Export

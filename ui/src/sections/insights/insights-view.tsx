@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MenuOpenIcon } from '@/components/icons';
+import { DownloadIcon, MenuOpenIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import SpreadSheet, { Source } from './spread-sheet';
 import { Submission } from '@/types/submission';
@@ -10,6 +10,7 @@ import { Data } from '@/types/data';
 import { useApiService } from '@/services/api';
 import { Separator } from "@/components/ui/separator"
 import ChartForm from './chart';
+import { Button } from '@/components/ui/button';
 
 export default function InsightsView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -22,6 +23,29 @@ export default function InsightsView() {
     const isData = (output: string | Data): output is Data => {
         return (output as Data).name !== undefined;
     }
+
+    const handlePlotExport = () => {
+        if (chartRef.current) {
+            const svgElement = chartRef.current.querySelector('svg');
+
+            if (svgElement) {
+                // Clone the SVG node to avoid mutating the live DOM element
+                const clonedSvgElement = svgElement.cloneNode(true);
+
+                // Serialize the cloned SVG element into an XML string
+                const serializer = new XMLSerializer();
+                let svgString = serializer.serializeToString(clonedSvgElement);
+
+                // Create a blob and trigger the download
+                const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+                const downloadLink = document.createElement("a");
+                downloadLink.href = URL.createObjectURL(svgBlob);
+                downloadLink.download = "chart.svg";
+                downloadLink.click();
+            }
+        }
+    };
+
 
     const getURLs = async (subs: Submission[]) => {
         const urlPromises = subs.flatMap((sub) => {
@@ -49,28 +73,36 @@ export default function InsightsView() {
         <div className="flex h-full transition-all duration-300 overflow-hidden">
             {/* Left section */}
             <div
-                className={`flex flex-col flex-grow transition-all duration-300 ${isSidebarOpen ? 'w-full' : 'w-full'
+                className={`flex flex-col gap-10 flex-grow transition-all duration-300 ${isSidebarOpen ? 'w-full' : 'w-full'
                     }`}
             >
-                <div className="flex flex-grow h-full w-full items-center justify-center" ref={chartRef} />
+                <div className="flex flex-col px-4">
+                    <div className='flex items-center justify-between'>
+                        <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={handlePlotExport}>
+                            <DownloadIcon className="h-4 w-4" />
+                            Export
+                        </Button>
+                        <Button
+                            variant="icon"
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        >
+                            {isSidebarOpen ? (
+                                <MenuOpenIcon className="w-6 h-6 transform rotate-180" />
+                            ) : (
+                                <MenuOpenIcon className="w-6 h-6" />
+                            )}
+                        </Button>
 
+                    </div>
+                    <div className="flex flex-grow h-full w-full items-center justify-center" ref={chartRef} />
+
+                </div>
                 <SpreadSheet
                     sources={dataSources}
                     data={data}
                     onDataChange={(value) => setData(value)}
                 />
             </div>
-
-            <button
-                className={cn("absolute z-10 rounded-full p-2 transition-transform duration-300", "right-0")}
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-                {isSidebarOpen ? (
-                    <MenuOpenIcon className="w-6 h-6 transform rotate-180" />
-                ) : (
-                    <MenuOpenIcon className="w-6 h-6" />
-                )}
-            </button>
 
             <div
                 className={`transition-all duration-300 ${isSidebarOpen ? 'border w-[400px]' : 'w-0'
