@@ -6,33 +6,35 @@ import * as Plot from "@observablehq/plot";
 import FormSelect from "@/components/form/form-select";
 import FormColorSelect from "@/components/form/form-color-select";
 import { getCssVariableValue } from "@/lib/utils";
+import FormSwitch from "@/components/form/form-switch";
 
-// Define the schema using zod with plotOptions and color support
+const basePlotOptionsSchema = z.object({
+    x: z.string().min(1, "X Axis is required"),
+    y: z.string().optional(),  // Optional for some plots
+    fill: z.string().optional(),  // Optional fill color
+    tip: z.boolean().optional()
+});
+
 const barPlotConfigSchema = z.object({
     plotType: z.literal("bar"),
-    plotOptions: z.object({
-        x: z.string().min(1, "X Axis is required"),
-        y: z.string().min(1, "Y Axis is required"),
-        fill: z.string().optional(),  // Optional color fill
+    plotOptions: basePlotOptionsSchema.extend({
+        y: z.string().min(1, "Y Axis is required"),  // Override y to be required for bar
     }),
 });
 
 const bubblePlotConfigSchema = z.object({
     plotType: z.literal("bubble"),
-    plotOptions: z.object({
-        x: z.string().min(1, "X Axis is required"),
-        y: z.string().min(1, "Y Axis is required"),
+    plotOptions: basePlotOptionsSchema.extend({
+        y: z.string().min(1, "Y Axis is required"),  // Override y to be required for bubble
         r: z.string().min(1, "Radius is required for Bubble Plot"),
-        fill: z.string().optional(),  // Optional fill color
         stroke: z.string().optional(),  // Optional stroke color (outline)
     }),
 });
 
 const heatmapPlotConfigSchema = z.object({
     plotType: z.literal("heatmap"),
-    plotOptions: z.object({
-        x: z.string().min(1, "X Axis is required"),
-        y: z.string().optional(),
+    plotOptions: basePlotOptionsSchema.extend({
+        y: z.string().optional(),  // y can be optional for heatmap
         fill: z.string().min(1, "Fill is required for Heatmap"),  // Fill required for heatmap
     }),
 });
@@ -67,6 +69,7 @@ export default function ChartForm({
                 x: columns[0] || "",
                 y: columns[1] || "",
                 fill: getCssVariableValue("--primary"),
+                tip: true
             },
         },
     });
@@ -115,7 +118,7 @@ export default function ChartForm({
                     break;
                 case "heatmap":
                     plot = Plot.plot({
-                        color: {legend: true},
+                        color: { legend: true },
                         marks: [
                             Plot.cell(
                                 data,
@@ -182,18 +185,18 @@ export default function ChartForm({
                                     description="Select the column for the bubble size (radius)."
                                     options={columnOptions}
                                     placeholder="Select radius"
-                                /> 
+                                />
                             </>
                         )}
 
                         {plotType === "heatmap" &&
-                        
-                        <FormSelect
-                            name="plotOptions.fill"
-                            label="Fill"
-                            options={columnOptions}
-                        />
-                        
+
+                            <FormSelect
+                                name="plotOptions.fill"
+                                label="Fill"
+                                options={columnOptions}
+                            />
+
                         }
 
                         {plotType != "heatmap" && (
@@ -201,9 +204,10 @@ export default function ChartForm({
                                 name="plotOptions.fill"
                                 label="Color (Fill)"
                             />
-                        )} 
+                        )}
 
                         <h1 className="text-xl font-bold">Display</h1>
+                        <FormSwitch name="plotOptions.tip" label="Tip" description="Enable or disable interactive tips"/>
                     </>
                 ) : null}
             </form>
