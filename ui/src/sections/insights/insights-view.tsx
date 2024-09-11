@@ -52,7 +52,7 @@ export default function InsightsView() {
                 className={`flex flex-col flex-grow transition-all duration-300 ${isSidebarOpen ? 'w-full' : 'w-full'
                     }`}
             >
-                <div className="flex flex-grow h-full w-full items-center justify-center" ref={chartRef}></div>
+                <div className="flex flex-grow h-full w-full items-center justify-center" ref={chartRef} />
 
                 <SpreadSheet
                     sources={dataSources}

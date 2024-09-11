@@ -69,6 +69,8 @@ export default function ChartForm({
 
             const container = chartRef.current;
             container.innerHTML = ""; // Clear previous plot
+            
+            if (data.length === 0) return; // Don't generate plot if data is empty
 
             let plot;
             switch (formData.plotType) {
@@ -94,24 +96,6 @@ export default function ChartForm({
     );
 
     const formData = watch();
-
-    // New useEffect to run generatePlot with default values on initial mount
-    useEffect(() => {
-        if (data && data.length > 0) {
-            generatePlot({
-                plotType: "bar", // Default plot type
-                x: "name",       // Default x-axis field
-                y: "abundance",       // Default y-axis field
-            });
-        }
-
-        return () => {
-            if (chartRef.current) {
-                chartRef.current.innerHTML = ""; // Clear the chart on unmount
-            }
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data]);
 
     useEffect(() => {
         if (formState.isValid && !isValidating) {
