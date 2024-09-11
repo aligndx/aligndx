@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MenuOpenIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import Chart from './chart';
 import SpreadSheet, { Source } from './spread-sheet';
 import { Submission } from '@/types/submission';
 import { SubmissionSelector } from './submission-selector';
 import { Data } from '@/types/data';
 import { useApiService } from '@/services/api';
 import { Separator } from "@/components/ui/separator"
+import ChartForm from './chart';
 
 export default function InsightsView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -17,6 +17,7 @@ export default function InsightsView() {
     const [data, setData] = useState<any>([]); // Todo: Set a type for this data
     const [dataSources, setDataSources] = useState<Source[]>([]);
     const { data: dataService } = useApiService()
+    const chartRef = useRef<HTMLDivElement | null>(null);
 
     const isData = (output: string | Data): output is Data => {
         return (output as Data).name !== undefined;
@@ -51,7 +52,7 @@ export default function InsightsView() {
                 className={`flex flex-col flex-grow transition-all duration-300 ${isSidebarOpen ? 'w-full' : 'w-full'
                     }`}
             >
-                <Chart data={data} />
+                <div className="flex flex-grow h-full w-full" ref={chartRef}></div>
 
                 <SpreadSheet
                     sources={dataSources}
@@ -84,6 +85,7 @@ export default function InsightsView() {
                             multiple />
                         <Separator />
                         <h1 className="text-xl font-bold">Chart</h1>
+                        <ChartForm data={data} chartRef={chartRef} />
                     </div>
                 )}
             </div>

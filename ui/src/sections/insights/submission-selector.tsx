@@ -98,12 +98,12 @@ export function SubmissionSelector({
         <Command>
             <div className="flex flex-row items-center justify-between p-2">
                 <Button className="flex items-center gap-2" onClick={handleSelectAll} variant="ghost" size="sm">
-                   <CheckBoxIcon />  
-                   Select All
+                    <CheckBoxIcon />
+                    Select All
                 </Button>
                 <Button className="flex items-center gap-2" onClick={handleClearAll} variant="ghost" size="sm">
-                   <CheckBoxOutlineBlankIcon />  
-                   Clear All
+                    <CheckBoxOutlineBlankIcon />
+                    Clear All
                 </Button>
             </div>
             <CommandSeparator />
@@ -171,7 +171,7 @@ export function SubmissionSelector({
             ) : (
                 <Popover>
                     <PopoverTrigger asChild>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-2">
                             <h1>Source(s)</h1>
                             <Button
                                 variant="outline"
