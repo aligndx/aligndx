@@ -3,10 +3,11 @@
 import { DataTableColumnHeader } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowRight, GitBranch } from "@/components/icons"
+import { ArrowRight, Chart, StatusIcon } from "@/components/icons"
 import { routes, useUpdateSearchParams } from "@/routes"
 import { Submission } from "@/types/submission"
 import { Data } from "@/types/data"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export const useColumns = () => {
   const updateSearchParams = useUpdateSearchParams();
@@ -97,11 +98,35 @@ export const useColumns = () => {
         const submissionId = row.original.id
 
         return (
-          <div className="text-right">
-            <Button variant={"icon"} onClick={(e) => {
-              e.stopPropagation();
-              updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
-            }}> <ArrowRight /></Button>
+          <div className="flex">
+            <div className="text-right">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button variant={"icon"} onClick={(e) => {
+                      e.stopPropagation();
+                      updateSearchParams({ "id": submissionId }, routes.dashboard.visualize);
+                    }}> <Chart /> </Button></TooltipTrigger>
+                  <TooltipContent>
+                    <p>Visualize</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="text-right">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button variant={"icon"} onClick={(e) => {
+                      e.stopPropagation();
+                      updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
+                    }}> <StatusIcon /></Button></TooltipTrigger>
+                  <TooltipContent>
+                    <p>Events</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         )
       },

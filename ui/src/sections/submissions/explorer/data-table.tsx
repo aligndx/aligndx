@@ -93,10 +93,10 @@ export function DataTable<TData extends { id: string }, TValue>({
                             table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
-                                        className="hover:cursor-pointer"
+                                        // className="hover:cursor-pointer"
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
-                                        onClick={() => updateSearchParams({"id" : row.original.id}, routes.dashboard.submissions.submission)}
+                                        // onClick={() => updateSearchParams({"id" : row.original.id}, routes.dashboard.submissions.submission)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>

@@ -17,17 +17,20 @@ export { default as CaretUpDown } from './caret-up-down';
 export { default as EyeSlash } from './eye-slash';
 export { default as MixerHorizontal } from './mixer-horizontal';
 export { default as ArrowRight } from './arrow-right';
-export { PiGitBranch as GitBranch} from "react-icons/pi";
-export { PiGridFour as GridFour, PiTable as Table } from "react-icons/pi"
+export { default as StatusIcon } from './status';
 export { default as Trash} from './trash'
 export { default as Upload} from './upload'
+
 export { Archive as Archive} from 'lucide-react'
 export { FolderIcon as FolderIcon } from 'lucide-react'
 export { FileIcon as FileIcon} from 'lucide-react'
 export { MoreVerticalIcon as MoreVerticalIcon} from 'lucide-react'
 export { DownloadIcon as DownloadIcon} from 'lucide-react'
 export { EditIcon as EditIcon} from 'lucide-react'
+
 export { MdMenuOpen as MenuOpenIcon} from 'react-icons/md'
 export { MdCheck as CheckIcon} from 'react-icons/md'
 export { MdCheckBox as CheckBoxIcon} from 'react-icons/md'
 export { MdCheckBoxOutlineBlank as CheckBoxOutlineBlankIcon} from 'react-icons/md'
+export { PiGitBranch as GitBranch} from "react-icons/pi";
+export { PiGridFour as GridFour, PiTable as Table } from "react-icons/pi"

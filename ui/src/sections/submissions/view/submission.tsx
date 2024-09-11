@@ -2,15 +2,15 @@
 
 import { useApiService } from "@/services/api";
 import { useSearchParams } from "@/routes";
-import { useEffect, useState } from "react";  // Import useState for state management
+import { useEffect, useState } from "react";
 import { Tracker } from "@/components/ui/tracker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { events } from "./mock";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Event } from "@/types/event";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Submission() {
     const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
@@ -59,65 +59,67 @@ export default function Submission() {
                 </div>
                 <Tracker data={generateTrackerData(submissionUpdates)} />
             </div>
-            <div className="flex flex-grow">
-                <Table className="w-full">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[150px]">Event Type</TableHead>
-                            <TableHead>Message</TableHead>
-                            <TableHead>Timestamp</TableHead>
-                            <TableHead className="w-[50px]" />
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {submissionUpdates.map((event, index) => (
-                            <>
-                                <TableRow
-                                    className={cn("",
-                                        event.metadata ? "cursor-pointer" : null
-                                    )}
-                                    key={index}
-                                    onClick={() => toggleRowExpansion(index)}
-                                >
-                                    <TableCell className="font-medium">{event.type}</TableCell>
-                                    <TableCell>{event.message}</TableCell>
-                                    <TableCell>{event.timestamp}</TableCell>
-                                    <TableCell>
-                                        {event.metadata ?
+            <div className="flex flex-grow h-full overflow-hidden">
+                <ScrollArea className="h-full w-full">
+                    <Table className="w-full">
+                        <TableHeader >
+                            <TableRow>
+                                <TableHead className="w-[150px]">Event Type</TableHead>
+                                <TableHead>Message</TableHead>
+                                <TableHead>Timestamp</TableHead>
+                                <TableHead className="w-[50px]" />
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {submissionUpdates.map((event, index) => (
+                                <>
+                                    <TableRow
+                                        className={cn("",
+                                            event.metadata ? "cursor-pointer" : null
+                                        )}
+                                        key={index}
+                                        onClick={() => toggleRowExpansion(index)}
+                                    >
+                                        <TableCell className="font-medium">{event.type}</TableCell>
+                                        <TableCell>{event.message}</TableCell>
+                                        <TableCell>{event.timestamp}</TableCell>
+                                        <TableCell>
+                                            {event.metadata ?
 
-                                            <Button
-                                                variant="icon"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    toggleRowExpansion(index);
-                                                }}
-                                            >
-                                                <ChevronDown className={`h-4 w-4 transform transition-transform duration-200 ${expandedRows[index] ? 'rotate-180' : 'rotate-0'}`} />
-                                            </Button>
-                                            : null}
-                                    </TableCell>
-                                </TableRow>
-                                {expandedRows[index] && event.metadata && (
-                                    <TableRow key={`${index}-expanded`}>
-                                        <TableCell colSpan={4} className="p-4 bg-muted">
-                                            {Object.entries(event.metadata).map(([key, value]) => (
-                                                <div key={key}>
-                                                    <pre>
-                                                        <code>
-                                                            <strong>{key.charAt(0).toUpperCase() + key.slice(1)}</strong>: {value}
-                                                        </code>
-                                                    </pre>
-                                                </div>
-                                            ))}
+                                                <Button
+                                                    variant="icon"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        toggleRowExpansion(index);
+                                                    }}
+                                                >
+                                                    <ChevronDown className={`h-4 w-4 transform transition-transform duration-200 ${expandedRows[index] ? 'rotate-180' : 'rotate-0'}`} />
+                                                </Button>
+                                                : null}
                                         </TableCell>
                                     </TableRow>
-                                )}
-                            </>
-                        ))}
-                    </TableBody>
-                </Table>
+                                    {expandedRows[index] && event.metadata && (
+                                        <TableRow key={`${index}-expanded`}>
+                                            <TableCell colSpan={4} className="p-4 bg-muted">
+                                                {Object.entries(event.metadata).map(([key, value]) => (
+                                                    <div key={key}>
+                                                        <pre>
+                                                            <code>
+                                                                <strong>{key.charAt(0).toUpperCase() + key.slice(1)}</strong>: {value}
+                                                            </code>
+                                                        </pre>
+                                                    </div>
+                                                ))}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
             </div>
         </div>
     );
