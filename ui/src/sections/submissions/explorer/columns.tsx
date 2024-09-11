@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ColumnDef } from "@tanstack/react-table"
 import { Chart, StatusIcon } from "@/components/icons"
 import { routes, useUpdateSearchParams } from "@/routes"
-import { Status, StatusColorMap, Submission } from "@/types/submission"
+import { Status, Submission } from "@/types/submission"
 import { Data } from "@/types/data"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
@@ -124,7 +124,7 @@ export const useColumns = () => {
             <div className="text-right">
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <Button variant={"icon"} onClick={(e) => {
                       e.stopPropagation();
                       updateSearchParams({ "id": submissionId }, routes.dashboard.visualize);
@@ -138,11 +138,13 @@ export const useColumns = () => {
             <div className="text-right">
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger>
+                  <TooltipTrigger asChild>
                     <Button variant={"icon"} onClick={(e) => {
                       e.stopPropagation();
                       updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
-                    }}> <StatusIcon /></Button></TooltipTrigger>
+                    }}>
+                      <StatusIcon />
+                    </Button></TooltipTrigger>
                   <TooltipContent>
                     <p>Events</p>
                   </TooltipContent>
