@@ -49,6 +49,7 @@ type JobService struct {
 type JobStatus string
 
 const (
+	StatusCreated    JobStatus = "created"
 	StatusQueued     JobStatus = "queued"
 	StatusProcessing JobStatus = "processing"
 	StatusFinished   JobStatus = "finished"

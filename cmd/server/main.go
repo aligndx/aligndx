@@ -47,7 +47,16 @@ func main() {
 		return nil
 	})
 
+	app.OnRecordBeforeCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
+		e.Record.Set("status", string(jobs.StatusCreated))
+		return nil
+	})
+
 	app.OnRecordAfterCreateRequest("submissions").Add(func(e *core.RecordCreateEvent) error {
+		admin, _ := e.HttpContext.Get(apis.ContextAdminKey).(*models.Admin)
+		if admin != nil {
+			return nil // ignore for admins
+		}
 		record := e.Record
 		jobID := e.Record.Id
 

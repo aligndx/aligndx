@@ -9,7 +9,8 @@ export const mapRecordToSubmission = (record: RecordModel): Submission => {
     inputs: record.inputs,
     user: record.user,
     outputs: record.expand?.outputs || record.outputs,  // Use expanded data if available
-    workflow: record.expand?.workflow || record.workflow, 
+    workflow: record.expand?.workflow || record.workflow,
+    status: record.status, 
     created: new Date(record.created),
     updated: new Date(record.updated)
   };

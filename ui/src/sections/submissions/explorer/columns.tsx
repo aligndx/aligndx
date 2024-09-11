@@ -3,11 +3,12 @@
 import { DataTableColumnHeader } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowRight, Chart, StatusIcon } from "@/components/icons"
+import { Chart, StatusIcon } from "@/components/icons"
 import { routes, useUpdateSearchParams } from "@/routes"
-import { Submission } from "@/types/submission"
+import { Status, StatusColorMap, Submission } from "@/types/submission"
 import { Data } from "@/types/data"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
 
 export const useColumns = () => {
   const updateSearchParams = useUpdateSearchParams();
@@ -90,6 +91,27 @@ export const useColumns = () => {
           </div>
         );
       },
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status
+        const StatusColorMap: Record<Status, string> = {
+          [Status.Created]: "#3498db",      // Blue
+          [Status.Queued]: "#f39c12",       // Orange
+          [Status.Processing]: "#f1c40f",   // Yellow
+          [Status.Finished]: "#2ecc71",     // Green
+          [Status.Error]: "#e74c3c"         // Red
+        };
+        const statusColor = StatusColorMap[status || Status.Created]
+        return (
+          <Badge style={{ backgroundColor: statusColor }}>{status}</Badge>
+
+        )
+      }
     },
 
     {

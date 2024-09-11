@@ -1,5 +1,14 @@
 import { Data } from "./data";
+import { Event } from "./event";
 import { Workflow } from "./workflow";
+
+export enum Status {
+    Created = "created",
+    Queued = "queued",
+    Processing = "processing",
+    Finished = "finished",
+    Error = "error"
+}
 
 export type Submission = {
     id: string;
@@ -7,7 +16,9 @@ export type Submission = {
     workflow: string | Workflow;
     name: string;
     inputs: any;
-    outputs: string[]  | Data[];
+    status?: Status;
+    events?: Event;
+    outputs: string[] | Data[];
     created: Date;
     updated: Date
 };
