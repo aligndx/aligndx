@@ -4,7 +4,7 @@ const BASE_ROUTES = {
 }
 
 export const routes = {
-    home: "/dashboard",
+    home: "/dashboard/workflows",
     auth: {
         signin: `${BASE_ROUTES.ROOT}/signin`,
         signup: `${BASE_ROUTES.ROOT}/signup`,

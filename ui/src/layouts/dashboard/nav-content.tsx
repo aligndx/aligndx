@@ -6,34 +6,34 @@ import { cn } from "@/lib/utils";
 
 const commonStyles = "w-[20px] h-[20px]"
 const links = [
+  // {
+  //   label: "Dashboard",
+  //   href: routes.dashboard.root,
+  //   icon: (
+  //     <DashboardIcon className={commonStyles} />
+  //   ),
+  // },
   {
-    label: "Dashboard",
-    href: routes.dashboard.root,
-    icon: (
-      <DashboardIcon className={commonStyles} />
-    ),
-  },
-  {
-    label: "Workflows",
+    label: "Upload",
     href: routes.dashboard.workflows.root,
     icon: (
       <Analyze className={commonStyles} />
     ),
   },
   {
-    label: "Submissions",
+    label: "Review",
     href: routes.dashboard.submissions.root,
     icon: (
       <Archive className={commonStyles} />
     ),
   },
-  {
-    label: "Data",
-    href: routes.dashboard.data,
-    icon: (
-      <Drive className={commonStyles} />
-    ),
-  },
+  // {
+  //   label: "Data",
+  //   href: routes.dashboard.data,
+  //   icon: (
+  //     <Drive className={commonStyles} />
+  //   ),
+  // },
   {
     label: "Visualize",
     href: routes.dashboard.visualize,
@@ -68,19 +68,20 @@ function NavItem({ title, route, icon, highlighted, isMobile }: NavListProps) {
       <Tooltip delayDuration={200}>
         <TooltipTrigger>
           <Link href={route} className={
-            cn("flex flex-row items-center rounded-md px-2 py-2 hover:text-muted-foreground  hover:cursor-pointer",
+            cn("flex flex-row items-center rounded-md gap-2 text-sm px-2 py-2 hover:text-muted-foreground  hover:cursor-pointer",
               highlighted ? "border" : null,
               isMobile ? "gap-4" : null
             )}>
             {icon}
             <h3 className="scroll-m-20 tracking-tight">
-              {isMobile && capitalizeFirstLetter(title)}
+              {capitalizeFirstLetter(title)}
+              {/* {isMobile && capitalizeFirstLetter(title)} */}
             </h3>
           </Link>
         </TooltipTrigger>
-        {!isMobile ? <TooltipContent side="right">
+        {/* {!isMobile ? <TooltipContent side="right">
           {capitalizeFirstLetter(title)}
-        </TooltipContent> : null}
+        </TooltipContent> : null} */}
       </Tooltip>
 
     </TooltipProvider>

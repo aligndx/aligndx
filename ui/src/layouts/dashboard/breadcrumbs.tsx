@@ -51,7 +51,7 @@ export function Breadcrumbs() {
                 </BreadcrumbItem>
             );
         } else {
-            pathSegments.forEach((segment, index) => {
+            pathSegments.forEach((segment, index ) => {
                 const href = "/" + pathSegments.slice(0, index + 1).join("/");
                 if (index != 0) {
                     breadcrumbs.push(
