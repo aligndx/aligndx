@@ -22,3 +22,13 @@ export function formatBytes(
     sizeType === "accurate" ? accurateSizes[i] ?? "Bytest" : sizes[i] ?? "Bytes"
   }`
 }
+
+export const getCssVariableValue = (variableName: string) => {
+  const rawValue = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+
+  // Check if the value is a valid hsl color value (space-separated HSL parts)
+  if (rawValue && rawValue.includes(" ")) {
+      return `hsl(${rawValue})`;  // Convert the HSL components into a valid hsl() string
+  }
+  return rawValue;
+};

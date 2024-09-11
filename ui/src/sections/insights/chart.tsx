@@ -5,6 +5,7 @@ import { useEffect, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
 import FormSelect from "@/components/form/form-select";
 import FormColorSelect from "@/components/form/form-color-select";
+import { getCssVariableValue } from "@/lib/utils";
 
 // Define the schema using zod with plotOptions and color support
 const barPlotConfigSchema = z.object({
@@ -65,6 +66,7 @@ export default function ChartForm({
             plotOptions: {
                 x: columns[0] || "",
                 y: columns[1] || "",
+                fill: getCssVariableValue("--primary"),
             },
         },
     });
@@ -113,6 +115,7 @@ export default function ChartForm({
                     break;
                 case "heatmap":
                     plot = Plot.plot({
+                        color: {legend: true},
                         marks: [
                             Plot.cell(
                                 data,
@@ -179,32 +182,26 @@ export default function ChartForm({
                                     description="Select the column for the bubble size (radius)."
                                     options={columnOptions}
                                     placeholder="Select radius"
-                                />
-
-                                <FormSelect
-                                    name="plotOptions.stroke"
-                                    label="Stroke (Bubble Outline)"
-                                    options={[...columnOptions, { value: "black", label: "Black" }, { value: "gray", label: "Gray" }]}
-                                    placeholder="Select stroke color"
-                                />
+                                /> 
                             </>
                         )}
 
-                        {plotType === "heatmap" && (
-                            <FormSelect
-                                name="plotOptions.fill"
-                                label="Fill"
-                                description="Select the column for the heatmap fill."
-                                options={columnOptions}
-                                placeholder="Select fill"
-                            />
-                        )}
-
-                        <FormColorSelect
+                        {plotType === "heatmap" &&
+                        
+                        <FormSelect
                             name="plotOptions.fill"
-                            label="Color (Fill)"
-
+                            label="Fill"
+                            options={columnOptions}
                         />
+                        
+                        }
+
+                        {plotType != "heatmap" && (
+                            <FormColorSelect
+                                name="plotOptions.fill"
+                                label="Color (Fill)"
+                            />
+                        )} 
 
                         <h1 className="text-xl font-bold">Display</h1>
                     </>
