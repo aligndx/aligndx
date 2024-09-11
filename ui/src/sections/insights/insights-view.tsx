@@ -9,7 +9,7 @@ import { SubmissionSelector } from './submission-selector';
 import { Data } from '@/types/data';
 import { useApiService } from '@/services/api';
 import ChartForm from './chart';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'; 
 
 export default function InsightsView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);

@@ -22,6 +22,7 @@ import { CaretUpDown, CheckBoxIcon, CheckBoxOutlineBlankIcon, CheckIcon } from "
 import { Badge } from "@/components/ui/badge"
 import { useApiService } from "@/services/api"
 import { Submission } from "@/types/submission"
+import { useSearchParams, useUpdateSearchParams } from "@/routes"
 
 interface SubmissionSelectorProps {
     value?: Submission[];
@@ -37,7 +38,9 @@ export function SubmissionSelector({
     const [internalValue, setInternalValue] = React.useState<Submission[]>([])
     const [isMobile, setIsMobile] = React.useState(false) // State to track if mobile view
     const [drawerOpen, setDrawerOpen] = React.useState(false) // State to manage Drawer visibility
-
+    const searchParams = useSearchParams();
+    const updateSearchParams = useUpdateSearchParams();
+    const submissionId = searchParams.get('id');
     const value = controlledValue.length ? controlledValue : internalValue
 
     const { submissions } = useApiService()
@@ -92,6 +95,18 @@ export function SubmissionSelector({
             setInternalValue([])
         }
     }
+
+    React.useEffect(() => {
+        if (submissionId && data) {
+            const foundSubmission = data.find((value) => value.id === submissionId);
+            if (foundSubmission) {
+                onChange?.([foundSubmission]);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [submissionId, data]);
+    
+
 
     // The content of the dropdown (shared between Popover and Drawer)
     const DropdownContent = () => (
