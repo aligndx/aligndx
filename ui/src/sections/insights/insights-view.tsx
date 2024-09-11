@@ -83,8 +83,6 @@ export default function InsightsView() {
                             value={selectedSubmissions}
                             onChange={handleSubmissionSelectionChange}
                             multiple />
-                        <Separator />
-                        <h1 className="text-xl font-bold">Chart</h1>
                         <ChartForm data={data} chartRef={chartRef} />
                     </div>
                 )}

@@ -5,6 +5,7 @@ import { useEffect, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 
 // Define the schema using zod with discriminated union
 const barPlotConfigSchema = z.object({
@@ -73,19 +74,19 @@ export default function ChartForm({
             switch (formData.plotType) {
                 case "bar":
                     plot = Plot.plot({
-                        marks: [Plot.barY(data, { x: formData.x, y: formData.y })],
+                        marks: [Plot.barY(data, formData)],
                     });
                     break;
                 case "bubble":
                     plot = Plot.plot({
-                        marks: [Plot.dot(data, { x: formData.x, y: formData.y, r: formData.r })],
+                        marks: [Plot.dot(data, formData)],
                     });
                     break;
                 case "heatmap":
                     plot = Plot.plot({
-                        marks: [Plot.cell(data, { x: formData.x, y: formData.y, fill: formData.fill })],
+                        marks: [Plot.cell(data, formData)],
                     });
-                    break; 
+                    break;
             }
             container.appendChild(plot);
         },
@@ -119,8 +120,9 @@ export default function ChartForm({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formState, formData, isValidating]);
 
-    return (
-        <form className="flex flex-col gap-4">
+    const renderContent = (
+        <>
+            <h1 className="text-xl font-bold">Chart</h1>
             <div className="flex flex-col gap-2">
                 <label className="block font-medium text-sm">Plot Type</label>
                 <Select
@@ -166,6 +168,14 @@ export default function ChartForm({
                     {"fill" in errors && errors.fill && <p className="text-red-500 text-sm">{errors.fill.message}</p>}
                 </div>
             )}
+
+            <h1 className="text-xl font-bold">Display</h1>
+        </>
+    )
+
+    return (
+        <form className="flex flex-col gap-4">
+            {data.length > 0 ? renderContent : null}
         </form>
     );
 }
