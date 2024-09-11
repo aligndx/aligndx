@@ -4,13 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
 import FormSelect from "@/components/form/form-select";
+import FormColorSelect from "@/components/form/form-color-select";
 
-// Define the schema using zod with plotOptions as a nested object
+// Define the schema using zod with plotOptions and color support
 const barPlotConfigSchema = z.object({
     plotType: z.literal("bar"),
     plotOptions: z.object({
         x: z.string().min(1, "X Axis is required"),
         y: z.string().min(1, "Y Axis is required"),
+        fill: z.string().optional(),  // Optional color fill
     }),
 });
 
@@ -20,6 +22,8 @@ const bubblePlotConfigSchema = z.object({
         x: z.string().min(1, "X Axis is required"),
         y: z.string().min(1, "Y Axis is required"),
         r: z.string().min(1, "Radius is required for Bubble Plot"),
+        fill: z.string().optional(),  // Optional fill color
+        stroke: z.string().optional(),  // Optional stroke color (outline)
     }),
 });
 
@@ -28,11 +32,10 @@ const heatmapPlotConfigSchema = z.object({
     plotOptions: z.object({
         x: z.string().min(1, "X Axis is required"),
         y: z.string().optional(),
-        fill: z.string().min(1, "Fill is required for Heatmap"),
+        fill: z.string().min(1, "Fill is required for Heatmap"),  // Fill required for heatmap
     }),
 });
 
-// General schema with plotOptions
 const plotConfigSchema = z.discriminatedUnion("plotType", [
     barPlotConfigSchema,
     bubblePlotConfigSchema,
@@ -81,13 +84,17 @@ export default function ChartForm({
 
             let plot;
 
+            const { plotOptions } = formData;
+
             switch (formData.plotType) {
                 case "bar":
                     plot = Plot.plot({
                         marks: [
                             Plot.barY(
                                 data,
-                                formData.plotOptions as Plot.BarYOptions // Explicitly assert the correct type
+                                {
+                                    ...plotOptions,
+                                } as Plot.BarYOptions
                             ),
                         ],
                     });
@@ -97,7 +104,9 @@ export default function ChartForm({
                         marks: [
                             Plot.dot(
                                 data,
-                                formData.plotOptions as Plot.DotOptions // Explicitly assert the correct type
+                                {
+                                    ...plotOptions,
+                                } as Plot.DotOptions
                             ),
                         ],
                     });
@@ -107,7 +116,9 @@ export default function ChartForm({
                         marks: [
                             Plot.cell(
                                 data,
-                                formData.plotOptions as Plot.CellOptions // Explicitly assert the correct type
+                                {
+                                    ...plotOptions,
+                                } as Plot.CellOptions
                             ),
                         ],
                     });
@@ -161,13 +172,22 @@ export default function ChartForm({
                         />
 
                         {plotType === "bubble" && (
-                            <FormSelect
-                                name="plotOptions.r"
-                                label="Radius"
-                                description="Select the column for the bubble size (radius)."
-                                options={columnOptions}
-                                placeholder="Select radius"
-                            />
+                            <>
+                                <FormSelect
+                                    name="plotOptions.r"
+                                    label="Radius"
+                                    description="Select the column for the bubble size (radius)."
+                                    options={columnOptions}
+                                    placeholder="Select radius"
+                                />
+
+                                <FormSelect
+                                    name="plotOptions.stroke"
+                                    label="Stroke (Bubble Outline)"
+                                    options={[...columnOptions, { value: "black", label: "Black" }, { value: "gray", label: "Gray" }]}
+                                    placeholder="Select stroke color"
+                                />
+                            </>
                         )}
 
                         {plotType === "heatmap" && (
@@ -179,6 +199,12 @@ export default function ChartForm({
                                 placeholder="Select fill"
                             />
                         )}
+
+                        <FormColorSelect
+                            name="plotOptions.fill"
+                            label="Color (Fill)"
+
+                        />
 
                         <h1 className="text-xl font-bold">Display</h1>
                     </>
