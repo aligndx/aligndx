@@ -5,27 +5,34 @@ import { useEffect, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
 import FormSelect from "@/components/form/form-select";
 
-// Define the schema using zod with discriminated union
+// Define the schema using zod with plotOptions as a nested object
 const barPlotConfigSchema = z.object({
     plotType: z.literal("bar"),
-    x: z.string().min(1, "X Axis is required"),
-    y: z.string().min(1, "Y Axis is required"),
+    plotOptions: z.object({
+        x: z.string().min(1, "X Axis is required"),
+        y: z.string().min(1, "Y Axis is required"),
+    }),
 });
 
 const bubblePlotConfigSchema = z.object({
     plotType: z.literal("bubble"),
-    x: z.string().min(1, "X Axis is required"),
-    y: z.string().min(1, "Y Axis is required"),
-    r: z.string().min(1, "Radius is required for Bubble Plot"),
+    plotOptions: z.object({
+        x: z.string().min(1, "X Axis is required"),
+        y: z.string().min(1, "Y Axis is required"),
+        r: z.string().min(1, "Radius is required for Bubble Plot"),
+    }),
 });
 
 const heatmapPlotConfigSchema = z.object({
     plotType: z.literal("heatmap"),
-    x: z.string().min(1, "X Axis is required"),
-    y: z.string().optional(),
-    fill: z.string().min(1, "Fill is required for Heatmap"),
+    plotOptions: z.object({
+        x: z.string().min(1, "X Axis is required"),
+        y: z.string().optional(),
+        fill: z.string().min(1, "Fill is required for Heatmap"),
+    }),
 });
 
+// General schema with plotOptions
 const plotConfigSchema = z.discriminatedUnion("plotType", [
     barPlotConfigSchema,
     bubblePlotConfigSchema,
@@ -52,12 +59,14 @@ export default function ChartForm({
         resolver: zodResolver(plotConfigSchema),
         defaultValues: {
             plotType: "bar",
-            x: columns[0] || "",
-            y: columns[1] || "",
+            plotOptions: {
+                x: columns[0] || "",
+                y: columns[1] || "",
+            },
         },
     });
 
-    const { watch, setValue, formState } = methods;
+    const { watch, formState } = methods;
     const plotType = watch("plotType");
     const formData = watch();
 
@@ -71,24 +80,43 @@ export default function ChartForm({
             if (data.length === 0) return; // Don't generate plot if data is empty
 
             let plot;
+
             switch (formData.plotType) {
                 case "bar":
                     plot = Plot.plot({
-                        marks: [Plot.barY(data, { x: formData.x, y: formData.y })],
+                        marks: [
+                            Plot.barY(
+                                data,
+                                formData.plotOptions as Plot.BarYOptions // Explicitly assert the correct type
+                            ),
+                        ],
                     });
                     break;
                 case "bubble":
                     plot = Plot.plot({
-                        marks: [Plot.dot(data, { x: formData.x, y: formData.y, r: formData.r })],
+                        marks: [
+                            Plot.dot(
+                                data,
+                                formData.plotOptions as Plot.DotOptions // Explicitly assert the correct type
+                            ),
+                        ],
                     });
                     break;
                 case "heatmap":
                     plot = Plot.plot({
-                        marks: [Plot.cell(data, { x: formData.x, y: formData.y, fill: formData.fill })],
+                        marks: [
+                            Plot.cell(
+                                data,
+                                formData.plotOptions as Plot.CellOptions // Explicitly assert the correct type
+                            ),
+                        ],
                     });
                     break;
             }
-            container.appendChild(plot);
+
+            if (plot) {
+                container.appendChild(plot);
+            }
         },
         [data, chartRef]
     );
@@ -119,14 +147,14 @@ export default function ChartForm({
                         />
 
                         <FormSelect
-                            name="x"
+                            name="plotOptions.x"
                             label="X Axis"
                             options={columnOptions}
                             placeholder="Select X axis"
                         />
 
                         <FormSelect
-                            name="y"
+                            name="plotOptions.y"
                             label="Y Axis"
                             options={columnOptions}
                             placeholder="Select Y axis"
@@ -134,7 +162,7 @@ export default function ChartForm({
 
                         {plotType === "bubble" && (
                             <FormSelect
-                                name="r"
+                                name="plotOptions.r"
                                 label="Radius"
                                 description="Select the column for the bubble size (radius)."
                                 options={columnOptions}
@@ -144,7 +172,7 @@ export default function ChartForm({
 
                         {plotType === "heatmap" && (
                             <FormSelect
-                                name="fill"
+                                name="plotOptions.fill"
                                 label="Fill"
                                 description="Select the column for the heatmap fill."
                                 options={columnOptions}
