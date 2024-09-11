@@ -6,14 +6,32 @@ import * as Plot from "@observablehq/plot";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
-// Define the schema using zod
-const plotConfigSchema = z.object({
-    plotType: z.enum(["bar", "bubble", "heatmap"]),
+// Define the schema using zod with discriminated union
+const barPlotConfigSchema = z.object({
+    plotType: z.literal("bar"),
     x: z.string().min(1, "X Axis is required"),
-    y: z.string().optional(), // Make Y optional for certain types
-    r: z.string().optional(),  // Only for bubble plot
-})
+    y: z.string().min(1, "Y Axis is required"),
+});
 
+const bubblePlotConfigSchema = z.object({
+    plotType: z.literal("bubble"),
+    x: z.string().min(1, "X Axis is required"),
+    y: z.string().min(1, "Y Axis is required"),
+    r: z.string().min(1, "Radius is required for Bubble Plot"),
+});
+
+const heatmapPlotConfigSchema = z.object({
+    plotType: z.literal("heatmap"),
+    x: z.string().min(1, "X Axis is required"),
+    y: z.string().optional(),
+    fill: z.string().min(1, "Fill is required for Heatmap"),
+});
+
+const plotConfigSchema = z.discriminatedUnion("plotType", [
+    barPlotConfigSchema,
+    bubblePlotConfigSchema,
+    heatmapPlotConfigSchema,
+]);
 
 type PlotConfigSchema = z.infer<typeof plotConfigSchema>;
 
@@ -38,8 +56,7 @@ export default function ChartForm({
         defaultValues: {
             plotType: "bar",
             x: "name",
-            y: "",
-            r: "",
+            y: "abundance",
         },
     });
 
@@ -66,37 +83,46 @@ export default function ChartForm({
                     break;
                 case "heatmap":
                     plot = Plot.plot({
-                        marks: [Plot.rect(data, { x: formData.x, y: formData.y, fill: formData.r })],
+                        marks: [Plot.cell(data, { x: formData.x, y: formData.y, fill: formData.fill })],
                     });
-                    break;
-                default:
-                    plot = Plot.plot({
-                        marks: [Plot.auto(data, { x: formData.x, y: formData.y })],
-                    });
+                    break; 
             }
             container.appendChild(plot);
-
         },
         [data, chartRef]
     );
 
     const formData = watch();
 
+    // New useEffect to run generatePlot with default values on initial mount
+    useEffect(() => {
+        if (data && data.length > 0) {
+            generatePlot({
+                plotType: "bar", // Default plot type
+                x: "name",       // Default x-axis field
+                y: "abundance",       // Default y-axis field
+            });
+        }
+
+        return () => {
+            if (chartRef.current) {
+                chartRef.current.innerHTML = ""; // Clear the chart on unmount
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data]);
+
     useEffect(() => {
         if (formState.isValid && !isValidating) {
-            console.log(formData);
             generatePlot(formData);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formState, formData, isValidating]);
-
 
     return (
         <form className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-                <label className="block font-medium text-sm">
-                    Plot Type
-                </label>
+                <label className="block font-medium text-sm">Plot Type</label>
                 <Select
                     onValueChange={(value) => setValue("plotType", value as "bar" | "bubble" | "heatmap")}
                     defaultValue="bar"
@@ -120,7 +146,7 @@ export default function ChartForm({
             </div>
 
             <div className="flex flex-col gap-2">
-                <label className="block font-medium text-sm  ">Y axis </label>
+                <label className="block font-medium text-sm">Y axis</label>
                 <Input type="text" placeholder="Y" {...register("y")} />
                 {errors.y && <p className="text-red-500 text-sm">{errors.y.message}</p>}
             </div>
@@ -129,7 +155,15 @@ export default function ChartForm({
                 <div className="flex flex-col gap-2">
                     <label className="block font-medium text-sm">Radius</label>
                     <Input type="text" placeholder="Radius" {...register("r")} />
-                    {errors.r && <p className="text-red-500 text-sm">{errors.r.message}</p>}
+                    {"r" in errors && errors.r && <p className="text-red-500 text-sm">{errors.r.message}</p>}
+                </div>
+            )}
+
+            {plotType === "heatmap" && (
+                <div className="flex flex-col gap-2">
+                    <label className="block font-medium text-sm">Fill</label>
+                    <Input type="text" placeholder="Fill" {...register("fill")} />
+                    {"fill" in errors && errors.fill && <p className="text-red-500 text-sm">{errors.fill.message}</p>}
                 </div>
             )}
         </form>
