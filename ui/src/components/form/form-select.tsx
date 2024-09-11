@@ -27,6 +27,9 @@ export default function FormSelect({ name, label, description, placeholder, opti
             render={({ field }) => (
                 <FormItem>
                     <FormLabel>{label}</FormLabel>
+                    <FormDescription>
+                        {description}
+                    </FormDescription>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                             <SelectTrigger>
@@ -43,9 +46,6 @@ export default function FormSelect({ name, label, description, placeholder, opti
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                    <FormDescription>
-                        {description}
-                    </FormDescription>
                     <FormMessage />
                 </FormItem>
             )}

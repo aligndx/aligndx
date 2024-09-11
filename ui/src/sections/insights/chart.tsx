@@ -1,10 +1,8 @@
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
-import { Input } from "@/components/ui/input";
-import { Form } from "@/components/ui/form";
 import FormSelect from "@/components/form/form-select";
 
 // Define the schema using zod with discriminated union
@@ -34,13 +32,6 @@ const plotConfigSchema = z.discriminatedUnion("plotType", [
     heatmapPlotConfigSchema,
 ]);
 
-const plotTypes = [
-    { value: 'bar', label: 'Bar Plot' },
-    { value: 'bubble', label: 'Bubble Plot' },
-    { value: 'heatmap', label: 'Heatmap' }
-];
-
-
 type PlotConfigSchema = z.infer<typeof plotConfigSchema>;
 
 export default function ChartForm({
@@ -50,26 +41,25 @@ export default function ChartForm({
     data: any;
     chartRef: React.RefObject<HTMLDivElement>;
 }) {
+    // Extract column names from the dataset
+    const columns = data.length > 0 ? Object.keys(data[0]) : [];
+
+    const columnOptions = columns.map((col) => ({ value: col, label: col }));
+
     // Initialize the form with react-hook-form and zod
     const methods = useForm<PlotConfigSchema>({
         mode: "onChange",
         resolver: zodResolver(plotConfigSchema),
         defaultValues: {
             plotType: "bar",
-            x: "name",
-            y: "abundance",
+            x: columns[0] || "",
+            y: columns[1] || "",
         },
     });
-    const {
-        register,
-        handleSubmit,
-        watch,
-        setValue,
-        formState,
-        formState: { isValidating, errors },
-    } = methods
 
+    const { watch, setValue, formState } = methods;
     const plotType = watch("plotType");
+    const formData = watch();
 
     const generatePlot = useCallback(
         (formData: PlotConfigSchema) => {
@@ -84,17 +74,17 @@ export default function ChartForm({
             switch (formData.plotType) {
                 case "bar":
                     plot = Plot.plot({
-                        marks: [Plot.barY(data, formData)],
+                        marks: [Plot.barY(data, { x: formData.x, y: formData.y })],
                     });
                     break;
                 case "bubble":
                     plot = Plot.plot({
-                        marks: [Plot.dot(data, formData)],
+                        marks: [Plot.dot(data, { x: formData.x, y: formData.y, r: formData.r })],
                     });
                     break;
                 case "heatmap":
                     plot = Plot.plot({
-                        marks: [Plot.cell(data, formData)],
+                        marks: [Plot.cell(data, { x: formData.x, y: formData.y, fill: formData.fill })],
                     });
                     break;
             }
@@ -103,61 +93,69 @@ export default function ChartForm({
         [data, chartRef]
     );
 
-    const formData = watch();
-
     useEffect(() => {
-        if (formState.isValid && !isValidating) {
+        if (formState.isValid && !formState.isValidating) {
             generatePlot(formData);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formState, formData, isValidating]);
-
-    const renderContent = (
-        <>
-            <h1 className="text-xl font-bold">Chart</h1>
-            <FormSelect
-                name="plotType"
-                label="Plot Type"
-                options={plotTypes}
-            />
-
-            <div className="flex flex-col gap-2">
-                <label className="block font-medium text-sm">X axis</label>
-                <Input type="text" placeholder="X" {...register("x")} />
-                {errors.x && <p className="text-red-500 text-sm">{errors.x.message}</p>}
-            </div>
-
-            <div className="flex flex-col gap-2">
-                <label className="block font-medium text-sm">Y axis</label>
-                <Input type="text" placeholder="Y" {...register("y")} />
-                {errors.y && <p className="text-red-500 text-sm">{errors.y.message}</p>}
-            </div>
-
-            {plotType === "bubble" && (
-                <div className="flex flex-col gap-2">
-                    <label className="block font-medium text-sm">Radius</label>
-                    <Input type="text" placeholder="Radius" {...register("r")} />
-                    {"r" in errors && errors.r && <p className="text-red-500 text-sm">{errors.r.message}</p>}
-                </div>
-            )}
-
-            {plotType === "heatmap" && (
-                <div className="flex flex-col gap-2">
-                    <label className="block font-medium text-sm">Fill</label>
-                    <Input type="text" placeholder="Fill" {...register("fill")} />
-                    {"fill" in errors && errors.fill && <p className="text-red-500 text-sm">{errors.fill.message}</p>}
-                </div>
-            )}
-
-            <h1 className="text-xl font-bold">Display</h1>
-        </>
-    )
+    }, [formState, formData]);
 
     return (
-        <Form {...methods}>
+        <FormProvider {...methods}>
             <form className="flex flex-col gap-4">
-                {data.length > 0 ? renderContent : null}
+                {data.length > 0 ? (
+                    <>
+                        <h1 className="text-xl font-bold">Chart</h1>
+
+                        <FormSelect
+                            name="plotType"
+                            label="Plot Type"
+                            options={[
+                                { value: "bar", label: "Bar" },
+                                { value: "bubble", label: "Bubble" },
+                                { value: "heatmap", label: "Heatmap" },
+                            ]}
+                            placeholder="Select a plot type"
+                        />
+
+                        <FormSelect
+                            name="x"
+                            label="X Axis"
+                            options={columnOptions}
+                            placeholder="Select X axis"
+                        />
+
+                        <FormSelect
+                            name="y"
+                            label="Y Axis"
+                            options={columnOptions}
+                            placeholder="Select Y axis"
+                        />
+
+                        {plotType === "bubble" && (
+                            <FormSelect
+                                name="r"
+                                label="Radius"
+                                description="Select the column for the bubble size (radius)."
+                                options={columnOptions}
+                                placeholder="Select radius"
+                            />
+                        )}
+
+                        {plotType === "heatmap" && (
+                            <FormSelect
+                                name="fill"
+                                label="Fill"
+                                description="Select the column for the heatmap fill."
+                                options={columnOptions}
+                                placeholder="Select fill"
+                            />
+                        )}
+
+                        <h1 className="text-xl font-bold">Display</h1>
+                    </>
+                ) : null}
             </form>
-        </Form>
+        </FormProvider>
     );
 }
