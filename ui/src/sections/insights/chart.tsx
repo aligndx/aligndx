@@ -3,9 +3,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useCallback } from "react";
 import * as Plot from "@observablehq/plot";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@radix-ui/react-dropdown-menu";
+import { Form } from "@/components/ui/form";
+import FormSelect from "@/components/form/form-select";
 
 // Define the schema using zod with discriminated union
 const barPlotConfigSchema = z.object({
@@ -34,6 +34,13 @@ const plotConfigSchema = z.discriminatedUnion("plotType", [
     heatmapPlotConfigSchema,
 ]);
 
+const plotTypes = [
+    { value: 'bar', label: 'Bar Plot' },
+    { value: 'bubble', label: 'Bubble Plot' },
+    { value: 'heatmap', label: 'Heatmap' }
+];
+
+
 type PlotConfigSchema = z.infer<typeof plotConfigSchema>;
 
 export default function ChartForm({
@@ -44,14 +51,7 @@ export default function ChartForm({
     chartRef: React.RefObject<HTMLDivElement>;
 }) {
     // Initialize the form with react-hook-form and zod
-    const {
-        register,
-        handleSubmit,
-        watch,
-        setValue,
-        formState,
-        formState: { isValidating, errors },
-    } = useForm<PlotConfigSchema>({
+    const methods = useForm<PlotConfigSchema>({
         mode: "onChange",
         resolver: zodResolver(plotConfigSchema),
         defaultValues: {
@@ -60,6 +60,14 @@ export default function ChartForm({
             y: "abundance",
         },
     });
+    const {
+        register,
+        handleSubmit,
+        watch,
+        setValue,
+        formState,
+        formState: { isValidating, errors },
+    } = methods
 
     const plotType = watch("plotType");
 
@@ -69,7 +77,7 @@ export default function ChartForm({
 
             const container = chartRef.current;
             container.innerHTML = ""; // Clear previous plot
-            
+
             if (data.length === 0) return; // Don't generate plot if data is empty
 
             let plot;
@@ -107,23 +115,11 @@ export default function ChartForm({
     const renderContent = (
         <>
             <h1 className="text-xl font-bold">Chart</h1>
-            <div className="flex flex-col gap-2">
-                <label className="block font-medium text-sm">Plot Type</label>
-                <Select
-                    onValueChange={(value) => setValue("plotType", value as "bar" | "bubble" | "heatmap")}
-                    defaultValue="bar"
-                >
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a plot type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="bar">Bar</SelectItem>
-                        <SelectItem value="bubble">Bubble</SelectItem>
-                        <SelectItem value="heatmap">Heatmap</SelectItem>
-                    </SelectContent>
-                </Select>
-                {errors.plotType && <p className="text-red-500 text-sm">{errors.plotType.message}</p>}
-            </div>
+            <FormSelect
+                name="plotType"
+                label="Plot Type"
+                options={plotTypes}
+            />
 
             <div className="flex flex-col gap-2">
                 <label className="block font-medium text-sm">X axis</label>
@@ -158,8 +154,10 @@ export default function ChartForm({
     )
 
     return (
-        <form className="flex flex-col gap-4">
-            {data.length > 0 ? renderContent : null}
-        </form>
+        <Form {...methods}>
+            <form className="flex flex-col gap-4">
+                {data.length > 0 ? renderContent : null}
+            </form>
+        </Form>
     );
 }
