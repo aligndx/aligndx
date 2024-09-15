@@ -7,6 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/knadh/koanf/providers/env v0.1.0
 	github.com/knadh/koanf/v2 v2.1.1
+	github.com/labstack/echo/v5 v5.0.0-20230722203903-ec5b858dab61
 	github.com/nats-io/nats-server/v2 v2.10.18
 	github.com/nats-io/nats.go v1.36.0
 	github.com/pocketbase/dbx v1.10.1
@@ -75,7 +76,6 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
-	github.com/labstack/echo/v5 v5.0.0-20230722203903-ec5b858dab61 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
