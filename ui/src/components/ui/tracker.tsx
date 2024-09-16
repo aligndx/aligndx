@@ -85,18 +85,22 @@ const Tracker = React.forwardRef<HTMLDivElement, TrackerProps>(
         className={cn("group flex h-8 w-full items-center", className)}
         {...props}
       >
-        {data.map((props, index) => (
-          <Block
-            key={props.key ?? index}
-            defaultBackgroundColor={defaultBackgroundColor}
-            hoverEffect={hoverEffect}
-            {...props}
-          />
-        ))}
+        {data.map((blockProps, index) => {
+          const { key, ...restProps } = blockProps; // Extract key to pass separately
+          return (
+            <Block
+              key={key ?? index} // Pass key directly
+              defaultBackgroundColor={defaultBackgroundColor}
+              hoverEffect={hoverEffect}
+              {...restProps} // Spread other props without key
+            />
+          );
+        })}
       </div>
     )
   },
 )
+
 
 Tracker.displayName = "Tracker"
 

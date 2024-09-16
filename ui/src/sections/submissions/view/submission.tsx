@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { events } from "./mock";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { capitalize, cn } from "@/lib/utils";
 import { Event } from "@/types/event";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 export default function Submission() {
     const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
@@ -34,9 +35,7 @@ export default function Submission() {
     useEffect(() => {
         if (!submissionId) return; // Ensure submissionId is valid
         const handleSubmissionUpdate = (event: MessageEvent) => {
-            console.log('Received new submission update:', event);
             const parsedData = JSON.parse(event.data);
-            console.table(parsedData);
             setSubmissionUpdates(prevUpdates => [...prevUpdates, parsedData]);
         };
 
@@ -55,7 +54,7 @@ export default function Submission() {
                     <h1 className="text-lg">
                         {data?.name}
                     </h1>
-                    {/* <Badge>Status {data?.status}</Badge> */}
+                    <Badge>Status | {capitalize(data?.status || "")}</Badge>
                 </div>
                 <Tracker data={generateTrackerData(submissionUpdates)} />
             </div>

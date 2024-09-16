@@ -32,3 +32,10 @@ export const getCssVariableValue = (variableName: string) => {
   }
   return rawValue;
 };
+
+
+export const capitalize = (str: string) => {
+  const firstletter = str.charAt(0).toLocaleUpperCase() 
+  const restOfLetters = str.slice(1)
+  return firstletter + restOfLetters
+}
