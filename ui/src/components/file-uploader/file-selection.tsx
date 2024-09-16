@@ -11,7 +11,7 @@ interface FileSelectionProps {
 function FileSelection({ files, progresses, onRemove }: FileSelectionProps) {
   return (
     <ScrollArea className="h-full w-full px-3">
-      <div className="flex max-h-48 flex-col gap-4">
+      <div className="flex max-h-40 flex-col gap-4">
         {files.map((file, index) => (
           <FileCard
             key={index}

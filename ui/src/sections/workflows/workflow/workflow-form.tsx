@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, GitBranch } from "@/components/icons";
 import { Separator } from "@/components/ui/separator";
 import DOMPurify from "dompurify";
-import { useUploadFile } from "@/hooks/use-upload-file";
 import { useEffect, useState } from "react";
 import { Submission } from "@/types/submission";
 import { routes, useUpdateSearchParams } from "@/routes";
@@ -81,81 +80,82 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
         defaultValues
     });
 
-    const { submissions } = useApiService()
+    const { submissions, data } = useApiService()
     const { createSubmissionMutation } = submissions
-    const { onUpload, progresses, isUploading } = useUploadFile({
-        defaultUploadedFiles: [],
-    });
+    const { onUpload, progresses, isUploading, uploadedFiles } = data.useUploadFileMutation([]);
 
     async function onSubmit(values: z.infer<typeof extendedFormSchema>) {
-        const { name, ...rest } = values
-        const inputs = { ...rest }
-
-        // Todo fix typigns
-        function transformInputsToFiles(inputs: any) {
+        const { name, ...rest } = values;
+        const inputs = { ...rest };
+    
+        // Transform inputs to file objects for upload
+        function transformInputsToFiles(inputs: Record<string, any>) {
             const filePathKeys = getFilePathKeys(jsonSchema);
             return Object.entries(inputs)
                 .filter(([id]) => filePathKeys.includes(id)) // Filter to include only keys present in filePathKeys
-                .flatMap(([id, files]: any) =>
-                    files.map((file: any) => ({
+                .flatMap(([id, files]: [string, File[]]) =>
+                    files.map((file) => ({
                         id,
                         file,
                     }))
                 );
         }
-        const fileInputs = transformInputsToFiles(inputs)
-
+    
+        const fileInputs = transformInputsToFiles(inputs);
+    
         try {
-            let uploadResults = []
+            let uploadResults = [];
+    
+            // If there are files, upload them
             if (fileInputs.length > 0) {
                 uploadResults = await onUpload(fileInputs, { user: currentUser?.id || "" });
-                // Check if all files were successfully uploaded
-                const allUploadsSuccessful = uploadResults.every(result => result.success);
-
-                if (!allUploadsSuccessful) {
-                    throw new Error("File upload failed");
-                }
             }
-
-            // grab file inputs if they exist
-            const attachedData: string[] = []
+    
+            // Process the uploaded results
+            const attachedData: string[] = [];
             const newFileInputs: Record<string, string> = {};
+    
             uploadResults.forEach((item) => {
-                newFileInputs[item.id] = item.data.id
-                attachedData.push(item.data.id)
-            })
+                newFileInputs[item.id] = item.data.id;
+                attachedData.push(item.data.id);
+            });
+    
+            // Merge file inputs with form inputs
             const mergedInputs = {
                 ...inputs,
-                ...newFileInputs
-            }
-
-            // Proceed with the rest of the form submission
+                ...newFileInputs,
+            };
+    
+            // Create the submission payload
             const workflow = id;
+    
             if (typeof name !== 'string') {
                 throw new Error('Name must be a string');
-              }
-
+            }
+    
             const submissionPayload = {
                 name,
                 params: mergedInputs,
                 workflow,
                 user: currentUser?.id || "",
             };
-
+    
             await createSubmissionMutation.mutateAsync(submissionPayload, {
                 onSuccess: (data) => {
                     toast.success("Form Submitted Successfully");
-                    updateSearchParams({ "id": data.id }, routes.dashboard.submissions.submission)
+                    updateSearchParams({ "id": data.id }, routes.dashboard.submissions.submission);
                 },
                 onError: (error) => {
                     toast.error("Form Submission Failed");
                 },
             });
+            
         } catch (error) {
             console.error("Error:", error);
             toast.error("There was an error submitting the form");
         }
     }
+    
 
     return (
         <div className="flex flex-grow flex-row gap-2">

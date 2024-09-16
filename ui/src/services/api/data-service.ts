@@ -1,7 +1,7 @@
 import PocketBase, { RecordModel } from 'pocketbase';
 import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult, UseQueryOptions } from '@tanstack/react-query';
 import { Data } from '@/types/data';
-
+import { useUploadFileHook } from './use-upload-file';
 export const mapRecordToData = (record: RecordModel): Data => {
   return {
     id: record.id,
@@ -132,6 +132,10 @@ const useDataService = (pb: PocketBase) => {
     return await _getDataURL(pb, id);
   };
 
+  const useUploadFileMutation = (defaultUploadedFiles: Data[]) => {
+    return useUploadFileHook({ pb, defaultUploadedFiles })
+  }
+
   return {
     getDataURLQuery,
     getPrivateDataURLQuery,
@@ -140,6 +144,7 @@ const useDataService = (pb: PocketBase) => {
     useCreateDataMutation,
     useUpdateDataMutation,
     useDeleteDataMutation,
+    useUploadFileMutation
   };
 };
 
