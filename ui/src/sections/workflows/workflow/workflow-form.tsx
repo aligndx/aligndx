@@ -81,7 +81,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
 
     const { submissions, data } = useApiService()
     const { createSubmissionMutation } = submissions
-    const { onUpload, progresses, isUploading, uploadedFiles } = data.useUploadFileMutation([]);
+    const { onUpload, progresses, isUploading } = data.useUploadFileMutation([]);
 
     async function onSubmit(values: z.infer<typeof extendedFormSchema>) {
         const { name, ...rest } = values;
