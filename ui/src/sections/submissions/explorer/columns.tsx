@@ -20,25 +20,25 @@ export const useColumns = () => {
         <DataTableColumnHeader column={column} title="Name" />
       ),
     },
-    {
-      accessorKey: "workflow",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Workflow" />
-      ),
-      cell: ({ row }) => {
-        const workflow = row.original.workflow;
+    // {
+    //   accessorKey: "workflow",
+    //   header: ({ column }) => (
+    //     <DataTableColumnHeader column={column} title="Workflow" />
+    //   ),
+    //   cell: ({ row }) => {
+    //     const workflow = row.original.workflow;
 
-        if (typeof workflow === 'string') {
-          return <div>{workflow}</div>;
-        }
+    //     if (typeof workflow === 'string') {
+    //       return <div>{workflow}</div>;
+    //     }
 
-        return (
-          <div>
-            {workflow?.name}
-          </div>
-        );
-      },
-    },
+    //     return (
+    //       <div>
+    //         {workflow?.name}
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "created",
       header: ({ column }) => (
