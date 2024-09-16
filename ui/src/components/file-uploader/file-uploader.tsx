@@ -15,7 +15,7 @@ import FileSelection from "./file-selection"
 import { Button } from "../ui/button"
 import { Separator } from "../ui/separator"
 
-interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: File[]
   onValueChange?: (files: File[]) => void
   onUpload?: (files: File[]) => Promise<void>

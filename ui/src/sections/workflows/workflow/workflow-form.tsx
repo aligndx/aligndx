@@ -19,6 +19,9 @@ import DOMPurify from "dompurify";
 import { useEffect, useState } from "react";
 import { Submission } from "@/types/submission";
 import { routes, useUpdateSearchParams } from "@/routes";
+import FormInput from "@/components/form/form-text";
+import FormUploader from "@/components/form/form-upload";
+import { capitalize } from "@/lib/utils";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -74,7 +77,7 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
     const formSchema = generateZodSchema(jsonSchema);
     const extendedFormSchema = formSchema.extend({
         name: z.string().min(1, 'Name is required'),  // Example: `name` as a required string
-      });
+    });
     const form = useForm({
         resolver: zodResolver(extendedFormSchema),
         defaultValues
@@ -87,7 +90,7 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
     async function onSubmit(values: z.infer<typeof extendedFormSchema>) {
         const { name, ...rest } = values;
         const inputs = { ...rest };
-    
+
         // Transform inputs to file objects for upload
         function transformInputsToFiles(inputs: Record<string, any>) {
             const filePathKeys = getFilePathKeys(jsonSchema);
@@ -100,46 +103,46 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
                     }))
                 );
         }
-    
+
         const fileInputs = transformInputsToFiles(inputs);
-    
+
         try {
             let uploadResults = [];
-    
+
             // If there are files, upload them
             if (fileInputs.length > 0) {
                 uploadResults = await onUpload(fileInputs, { user: currentUser?.id || "" });
             }
-    
+
             // Process the uploaded results
             const attachedData: string[] = [];
             const newFileInputs: Record<string, string> = {};
-    
+
             uploadResults.forEach((item) => {
                 newFileInputs[item.id] = item.data.id;
                 attachedData.push(item.data.id);
             });
-    
+
             // Merge file inputs with form inputs
             const mergedInputs = {
                 ...inputs,
                 ...newFileInputs,
             };
-    
+
             // Create the submission payload
             const workflow = id;
-    
+
             if (typeof name !== 'string') {
                 throw new Error('Name must be a string');
             }
-    
+
             const submissionPayload = {
                 name,
                 params: mergedInputs,
                 workflow,
                 user: currentUser?.id || "",
             };
-    
+
             await createSubmissionMutation.mutateAsync(submissionPayload, {
                 onSuccess: (data) => {
                     toast.success("Form Submitted Successfully");
@@ -149,34 +152,24 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
                     toast.error("Form Submission Failed");
                 },
             });
-            
+
         } catch (error) {
             console.error("Error:", error);
             toast.error("There was an error submitting the form");
         }
     }
-    
+
 
     return (
         <div className="flex flex-grow flex-row gap-2">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 p-4 gap-4">
-                    <FormField
-                        control={form.control}
-                        name={"name"}
+                    <FormInput
+                        name="name"
+                        label="Name"
+                        description="A run name for this submission"
                         defaultValue={getRandomName()}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>
-                                    Name
-                                </FormLabel>
-                                <FormDescription>A run name for this submission.</FormDescription>
-                                <FormControl>
-                                    <Input type="text" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        type="text"
                     />
                     {Object.entries(jsonSchema.properties).map(([key, value]) => {
                         const { type, description, pattern, default: defaultValue, format, contentMediaType, maxItems } = value as JsonSchemaProperty;
@@ -188,41 +181,30 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
 
                         const maxFileCount = maxItems || undefined
 
-                        return (
-                            <FormField
-                                key={key}
-                                control={form.control}
-                                name={key}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            {capitalizeWords(key)}
-                                        </FormLabel>
-                                        <FormDescription>{description}</FormDescription>
-                                        <FormControl>
-                                            {(() => {
-                                                switch (format) {
-                                                    case 'file-path':
-                                                        return <FileUploader
-                                                            accept={accept}
-                                                            multiple
-                                                            compact
-                                                            progresses={progresses}
-                                                            disabled={isUploading}
-                                                            maxFileCount={maxFileCount}
-                                                            value={field.value}
-                                                            onValueChange={field.onChange}
-                                                        />
-                                                    default:
-                                                        return <Input type="text" {...field} />;
-                                                }
-                                            })()}
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )
+                        switch (format) {
+                            case 'file-path':
+                                return <FormUploader
+                                    key={key}
+                                    name={key}
+                                    label={capitalize(key)}
+                                    description={description}
+                                    accept={accept}
+                                    multiple
+                                    compact
+                                    progresses={progresses}
+                                    disabled={isUploading}
+                                    maxFileCount={maxFileCount}
+                                />
+                            default:
+                                return <FormInput
+                                    key={key}
+                                    name={key}
+                                    label={capitalize(key)}
+                                    description={description}
+                                    type="text"
+                                />
+                        }
+
                     })}
 
                     <Button variant="expandIcon" Icon={ArrowRight} iconPlacement="right" className="text-background-foreground" type="submit">Submit</Button>
