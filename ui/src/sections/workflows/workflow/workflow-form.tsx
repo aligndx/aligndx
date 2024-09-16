@@ -22,6 +22,7 @@ import { routes, useUpdateSearchParams } from "@/routes";
 import FormInput from "@/components/form/form-text";
 import FormUploader from "@/components/form/form-upload";
 import { capitalize } from "@/lib/utils";
+import { Workflow } from "@/types/workflow";
 
 export interface JsonSchemaProperty {
     type: string;
@@ -39,22 +40,14 @@ export interface JsonSchemaProperty {
 }
 
 interface WorkflowFormProps {
-    id: string;
-    name: string;
-    repository: string;
-    description: string;
-    jsonSchema: JsonSchema;
+    workflow: Workflow;
 }
 
-function capitalizeWords(input: string): string {
-    const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
-    const words = input.split('_');
-    return words.map(capitalize).join(' ');
-}
-
-
-export default function WorkflowForm({ name, repository, description, id, jsonSchema }: WorkflowFormProps) {
+export default function WorkflowForm({ workflow }: WorkflowFormProps) {
     const updateSearchParams = useUpdateSearchParams()
+
+    const jsonSchema = workflow.schema
+    const id = workflow.id
 
     const defaultValues = Object.entries(jsonSchema.properties).reduce((acc, [key, value]) => {
         const { default: defaultValue, type, format } = value as JsonSchemaProperty;
@@ -80,7 +73,10 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
     });
     const form = useForm({
         resolver: zodResolver(extendedFormSchema),
-        defaultValues
+        defaultValues: {
+            ...defaultValues,
+            name : getRandomName()
+        }
     });
 
     const { submissions, data } = useApiService()
@@ -129,9 +125,6 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
                 ...newFileInputs,
             };
 
-            // Create the submission payload
-            const workflow = id;
-
             if (typeof name !== 'string') {
                 throw new Error('Name must be a string');
             }
@@ -139,7 +132,7 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
             const submissionPayload = {
                 name,
                 params: mergedInputs,
-                workflow,
+                workflow : id,
                 user: currentUser?.id || "",
             };
 
@@ -168,7 +161,6 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
                         name="name"
                         label="Name"
                         description="A run name for this submission"
-                        defaultValue={getRandomName()}
                         type="text"
                     />
                     {Object.entries(jsonSchema.properties).map(([key, value]) => {
@@ -209,22 +201,7 @@ export default function WorkflowForm({ name, repository, description, id, jsonSc
 
                     <Button variant="expandIcon" Icon={ArrowRight} iconPlacement="right" className="text-background-foreground" type="submit">Submit</Button>
                 </form>
-            </Form>
-            <div className="hidden md:flex w-[300px] flex-col gap-4 p-4 border bg-muted/50">
-                <header className="flex  gap-2 text-lg" >
-                    {name}
-                    <a className="flex flex-row  gap-2 underline items-center text-sm hover:text-muted-foreground"
-                        href={repository}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => { e.stopPropagation(); }}
-                    >
-                        <GitBranch />
-                    </a>
-                </header>
-                <div className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }} />
-                <Separator className="my-4" />
-            </div>
+            </Form> 
         </div>
 
     );

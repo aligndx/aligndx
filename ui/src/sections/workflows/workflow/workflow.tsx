@@ -2,7 +2,6 @@
 
 import { useApiService } from "@/services/api";
 import { useSearchParams } from "@/routes";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import WorkflowForm, { WorkflowFormSkeleton } from "./workflow-form";
 import { Skeleton } from "@/components/ui/skeleton";
 

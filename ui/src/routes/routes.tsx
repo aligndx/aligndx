@@ -4,7 +4,7 @@ const BASE_ROUTES = {
 }
 
 export const routes = {
-    home: "/dashboard/workflows",
+    home: "/dashboard/upload",
     auth: {
         signin: `${BASE_ROUTES.ROOT}/signin`,
         signup: `${BASE_ROUTES.ROOT}/signup`,
@@ -19,6 +19,9 @@ export const routes = {
         submissions: {
             root: `${BASE_ROUTES.DASHBOARD}/submissions`,
             submission: `${BASE_ROUTES.DASHBOARD}/submissions/submission`,
+        },
+        upload: {
+            root: `${BASE_ROUTES.DASHBOARD}/upload`
         },
         workflows: {
             root: `${BASE_ROUTES.DASHBOARD}/workflows`,

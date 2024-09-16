@@ -15,7 +15,7 @@ const links = [
   // },
   {
     label: "Upload",
-    href: routes.dashboard.workflows.root,
+    href: routes.dashboard.upload.root,
     icon: (
       <Analyze className={commonStyles} />
     ),
