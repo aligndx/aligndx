@@ -9,6 +9,10 @@ params {
   nats_subject = '{{.NatsSubject}}'
   nats_events = [{{range $index, $element := .NatsEvents}}{{if $index}}, {{end}}'{{$element}}'{{end}}]
   nats_jetstream_enabled = {{.NatsJetStreamEnabled}}
+
+  max_cpus   = 2
+  max_memory = '2.GB'
+  max_time   = '1.h'
 }
 
 nats {

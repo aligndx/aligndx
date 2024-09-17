@@ -14,11 +14,12 @@ import (
 
 // WorkflowInputs represents the expected inputs for the WorkflowHandler.
 type WorkflowInputs struct {
-	Name     string                 `json:"name"`
-	Workflow string                 `json:"workflow"`
-	Inputs   map[string]interface{} `json:"inputs"`
-	JobID    string                 `json:"jobid"`
-	UserID   string                 `json:"userid"`
+	Name               string                 `json:"name"`
+	WorkflowRepository string                 `json:"workflowrepository"`
+	WorkflowSchema     map[string]interface{} `json:"workflowschema"`
+	Inputs             map[string]interface{} `json:"inputs"`
+	JobID              string                 `json:"jobid"`
+	UserID             string                 `json:"userid"`
 }
 
 // WorkflowHandlerSpecific contains specific job logic
@@ -38,23 +39,25 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	}
 	defer os.Remove(configFilePath)
 
-	jsonFilePath, err := prepareJSONFile(inputs.Inputs)
-	if err != nil {
-		return fmt.Errorf("failed to prepare JSON file: %w", err)
-	}
-	defer os.Remove(jsonFilePath)
-
 	localExec := local.NewLocalExecutor(log)
 	es := executor.NewExecutorService(localExec)
 
 	baseDir := fmt.Sprintf("%s/pb_data/workflows", currentDir)
 	jobDir := fmt.Sprintf("%s/pb_data/workflows/%s", currentDir, inputs.JobID)
+	inputsDir := fmt.Sprintf("%s/inputs", jobDir)
 
 	os.MkdirAll(baseDir, 0777)
 	os.MkdirAll(jobDir, 0777)
+	os.MkdirAll(inputsDir, 0777)
+
+	jsonFilePath, err := prepareJSONFile(cfg, inputs.Inputs, inputs.WorkflowSchema, inputsDir)
+	if err != nil {
+		return fmt.Errorf("failed to prepare JSON file: %w", err)
+	}
+	defer os.Remove(jsonFilePath)
 
 	// Defer the cleanup immediately after jobDir creation
-	defer os.RemoveAll(jobDir)
+	// defer os.RemoveAll(jobDir)
 
 	nxfDir := fmt.Sprintf("%s/nxf", jobDir)
 	resultsdir := fmt.Sprintf("%s/%s_results", jobDir, inputs.Name)
@@ -63,11 +66,11 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 		[]string{
 			fmt.Sprintf("%s/nextflow", baseDir),
 			"-log", fmt.Sprintf("%s/nextflow.log", jobDir),
-			"run", inputs.Workflow,
+			"run", inputs.WorkflowRepository,
+			"-latest", // Ensure the latest code is pulled
 			"-c", configFilePath,
-			// "-params-file", jsonFilePath,
-			// "-profile", "docker",
-			"-profile", "docker,test",
+			"-params-file", jsonFilePath,
+			"-profile", "docker",
 			"--nats_url", cfg.MQ.URL,
 			"--outdir", resultsdir,
 		},
@@ -106,30 +109,4 @@ func WorkflowHandler(ctx context.Context, inputs interface{}) error {
 	}
 
 	return WorkflowHandlerSpecific(ctx, workflowInputs)
-}
-
-func prepareJSONFile(inputs map[string]interface{}) (string, error) {
-	// Convert inputs to JSON
-	inputsJSON, err := json.Marshal(inputs)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal inputs to JSON: %w", err)
-	}
-
-	// Create a temporary file to save the JSON
-	tmpfile, err := os.CreateTemp("", "aligndx_nf_params_*.json")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temporary file: %w", err)
-	}
-
-	// Write JSON to the temporary file
-	if _, err := tmpfile.Write(inputsJSON); err != nil {
-		tmpfile.Close() // Close the file before returning error
-		return "", fmt.Errorf("failed to write JSON to temporary file: %w", err)
-	}
-	if err := tmpfile.Close(); err != nil {
-		return "", fmt.Errorf("failed to close temporary file: %w", err)
-	}
-
-	// Return the path of the temporary JSON file
-	return tmpfile.Name(), nil
 }

@@ -77,7 +77,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
         resolver: zodResolver(extendedFormSchema),
         defaultValues: {
             ...defaultValues,
-            name : getRandomName()
+            name: getRandomName()
         }
     });
 
@@ -113,14 +113,20 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
             }
 
             // Process the uploaded results
-            const attachedData: string[] = [];
-            const newFileInputs: Record<string, string> = {};
+            const newFileInputs: Record<string, string[]> = {};
 
             uploadResults.forEach((item) => {
-                newFileInputs[item.id] = item.data.id;
-                attachedData.push(item.data.id);
+                // Check if item.id already exists in newFileInputs
+                if (!newFileInputs[item.id]) {
+                    // Initialize it as an array if it doesn't exist
+                    newFileInputs[item.id] = [];
+                }
+                
+                // Push the current item.data.id into the array
+                newFileInputs[item.id].push(item.data.id);
+                
             });
-
+            
             // Merge file inputs with form inputs
             const mergedInputs = {
                 ...inputs,
@@ -134,7 +140,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
             const submissionPayload = {
                 name,
                 params: mergedInputs,
-                workflow : id,
+                workflow: id,
                 user: currentUser?.id || "",
             };
 
@@ -174,7 +180,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
                         }
 
                         if (writeonly) {
-                            return  
+                            return
                         }
 
                         const maxFileCount = maxItems || undefined
@@ -207,7 +213,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
 
                     <Button variant="expandIcon" Icon={ArrowRight} iconPlacement="right" className="text-background-foreground" type="submit">Submit</Button>
                 </form>
-            </Form> 
+            </Form>
         </div>
 
     );

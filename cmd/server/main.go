@@ -78,12 +78,16 @@ func main() {
 		userID := e.HttpContext.Get(apis.ContextAuthRecordKey).(*models.Record).Id
 
 		workflowRepo := workflowRecord.GetString("repository")
+		schema := map[string]interface{}{}
+		workflowRecord.UnmarshalJSONField("schema", &schema)
+
 		workflowInputs := workflow.WorkflowInputs{
-			Name:     record.GetString("name"),
-			Workflow: workflowRepo,
-			Inputs:   result,
-			JobID:    jobID,
-			UserID:   userID,
+			Name:               record.GetString("name"),
+			WorkflowRepository: workflowRepo,
+			WorkflowSchema:     schema,
+			Inputs:             result,
+			JobID:              jobID,
+			UserID:             userID,
 		}
 
 		queue_err := jobService.QueueJob(ctx, jobID, workflowInputs, "workflow")
