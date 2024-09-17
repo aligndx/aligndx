@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/components/ui/sonner";
-import { z } from "zod"
+import { boolean, z } from "zod"
 import generateZodSchema, { JsonSchema } from "@/lib/parser";
 import getRandomName from "@/lib/getRandomName";
 import { useApiService } from "@/services/api";
@@ -36,6 +36,8 @@ export interface JsonSchemaProperty {
     format?: string;
     maxItems: number;
     minLength?: number;
+    writeonly?: boolean;
+    readonly?: boolean;
     contentMediaType?: string;
 }
 
@@ -164,11 +166,15 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
                         type="text"
                     />
                     {Object.entries(jsonSchema.properties).map(([key, value]) => {
-                        const { type, description, pattern, default: defaultValue, format, contentMediaType, maxItems } = value as JsonSchemaProperty;
+                        const { type, description, pattern, default: defaultValue, format, contentMediaType, maxItems, writeonly, readonly } = value as JsonSchemaProperty;
                         const acceptKey = contentMediaType;
                         const accept: Record<string, any> = {};
                         if (acceptKey && typeof acceptKey === "string") {
                             accept[acceptKey] = [];
+                        }
+
+                        if (writeonly) {
+                            return  
                         }
 
                         const maxFileCount = maxItems || undefined
