@@ -22,10 +22,23 @@ export const getData = async (pb: PocketBase, id: string): Promise<Data> => {
   return mapRecordToData(record);
 };
 
-export const getDatas = async (pb: PocketBase): Promise<Data[]> => {
-  const records = await pb.collection('data').getFullList();
+export const getDatas = async (
+  pb: PocketBase,
+  options: { filter?: string; sort?: string; expand?: string } = {}
+): Promise<Data[]> => {
+  const queryOptions: Record<string, string> = {};
+
+  // Only assign options if they are defined
+  if (options.filter) queryOptions.filter = options.filter;
+  if (options.sort) queryOptions.sort = options.sort;
+  if (options.expand) queryOptions.expand = options.expand;
+
+  const records = await pb.collection('data').getFullList(queryOptions);
+
   return records.map(mapRecordToData);
 };
+
+
 
 export const createData = async (pb: PocketBase, data: any): Promise<Data> => {
   const record = await pb.collection('data').create(data);
@@ -88,14 +101,18 @@ const useDataService = (pb: PocketBase) => {
     });
   };
 
-  const useGetDatasQuery = (queryOptions?: UseQueryOptions<Data[], Error>): UseQueryResult<Data[], Error> => {
+  const useGetDatasQuery = (
+    options?: { filter?: string; sort?: string; expand?: string },
+    queryOptions?: UseQueryOptions<Data[], Error>
+  ): UseQueryResult<Data[], Error> => {
     return useQuery({
-      queryKey: ['datas'],
-      queryFn: () => getDatas(pb),
+      queryKey: ['datas', options], // Ensure query key changes based on options
+      queryFn: () => getDatas(pb, options),
       enabled: false, // Default to disabled
       ...queryOptions, // Override with user-provided options
     });
   };
+
 
   const useCreateDataMutation = (): UseMutationResult<Data, Error, FormData> => {
     return useMutation({

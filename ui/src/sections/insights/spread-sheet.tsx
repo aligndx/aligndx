@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { HTMLAttributes, useEffect } from "react";
+import { HTMLAttributes, useEffect, useState } from "react";
 import { useDuckDb, exportCsv } from "duckdb-wasm-kit";
 import { insertRemoteFile } from "./insert-file";
 import { toast } from "@/components/ui/sonner";
@@ -14,6 +14,8 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Importing shadcn scrollarea
 import { Button } from "@/components/ui/button";
 import { DownloadIcon } from '@/components/icons'
+import { Input } from "@/components/ui/input";
+
 export interface Source {
     id: string;  // Table name
     url: string; // URL for the source file
@@ -32,6 +34,7 @@ export default function SpreadSheet({
     className,
 }: SpreadSheetProps) {
     const { db, loading, error } = useDuckDb();
+    const [filter, setFilter] = useState("");  // State to hold filter input
 
     useEffect(() => {
         const loadTable = async () => {
@@ -110,29 +113,40 @@ export default function SpreadSheet({
         }
     };
 
-
     if (loading) return <p>Loading ...</p>;
+
+    // Filter the data based on the search input
+    const filteredData = data.filter((row) => {
+        return Object.values(row).some((value) =>
+            String(value).toLowerCase().includes(filter.toLowerCase())
+        );
+    });
 
     const renderContent = (
         <>
-            <header className="flex justify-start px-4">
+            <header className="flex items-center justify-between px-4">
                 <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={handleExport}>
                     <DownloadIcon className="h-4 w-4" />
                     Export
                 </Button>
+                <Input 
+                    placeholder="Search pathogens..." 
+                    value={filter} 
+                    onChange={(e) => setFilter(e.target.value)}  // Update filter state on input change
+                />
             </header>
             <div className="flex h-full">
                 <ScrollArea className="w-0 flex-1 whitespace-nowrap ">
                     <Table> {/* Ensures table fills available width */}
                         <TableHeader>
                             <TableRow>
-                                {data.length > 0 && Object.keys(data[0]).map((col) => (
+                                {filteredData.length > 0 && Object.keys(filteredData[0]).map((col) => (
                                     <TableHead key={col}>{col}</TableHead>
                                 ))}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {data.map((row: any, rowIndex: number) => (
+                            {filteredData.map((row: any, rowIndex: number) => (
                                 <TableRow key={rowIndex}>
                                     {Object.values(row).map((value: any, colIndex: number) => (
                                         <TableCell key={colIndex}>
@@ -152,7 +166,7 @@ export default function SpreadSheet({
     // Only render the content if there is data to display
     return (
         <div className={cn("flex flex-col h-full ", className)}>
-            {data.length > 0 ? renderContent : null}
+            {filteredData.length > 0 ? renderContent : null}
         </div>
     );
 }

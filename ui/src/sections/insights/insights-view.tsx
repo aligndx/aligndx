@@ -9,7 +9,7 @@ import { SubmissionSelector } from './submission-selector';
 import { Data } from '@/types/data';
 import { useApiService } from '@/services/api';
 import ChartForm from './chart';
-import { Button } from '@/components/ui/button'; 
+import { Button } from '@/components/ui/button';
 
 export default function InsightsView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -19,10 +19,6 @@ export default function InsightsView() {
     const { data: dataService } = useApiService();
     const chartRef = useRef<HTMLDivElement | null>(null);
     const [isSvgAvailable, setIsSvgAvailable] = useState(false);
-
-    const isData = (output: string | Data): output is Data => {
-        return (output as Data).name !== undefined;
-    };
 
     const handlePlotExport = () => {
         if (chartRef.current) {
@@ -46,28 +42,32 @@ export default function InsightsView() {
         }
     };
 
+    const filter = `name = "bracken_combined.filtered.transformed_long.tsv"`;
+    const { data: queryData, refetch } = dataService.useGetDatasQuery({ filter })
+
     const getURLs = async (subs: Submission[]) => {
-        const urlPromises = subs.flatMap((sub) => {
-            return sub.outputs
-                .filter(isData)
-                .filter((data: Data) => data.name === 'bracken_combined.filtered.tsv') // Get bracken output file
-                .map(async (data: Data) => {
-                    const url = await dataService.getPrivateDataURLQuery(data.id || ''); // Safely access 'id'
-                    return { id: sub.id, url }; // Return object with id and url
-                });
+        refetch();
+        const urlPromises = subs.flatMap(async (sub) => {
+            const dataOfInterest = queryData?.filter((item) => item.submission === sub.id);
+            const dataFile = dataOfInterest && dataOfInterest[0]?.id;
+            if (dataFile) {
+                const url = await dataService.getPrivateDataURLQuery(dataFile); // Safely access 'id'
+                return { id: `${dataFile}`, url }; // Return object with id and url
+            }
+            return undefined; // Explicitly return undefined for no results
         });
-
+    
         const urls = await Promise.all(urlPromises);
-        return urls;
+        return urls.filter((url) => url !== undefined); // Filter out undefined values
     };
-
+    
     const handleSubmissionSelectionChange = async (subs: Submission[]) => {
         setSelectedSubmissions(subs);
-
+    
         const urls = await getURLs(subs);
-        setDataSources(urls);
+        setDataSources(urls as Source[]); // Cast to Source[] since undefined values are removed
     };
-
+    
     // Monitor chartRef for changes using MutationObserver
     useEffect(() => {
         const observer = new MutationObserver((mutationsList) => {
@@ -142,3 +142,4 @@ export default function InsightsView() {
         </div>
     );
 }
+

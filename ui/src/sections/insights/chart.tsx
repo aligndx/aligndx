@@ -78,6 +78,23 @@ export default function ChartForm({
     const plotType = watch("plotType");
     const formData = watch();
 
+    const calculateMargin = (axisLabels: string[], tickRotation = 0, titlePadding = 0) => {
+        const longestLabel = axisLabels.reduce(
+            (a, b) => (a.length > b.length ? a : b),
+            ""
+        );
+    
+        // Estimate the width based on character length (approximation, can fine-tune)
+        const labelWidth = longestLabel.length * 13; // Assuming ~8px per character
+    
+        // Adjust for rotation if there's a tick rotation (e.g., -30 degrees)
+        const marginBottom = tickRotation !== 0 ? labelWidth * Math.cos(tickRotation) + 40 : 40;
+    
+        return {
+            marginBottom: marginBottom + titlePadding,  // Add padding for the axis title
+        };
+    };
+
     const generatePlot = useCallback(
         (formData: PlotConfigSchema) => {
             if (!chartRef.current) return;
@@ -91,9 +108,16 @@ export default function ChartForm({
 
             const { plotOptions } = formData;
 
+            const xAxisLabels = data.map((row: any) => row[plotOptions.x]);
+            const margins = calculateMargin(xAxisLabels, -30); // Use -30 for tick rotation as per the original code
+
             switch (formData.plotType) {
                 case "bar":
                     plot = Plot.plot({
+                        ...margins,
+                        x: {
+                            tickRotate: -30,
+                        },
                         marks: [
                             Plot.barY(
                                 data,
@@ -207,7 +231,7 @@ export default function ChartForm({
                         )}
 
                         <h1 className="text-xl font-bold">Display</h1>
-                        <FormSwitch name="plotOptions.tip" label="Tip" description="Enable or disable interactive tips"/>
+                        <FormSwitch name="plotOptions.tip" label="Tip" description="Enable or disable interactive tips" />
                     </>
                 ) : null}
             </form>
