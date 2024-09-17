@@ -22,18 +22,43 @@ export default function InsightsView() {
 
     const handlePlotExport = () => {
         if (chartRef.current) {
-            const svgElement = chartRef.current.querySelector('svg');
-
-            if (svgElement) {
-                // Clone the SVG node to avoid mutating the live DOM element
-                const clonedSvgElement = svgElement.cloneNode(true);
-
-                // Serialize the cloned SVG element into an XML string
+            const svgElements = chartRef.current.querySelectorAll('svg');
+    
+            if (svgElements.length > 0) {
                 const serializer = new XMLSerializer();
-                let svgString = serializer.serializeToString(clonedSvgElement);
-
-                // Create a blob and trigger the download
-                const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+                let combinedSvgContent = '';
+                let totalWidth = 0;
+                let totalHeight = 0;
+    
+                // Iterate over each SVG element and combine them while preserving their layout
+                svgElements.forEach((svgElement, index) => {
+                    const clonedSvgElement = svgElement.cloneNode(true) as SVGElement;
+                    const svgString = serializer.serializeToString(clonedSvgElement);
+    
+                    // Get the bounding box for the current SVG
+                    const bbox = svgElement.getBoundingClientRect();
+    
+                    // Update total width and height based on bounding box
+                    totalWidth = Math.max(totalWidth, bbox.x + bbox.width);
+                    totalHeight = Math.max(totalHeight, bbox.y + bbox.height);
+    
+                    // Wrap each SVG in a <g> element, translate it to its original position
+                    combinedSvgContent += `
+                        <g transform="translate(${bbox.x}, ${bbox.y})">
+                            ${svgString}
+                        </g>
+                    `;
+                });
+    
+                // Now wrap all SVG content in a single root SVG tag with the proper width and height
+                const rootSvg = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${totalHeight}">
+                        ${combinedSvgContent}
+                    </svg>
+                `;
+    
+                // Create a blob from the root SVG string
+                const svgBlob = new Blob([rootSvg], { type: "image/svg+xml;charset=utf-8" });
                 const downloadLink = document.createElement("a");
                 downloadLink.href = URL.createObjectURL(svgBlob);
                 downloadLink.download = "chart.svg";
@@ -41,6 +66,9 @@ export default function InsightsView() {
             }
         }
     };
+    
+    
+    
 
     const filter = `name = "bracken_combined.filtered.transformed_long.tsv"`;
     const { data: queryData, refetch } = dataService.useGetDatasQuery({ filter })

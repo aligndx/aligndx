@@ -78,20 +78,20 @@ export default function ChartForm({
     const plotType = watch("plotType");
     const formData = watch();
 
-    const calculateMargin = (axisLabels: string[], tickRotation = 0, titlePadding = 0) => {
+    const calculateMargin = (axisLabels: string[], tickRotation = 0, xTitlePadding = 0, yTitlePadding = 0) => {
         const longestLabel = axisLabels.reduce(
             (a, b) => (a.length > b.length ? a : b),
             ""
         );
-    
+
         // Estimate the width based on character length (approximation, can fine-tune)
         const labelWidth = longestLabel.length * 13; // Assuming ~8px per character
-    
+
         // Adjust for rotation if there's a tick rotation (e.g., -30 degrees)
         const marginBottom = tickRotation !== 0 ? labelWidth * Math.cos(tickRotation) + 40 : 40;
-    
+        const marginLeft = labelWidth
         return {
-            marginBottom: marginBottom + titlePadding,  // Add padding for the axis title
+            marginBottom: marginBottom + xTitlePadding,  // Add padding for the axis title
         };
     };
 
@@ -130,6 +130,10 @@ export default function ChartForm({
                     break;
                 case "bubble":
                     plot = Plot.plot({
+                        ...margins,
+                        x: {
+                            tickRotate: -30,
+                        },
                         marks: [
                             Plot.dot(
                                 data,
@@ -142,7 +146,10 @@ export default function ChartForm({
                     break;
                 case "heatmap":
                     plot = Plot.plot({
-                        color: { legend: true },
+                        ...margins,
+                        x: {
+                            tickRotate: -30,
+                        }, color: { legend: true},
                         marks: [
                             Plot.cell(
                                 data,
