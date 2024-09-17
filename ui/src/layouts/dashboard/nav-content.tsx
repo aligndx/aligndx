@@ -1,4 +1,4 @@
-import { Analyze, Archive, Chart, DashboardIcon, Drive} from "@/components/icons";
+import { Analyze, Archive, MagnifyingGlass} from "@/components/icons";
 import { routes, usePathname } from "@/routes";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
@@ -35,10 +35,10 @@ const links = [
   //   ),
   // },
   {
-    label: "Visualize",
-    href: routes.dashboard.visualize,
+    label: "Explore",
+    href: routes.dashboard.explore,
     icon: (
-      <Chart className={commonStyles} />
+      <MagnifyingGlass className={commonStyles} />
     ),
   },
 

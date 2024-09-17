@@ -34,3 +34,4 @@ export { MdCheckBox as CheckBoxIcon} from 'react-icons/md'
 export { MdCheckBoxOutlineBlank as CheckBoxOutlineBlankIcon} from 'react-icons/md'
 export { PiGitBranch as GitBranch} from "react-icons/pi";
 export { PiGridFour as GridFour, PiTable as Table } from "react-icons/pi"
+export { PiMagnifyingGlass as MagnifyingGlass } from "react-icons/pi"

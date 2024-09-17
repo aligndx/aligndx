@@ -27,7 +27,7 @@ export const routes = {
             root: `${BASE_ROUTES.DASHBOARD}/workflows`,
             workflow: `${BASE_ROUTES.DASHBOARD}/workflows/workflow`,
         },
-        visualize: `${BASE_ROUTES.DASHBOARD}/visualize`,
+        explore: `${BASE_ROUTES.DASHBOARD}/explore`,
     },
 }
 

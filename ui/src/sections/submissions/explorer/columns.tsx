@@ -127,10 +127,10 @@ export const useColumns = () => {
                   <TooltipTrigger asChild>
                     <Button variant={"icon"} onClick={(e) => {
                       e.stopPropagation();
-                      updateSearchParams({ "id": submissionId }, routes.dashboard.visualize);
+                      updateSearchParams({ "id": submissionId }, routes.dashboard.explore);
                     }}> <Chart /> </Button></TooltipTrigger>
                   <TooltipContent>
-                    <p>Visualize</p>
+                    <p>explore</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

@@ -1,7 +1,7 @@
 import { InsightsView } from "@/sections/insights";
 
 export const metadata = {
-    title: 'Insights',
+    title: 'Explore',
 };
 
 export default function Page() {
