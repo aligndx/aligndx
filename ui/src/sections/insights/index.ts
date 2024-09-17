@@ -1,1 +1,1 @@
-export {default as InsightsView} from './insights-view'
+export {default as InsightsView} from './view/insights-view'
