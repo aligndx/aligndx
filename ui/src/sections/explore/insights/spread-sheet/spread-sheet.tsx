@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { HTMLAttributes, useEffect, useState } from "react";
 import { useDuckDb, exportCsv, initializeDuckDb } from "duckdb-wasm-kit";
-import { insertRemoteFile } from "./insert-file";
 import { toast } from "@/components/ui/sonner";
 import {
     Table,
@@ -14,8 +13,8 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Importing shadcn scrollarea
 import { Button } from "@/components/ui/button";
 import { DownloadIcon } from '@/components/icons'
-import { Input } from "@/components/ui/input";
 import { DuckDBConfig } from "@duckdb/duckdb-wasm";
+import { handleExport, insertRemoteFile } from "./actions";
 
 export interface Source {
     id: string;  // Table name
@@ -78,20 +77,6 @@ export default function SpreadSheet({
     }, [sources, db]);
 
 
-    useEffect(() => {
-        const config: DuckDBConfig = {
-            query: {
-                /**
-                 * By default, int values returned by DuckDb are Int32Array(2).
-                 * This setting tells DuckDB to cast ints to double instead,
-                 * so they become JS numbers.
-                 */
-                castBigIntToDouble: true,
-            },
-        }
-        initializeDuckDb({ config, debug: true });
-    }, []);
-
     // Function to generate a dynamic JOIN query based on the selected sources
     const generateJoinQuery = (sources: Source[]) => {
         // Assuming a common column like `id` for joining, adjust as per your schema
@@ -103,31 +88,6 @@ export default function SpreadSheet({
         return `SELECT * FROM ${sources[0].id} AS table1 ${joinClauses} LIMIT 100`;
     };
 
-    const handleExport = async () => {
-        if (db && sources?.length) {
-            try {
-                // Call exportCsv to get the File object
-                const file = await exportCsv(db, sources[0].id);
-
-                // Create a URL for the File object
-                const url = URL.createObjectURL(file);
-
-                // Create an anchor element and trigger a download
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = file.name; // The filename from exportCsv
-                document.body.appendChild(link);
-                link.click();
-
-                // Clean up the DOM and revoke the object URL
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            } catch (err) {
-                console.error("Error exporting data:", err);
-                toast.error("Couldn't export the data");
-            }
-        }
-    };
 
     if (loading) return <p>Loading ...</p>;
 
@@ -140,8 +100,8 @@ export default function SpreadSheet({
 
     const renderContent = (
         <>
-            <header className="flex items-center justify-between px-4">
-                <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={handleExport}>
+            <header className="flex items-center justify-end p-4">
+                <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={() => db && sources && handleExport(db, sources[0].id)}>
                     <DownloadIcon className="h-4 w-4" />
                     Export
                 </Button> 

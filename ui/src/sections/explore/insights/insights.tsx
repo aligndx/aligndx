@@ -71,7 +71,7 @@ export default function Insights({
             </div>
             {selectedSubs.length > 0 &&
                 <div className="flex flex-col flex-grow h-full">
-                    <h1 className="font-bold p-10">Detected Pathogens </h1>
+                    <h1 className="font-bold px-10 pt-10">Detected Pathogens </h1>
                     <SpreadSheet sources={sources} data={data} onDataChange={onDataChange} />
                 </div>
             }
