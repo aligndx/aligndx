@@ -8,6 +8,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { SubmissionSelector } from "../submission-selector";
 import { Submission } from "@/types/submission";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 
 export default function ExploreView() {
     const [data, setData] = useState<any>(jsonData); // Todo: Set a type for this data
@@ -27,10 +29,27 @@ export default function ExploreView() {
                 <TabsTrigger value="visualize">Visualize</TabsTrigger>
             </TabsList>
             <TabsContent value="insights" className="flex flex-col h-full">
-                <div className="flex flex-grow h-full p-10">
-                    <SubmissionSelector
-                        value={selectedSubmissions}
-                        onChange={handleSubmissionSelectionChange} />
+                <div className="flex flex-col flex-grow h-full">
+                    <div className="flex flex-row border-b h-full">
+                        <div className="flex flex-col flex-grow p-10 gap-4">
+                            <h1 className="font-bold">Data </h1>
+                            <div className="flex">
+                                <SubmissionSelector
+                                    value={selectedSubmissions}
+                                    onChange={handleSubmissionSelectionChange} />
+                            </div>
+                        </div>
+                        {selectedSubmissions.length > 0 &&
+                            <div className="border-l flex flex-col flex-grow p-10 gap-4">
+                                <h1 className="font-bold">Summary Statistics </h1>
+                                <p>Pathogens Detected | 1 of 260 screened</p>
+                            </div>}
+                    </div>
+                    {selectedSubmissions.length > 0 &&
+                        <div className="flex flex-grow h-full">
+                            test
+                        </div>
+                    }
                 </div>
             </TabsContent>
             <TabsContent value="visualize" className={cn("flex h-full overflow-hidden", isLarge ? "flex-row" : "flex-col")}>
