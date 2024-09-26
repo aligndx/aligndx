@@ -11,8 +11,7 @@ export function UserNav() {
   const username: string = currentUser?.email || "";
   const fallback = username.charAt(0).toUpperCase();
   
-  // Media query to check if screen width is <= 768px (mobile)
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("md", "down");
   const [isDrawerOpen, setDrawerOpen] = useState(false);
 
   return (

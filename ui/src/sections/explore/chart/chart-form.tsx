@@ -6,7 +6,7 @@ import HeatmapPlot from "./heatmap-plot";
 import BubblePlot from "./bubble-plot";
 import { Label } from "@/components/ui/label";
 
-interface ChartFormProps extends React.HTMLProps<HTMLFormElement> {
+interface ChartFormProps extends React.HTMLProps<HTMLDivElement> {
     data: any;
     chartRef: React.RefObject<HTMLDivElement>;
 }
@@ -17,7 +17,7 @@ const options = [
     { value: "heatmap", label: "Heatmap" },
 ]
 
-const ChartForm: React.FC<ChartFormProps> = ({ data, chartRef, className, ...props }) => {
+const ChartForm: React.FC<ChartFormProps> = ({ data, chartRef, ...props }) => {
     const [value, setValue] = useState<string>(options[0].value);
 
     const handleSelectChange = (innerValue: string) => { setValue(innerValue) }
@@ -36,7 +36,7 @@ const ChartForm: React.FC<ChartFormProps> = ({ data, chartRef, className, ...pro
     }
 
     return (
-        <div className="flex flex-col gap-4 border-t-2 p-10">
+        <div {...props}>
             <Label>Plot Type</Label>
             <Select onValueChange={handleSelectChange} defaultValue={value}>
                 <SelectTrigger>
