@@ -50,12 +50,14 @@ const BarPlot: React.FC<BarPlotProps> = ({ data, chartRef, className, ...props }
     useEffect(() => {
         if (formState.isValid && !formState.isValidating) {
             generateBarPlot(data, formData, chartRef);
-        } else if (!formState.isSubmitted) {
-            generateBarPlot(data, formDefaults, chartRef);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData, formState]);
 
+    useEffect(() => {
+        generateBarPlot(data, formData, chartRef);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     return (
         <FormProvider {...methods}>

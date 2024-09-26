@@ -23,6 +23,8 @@ import { Badge } from "@/components/ui/badge"
 import { useApiService } from "@/services/api"
 import { Submission } from "@/types/submission"
 import { useSearchParams, useUpdateSearchParams } from "@/routes"
+import { useMediaQuery } from "@/hooks/use-media-query"
+import { Label } from "@/components/ui/label"
 
 interface SubmissionSelectorProps {
     value?: Submission[];
@@ -36,26 +38,16 @@ export function SubmissionSelector({
     multiple = true, // Default to allow multiple selection
 }: SubmissionSelectorProps) {
     const [internalValue, setInternalValue] = React.useState<Submission[]>([])
-    const [isMobile, setIsMobile] = React.useState(false) // State to track if mobile view
     const [drawerOpen, setDrawerOpen] = React.useState(false) // State to manage Drawer visibility
     const searchParams = useSearchParams();
+    const isMobile = useMediaQuery("sm", "down")
+
     const updateSearchParams = useUpdateSearchParams();
     const submissionId = searchParams.get('id');
     const value = controlledValue.length ? controlledValue : internalValue
 
     const { submissions } = useApiService()
     const { data, isLoading } = submissions.getSubmissionsQuery
-
-    React.useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth <= 768) // Set to mobile view if screen width <= 768px
-        }
-        handleResize() // Check initially
-        window.addEventListener("resize", handleResize)
-        return () => {
-            window.removeEventListener("resize", handleResize)
-        }
-    }, [])
 
     const handleChange = (newSubmission: Submission) => {
         let newValue: Submission[]
@@ -105,7 +97,7 @@ export function SubmissionSelector({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [submissionId, data]);
-    
+
 
 
     // The content of the dropdown (shared between Popover and Drawer)
@@ -185,9 +177,10 @@ export function SubmissionSelector({
                 </Drawer>
             ) : (
                 <Popover>
-                    <PopoverTrigger asChild>
-                        <div className="flex flex-col gap-2">
-                            <h1>Source(s)</h1>
+                    <div className="flex flex-col gap-2">
+                        <Label>Source(s)</Label>
+                        <p className={"text-sm text-muted-foreground"}> The data to explore. </p>
+                        <PopoverTrigger asChild>
                             <Button
                                 variant="outline"
                                 role="combobox"
@@ -202,9 +195,10 @@ export function SubmissionSelector({
                                 )}
                                 <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
-                        </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0">
+                        </PopoverTrigger>
+
+                    </div>
+                    <PopoverContent className="p-0" align="start">
                         <DropdownContent />
                     </PopoverContent>
                 </Popover>

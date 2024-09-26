@@ -57,6 +57,11 @@ const BubblePlot: React.FC<BubblePlotProps> = ({ data, chartRef, className, ...p
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData, formState]);
 
+    
+    useEffect(() => {
+        generateBubblePlot(data, formData, chartRef);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     return (
         <FormProvider {...methods}>

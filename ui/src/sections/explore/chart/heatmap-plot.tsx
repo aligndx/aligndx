@@ -58,6 +58,12 @@ const HeatmapPlot: React.FC<HeatmapPlotProps> = ({ data, chartRef, className, ..
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData, formState]);
 
+    
+    useEffect(() => {
+        generateHeatmapPlot(data, formData, chartRef);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     return (
         <FormProvider {...methods}>
             <form className={cn("flex flex-col gap-4", className)} {...props}>

@@ -1,10 +1,12 @@
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import BarPlot from "./bar-plot";
 import HeatmapPlot from "./heatmap-plot";
 import BubblePlot from "./bubble-plot";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { handlePlotExport } from "./actions";
 
 interface ChartFormProps extends React.HTMLProps<HTMLDivElement> {
     data: any;
@@ -52,7 +54,10 @@ const ChartForm: React.FC<ChartFormProps> = ({ data, chartRef, ...props }) => {
                     </SelectGroup>
                 </SelectContent>
             </Select>
+            <SelectSeparator />
             {renderChart()}
+            <SelectSeparator />
+            <Button variant="outline" onClick={() => handlePlotExport(chartRef)}>Export</Button>
         </div>
     )
 }
