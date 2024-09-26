@@ -5,8 +5,8 @@ import { useRef, useState } from "react";
 import { ChartForm, ChartContainer } from "../chart";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
-import Insights from "../table/insights";
 import { Submission } from "@/types/submission";
+import { Insights } from "../insights";
 
 export default function ExploreView() {
     const [data, setData] = useState<any>(null); // Todo: Set a type for this data

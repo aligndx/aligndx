@@ -52,9 +52,7 @@ const HeatmapPlot: React.FC<HeatmapPlotProps> = ({ data, chartRef, className, ..
     useEffect(() => {
         if (formState.isValid && !formState.isValidating) {
             generateHeatmapPlot(data, formData, chartRef);
-        } else if (!formState.isSubmitted) {
-            generateHeatmapPlot(data, formData, chartRef);
-        }
+        } 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData, formState]);
 

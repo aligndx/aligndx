@@ -144,12 +144,7 @@ export default function SpreadSheet({
                 <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={handleExport}>
                     <DownloadIcon className="h-4 w-4" />
                     Export
-                </Button>
-                <Input
-                    placeholder="Search pathogens..."
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}  // Update filter state on input change
-                />
+                </Button> 
             </header>
             <div className="flex h-full">
                 <ScrollArea className="w-0 flex-1 whitespace-nowrap ">
