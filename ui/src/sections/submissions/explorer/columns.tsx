@@ -3,7 +3,7 @@
 import { DataTableColumnHeader } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { ColumnDef } from "@tanstack/react-table"
-import { Chart, StatusIcon } from "@/components/icons"
+import { MagnifyingGlass, StatusIcon } from "@/components/icons"
 import { routes, useUpdateSearchParams } from "@/routes"
 import { Status, Submission } from "@/types/submission"
 import { Data } from "@/types/data"
@@ -128,7 +128,7 @@ export const useColumns = () => {
                     <Button variant={"icon"} onClick={(e) => {
                       e.stopPropagation();
                       updateSearchParams({ "id": submissionId }, routes.dashboard.explore);
-                    }}> <Chart /> </Button></TooltipTrigger>
+                    }}> <MagnifyingGlass /> </Button></TooltipTrigger>
                   <TooltipContent>
                     <p>explore</p>
                   </TooltipContent>
