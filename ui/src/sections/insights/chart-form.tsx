@@ -67,7 +67,7 @@ export default function ChartForm({
             plotType: "bar",
             plotOptions: {
                 x: columns[0] || "",
-                y: columns[1] || "",
+                y: columns.slice(-1)[0] || "",
                 fill: getCssVariableValue("--primary"),
                 tip: true
             },
@@ -175,6 +175,11 @@ export default function ChartForm({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formState, formData]);
+
+    useEffect(() => {
+        generatePlot(formData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <FormProvider {...methods}>

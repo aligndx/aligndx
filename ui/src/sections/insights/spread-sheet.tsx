@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { HTMLAttributes, useEffect, useState } from "react";
-import { useDuckDb, exportCsv } from "duckdb-wasm-kit";
+import { useDuckDb, exportCsv, initializeDuckDb } from "duckdb-wasm-kit";
 import { insertRemoteFile } from "./insert-file";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -15,6 +15,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Importin
 import { Button } from "@/components/ui/button";
 import { DownloadIcon } from '@/components/icons'
 import { Input } from "@/components/ui/input";
+import { DuckDBConfig } from "@duckdb/duckdb-wasm";
 
 export interface Source {
     id: string;  // Table name
@@ -76,6 +77,21 @@ export default function SpreadSheet({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sources, db]);
 
+
+    useEffect(() => {
+        const config: DuckDBConfig = {
+            query: {
+                /**
+                 * By default, int values returned by DuckDb are Int32Array(2).
+                 * This setting tells DuckDB to cast ints to double instead,
+                 * so they become JS numbers.
+                 */
+                castBigIntToDouble: true,
+            },
+        }
+        initializeDuckDb({ config, debug: true });
+    }, []);
+
     // Function to generate a dynamic JOIN query based on the selected sources
     const generateJoinQuery = (sources: Source[]) => {
         // Assuming a common column like `id` for joining, adjust as per your schema
@@ -129,9 +145,9 @@ export default function SpreadSheet({
                     <DownloadIcon className="h-4 w-4" />
                     Export
                 </Button>
-                <Input 
-                    placeholder="Search pathogens..." 
-                    value={filter} 
+                <Input
+                    placeholder="Search pathogens..."
+                    value={filter}
                     onChange={(e) => setFilter(e.target.value)}  // Update filter state on input change
                 />
             </header>
