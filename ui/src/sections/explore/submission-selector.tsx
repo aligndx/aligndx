@@ -40,7 +40,7 @@ export function SubmissionSelector({
     const [internalValue, setInternalValue] = React.useState<Submission[]>([])
     const [drawerOpen, setDrawerOpen] = React.useState(false) // State to manage Drawer visibility
     const searchParams = useSearchParams();
-    const isMobile = useMediaQuery("sm", "down")
+    const isMobile = useMediaQuery("md", "down")
 
     const updateSearchParams = useUpdateSearchParams();
     const submissionId = searchParams.get('id');
