@@ -112,7 +112,7 @@ export default function SpreadSheet({
                 </Button>
             </header>
             <div className="flex h-full">
-                <ScrollArea className="w-0 flex-1 whitespace-nowrap" orientation="both">
+                <ScrollArea className="w-0 flex-1 whitespace-nowrap max-h-600px]" orientation="both">
                     <Table> {/* Ensures table fills available width */}
                         <TableHeader>
                             <TableRow>
