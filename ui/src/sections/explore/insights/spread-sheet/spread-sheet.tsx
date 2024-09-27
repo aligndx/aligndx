@@ -16,6 +16,7 @@ import { DownloadIcon, InformationCircle } from '@/components/icons'
 import { handleExport, insertRemoteFile } from "./actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface Source {
     id: string;  // Table name
@@ -44,7 +45,6 @@ export default function SpreadSheet({
     className,
 }: SpreadSheetProps) {
     const { db, loading, error } = useDuckDb();
-    const [filter, setFilter] = useState("");  // State to hold filter input
     const [metadata, setMetadata] = useState<any>(columnMetadata)
 
     useEffect(() => {
@@ -100,14 +100,8 @@ export default function SpreadSheet({
     };
 
 
-    if (loading) return <p>Loading ...</p>;
+    if (loading || data.length == 0) return  <SpreadSheetSkeleton/>;
 
-    // Filter the data based on the search input
-    const filteredData = data.filter((row) => {
-        return Object.values(row).some((value) =>
-            String(value).toLowerCase().includes(filter.toLowerCase())
-        );
-    });
 
     const renderContent = (
         <>
@@ -122,7 +116,7 @@ export default function SpreadSheet({
                     <Table> {/* Ensures table fills available width */}
                         <TableHeader>
                             <TableRow>
-                                {filteredData.length > 0 && Object.keys(filteredData[0]).map((col) => (
+                                {data.length > 0 && Object.keys(data[0]).map((col) => (
                                     <TableHead key={col}>
                                         <TooltipProvider>
                                             <Tooltip>
@@ -148,7 +142,7 @@ export default function SpreadSheet({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredData.map((row: any, rowIndex: number) => (
+                            {data.map((row: any, rowIndex: number) => (
                                 <TableRow key={rowIndex}>
                                     {Object.values(row).map((value: any, colIndex: number) => (
                                         <TableCell key={colIndex}>
@@ -168,7 +162,39 @@ export default function SpreadSheet({
     // Only render the content if there is data to display
     return (
         <div className={cn("flex flex-col h-full ", className)}>
-            {filteredData.length > 0 ? renderContent : null}
+            {renderContent}
         </div>
     );
+}
+
+function SpreadSheetSkeleton() {
+    return (
+        <div className="flex flex-col gap-4 p-4 w-full">
+            <div className="flex justify-end">
+                <Skeleton className="w-32 h-10" />
+            </div>
+            <SpreadSheetHeaderSkeleton />
+            <Skeleton className="w-full h-16" />
+            <Skeleton className="w-full h-16" />
+            <Skeleton className="w-full h-16" />
+            <Skeleton className="w-full h-16" />
+            <Skeleton className="w-full h-16" />
+            <Skeleton className="w-full h-16" />
+            <Skeleton className="w-full h-16" />
+        </div>
+    )
+}
+
+function SpreadSheetHeaderSkeleton() {
+    return (
+        <div className="flex flex-row gap-5">
+            <Skeleton className="w-36 h-4" />
+            <Skeleton className="w-36 h-4" />
+            <Skeleton className="w-36 h-4" />
+            <Skeleton className="w-36 h-4" />
+            <Skeleton className="w-36 h-4" />
+            <Skeleton className="w-36 h-4" />
+            <Skeleton className="w-32 h-4" />
+        </div>
+    )
 }
