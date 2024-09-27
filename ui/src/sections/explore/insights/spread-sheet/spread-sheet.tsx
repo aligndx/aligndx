@@ -10,7 +10,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"; // Importing shadcn table components
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Importing shadcn scrollarea
+import { ScrollArea } from "@/components/ui/scroll-area"; // Importing shadcn scrollarea
 import { Button } from "@/components/ui/button";
 import { DownloadIcon, InformationCircle } from '@/components/icons'
 import { handleExport, insertRemoteFile } from "./actions";
@@ -112,7 +112,7 @@ export default function SpreadSheet({
                 </Button>
             </header>
             <div className="flex h-full">
-                <ScrollArea className="w-0 flex-1 whitespace-nowrap ">
+                <ScrollArea className="w-0 flex-1 whitespace-nowrap" orientation="both">
                     <Table> {/* Ensures table fills available width */}
                         <TableHeader>
                             <TableRow>
@@ -153,7 +153,6 @@ export default function SpreadSheet({
                             ))}
                         </TableBody>
                     </Table>
-                    <ScrollBar orientation="horizontal" />
                 </ScrollArea>
             </div>
         </>
