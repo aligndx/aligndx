@@ -20,6 +20,7 @@ export { default as ArrowRight } from './arrow-right';
 export { default as StatusIcon } from './status';
 export { default as Trash} from './trash'
 export { default as Upload} from './upload'
+export { default as InformationCircle} from './information-circle'
 
 export { Archive as Archive} from 'lucide-react'
 export { FolderIcon as FolderIcon } from 'lucide-react'

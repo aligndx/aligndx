@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { HTMLAttributes, useEffect, useState } from "react";
-import { useDuckDb, exportCsv, initializeDuckDb } from "duckdb-wasm-kit";
+import { useDuckDb } from "duckdb-wasm-kit";
 import { toast } from "@/components/ui/sonner";
 import {
     Table,
@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/table"; // Importing shadcn table components
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Importing shadcn scrollarea
 import { Button } from "@/components/ui/button";
-import { DownloadIcon } from '@/components/icons'
-import { DuckDBConfig } from "@duckdb/duckdb-wasm";
+import { DownloadIcon, InformationCircle } from '@/components/icons'
 import { handleExport, insertRemoteFile } from "./actions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 export interface Source {
     id: string;  // Table name
@@ -27,6 +28,15 @@ interface SpreadSheetProps extends HTMLAttributes<HTMLDivElement> {
     onDataChange: (value: any[]) => void;  // Callback to pass final joined data
 }
 
+const columnMetadata = {
+    name: "Scientific name of the species",
+    taxonomy_id: "Unique identifier for the taxonomy",
+    taxonomy_lvl: "Level of the taxonomy (e.g., species, genus)",
+    sample: "Sample identifier",
+    abundance_num: "Numerical abundance of the species",
+    abundance_frac: "Fractional abundance of the species"
+};
+
 export default function SpreadSheet({
     sources,
     data = [],  // Default data to an empty array
@@ -35,6 +45,7 @@ export default function SpreadSheet({
 }: SpreadSheetProps) {
     const { db, loading, error } = useDuckDb();
     const [filter, setFilter] = useState("");  // State to hold filter input
+    const [metadata, setMetadata] = useState<any>(columnMetadata)
 
     useEffect(() => {
         const loadTable = async () => {
@@ -104,7 +115,7 @@ export default function SpreadSheet({
                 <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={() => db && sources && handleExport(db, sources[0].id)}>
                     <DownloadIcon className="h-4 w-4" />
                     Export
-                </Button> 
+                </Button>
             </header>
             <div className="flex h-full">
                 <ScrollArea className="w-0 flex-1 whitespace-nowrap ">
@@ -112,7 +123,27 @@ export default function SpreadSheet({
                         <TableHeader>
                             <TableRow>
                                 {filteredData.length > 0 && Object.keys(filteredData[0]).map((col) => (
-                                    <TableHead key={col}>{col}</TableHead>
+                                    <TableHead key={col}>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex items-center">
+                                                        {col}
+                                                        <span className="cursor-pointer">
+                                                            <Button variant="icon"  >
+                                                                <InformationCircle className="h-4" />
+                                                            </Button>
+                                                        </span>
+                                                    </div>
+                                                </TooltipTrigger>
+
+
+                                                <TooltipContent className="p-2 text-sm">
+                                                    {metadata[col] || "No description available"}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableHead>
                                 ))}
                             </TableRow>
                         </TableHeader>
