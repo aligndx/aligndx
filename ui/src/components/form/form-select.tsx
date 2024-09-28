@@ -10,9 +10,9 @@ interface SelectOption {
 
 type FormSelectProps = {
     name: string;
-    label: string;
+    label: string | React.ReactNode;
     placeholder?: string;
-    description?: string;
+    description?: string | React.ReactNode;
     options: SelectOption[];
 
 }

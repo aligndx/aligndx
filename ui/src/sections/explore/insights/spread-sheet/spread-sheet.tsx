@@ -100,7 +100,7 @@ export default function SpreadSheet({
     };
 
 
-    if (loading || data.length == 0) return  <SpreadSheetSkeleton/>;
+    if (loading || data.length == 0) return <SpreadSheetSkeleton />;
 
 
     const renderContent = (
@@ -112,26 +112,24 @@ export default function SpreadSheet({
                 </Button>
             </header>
             <div className="flex h-full">
-                <ScrollArea className="w-0 flex-1 whitespace-nowrap max-h-600px]" orientation="both">
+                <ScrollArea className="w-0 flex-1 whitespace-nowrap max-h-[500px]" orientation="both">
                     <Table> {/* Ensures table fills available width */}
                         <TableHeader>
                             <TableRow>
                                 {data.length > 0 && Object.keys(data[0]).map((col) => (
                                     <TableHead key={col}>
-                                        <TooltipProvider>
+                                        <TooltipProvider delayDuration={100}>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <div className="flex items-center">
                                                         {col}
-                                                        <span className="cursor-pointer">
+                                                        <span>
                                                             <Button variant="icon"  >
                                                                 <InformationCircle className="h-4" />
                                                             </Button>
                                                         </span>
                                                     </div>
                                                 </TooltipTrigger>
-
-
                                                 <TooltipContent className="p-2 text-sm">
                                                     {metadata[col] || "No description available"}
                                                 </TooltipContent>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { SpreadSheet } from "./spread-sheet";
 import { useApiService } from "@/services/api";
 import { Source } from "./spread-sheet/spread-sheet";
+import { PathogenSelector } from "./pathogen-selector";
 
 interface InsightsProps {
     data: any;
@@ -21,6 +22,7 @@ export default function Insights({
 
     const { data: dataService } = useApiService();
     const [sources, setSources] = useState<any>()
+    const [pathogens, setPathogens] = useState<string[]>([])
 
     const filter = `name = "bracken_combined.filtered.transformed_long.tsv"`;
     const { data: queryData, refetch } = dataService.useGetDatasQuery({ filter })
@@ -41,6 +43,10 @@ export default function Insights({
         return urls.filter((url) => url !== undefined); // Filter out undefined values
     };
 
+    const onPathogenChange = (pathogens: string[]) => {
+        setPathogens(pathogens)
+    }
+
     useEffect(() => {
         const handleSubChange = async () => {
             if (selectedSubs.length > 0) {
@@ -56,18 +62,23 @@ export default function Insights({
         <div className="flex flex-col flex-grow h-full">
             <div className="flex flex-row border-b h-full">
                 <div className="flex flex-col flex-grow p-10 gap-4">
-                    <h1 className="font-bold">Data </h1>
                     <div className="flex">
                         <SubmissionSelector
                             value={selectedSubs}
                             onChange={onSubChange} />
                     </div>
+                    {selectedSubs.length > 0 &&
+                        <div className="flex flex-col flex-grow gap-4">
+                            <PathogenSelector pathogens={pathogens} onPathogenChange={onPathogenChange}/>
+                        </div>
+                    }
                 </div>
                 {selectedSubs.length > 0 &&
                     <div className="border-l flex flex-col flex-grow p-10 gap-4">
                         <h1 className="font-bold">Summary Statistics </h1>
                         <p>Pathogens Detected | 1 of 260 screened</p>
-                    </div>}
+                    </div>
+                }
             </div>
             {selectedSubs.length > 0 &&
                 <div className="flex flex-col flex-grow h-full">
