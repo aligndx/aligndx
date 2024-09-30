@@ -9,7 +9,7 @@ import { Submission } from "@/types/submission";
 import { Insights } from "../insights";
 
 export default function ExploreView() {
-    const [data, setData] = useState<any>(null); // Todo: Set a type for this data
+    const [data, setData] = useState<any>([]); 
     const [selectedSubs, setSelectedSubs] = useState<Submission[]>([]);
 
     const chartRef = useRef<HTMLDivElement | null>(null);

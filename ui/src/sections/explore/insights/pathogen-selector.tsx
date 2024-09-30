@@ -1,12 +1,15 @@
 import FormSelect from "@/components/form/form-select";
 import { APDB, APDB_RAW } from "@/config-global";
 import { cn } from "@/lib/utils";
+import { useDuckDb } from "duckdb-wasm-kit";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { insertRemoteFile } from "./actions";
 
 interface PathogenSelectorProps extends React.HTMLProps<HTMLFormElement> {
     pathogens: string[];
-    onPathogenChange: (pathogens: string[]) => void;
+    onPathogensChange: (pathogens: string[]) => void;
 }
 
 const panels = [
@@ -15,31 +18,46 @@ const panels = [
     { value: "WHO priority pathogens", label: "WHO priority pathogens" },
 ];
 
-export function PathogenSelector({ pathogens, onPathogenChange, className, ...props }: PathogenSelectorProps) {
+export function PathogenSelector({ pathogens, onPathogensChange, className, ...props }: PathogenSelectorProps) {
     const methods = useForm({
         mode: "onChange",
         defaultValues: {
             panel: panels[0].value,
         },
     });
+    const { db, loading } = useDuckDb();
 
     const selectedPanel = methods.watch("panel");
 
     useEffect(() => {
-        if (selectedPanel) {
-            onPathogenChange([selectedPanel]);
-        }
-        console.log("test")
+        const loadTable = async (panel: string) => {
+            if (!db || loading || !panel) return;
+    
+            try {
+                await insertRemoteFile(db, APDB_RAW, "apdb");
+                const conn = await db.connect();
+    
+                const organismArrow = await conn.query(`SELECT organism FROM apdb WHERE "${panel}" = 'Y'`);
+                const organismList = organismArrow.toArray().map((row) => row["Organism"]);
+                onPathogensChange(organismList)
+                await conn.close();
+            } catch (err) {
+                console.error(err);
+                toast.error("Couldn't generate pathogens");
+            }
+        };
+        // Transform panels into pathogens
+        loadTable(selectedPanel)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedPanel]);
+    }, [db, selectedPanel]);
 
     const description = (
-        <div>
+        <span>
             Select a panel for screening. Generated from the{" "}
             <a href={APDB} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline">
                 APDB
             </a>.
-        </div>
+        </span>
     );
 
 
@@ -53,6 +71,16 @@ export function PathogenSelector({ pathogens, onPathogenChange, className, ...pr
                     options={panels}
                     placeholder="Select a panel"
                 />
+                {/* <div className="border p-4">
+                    {pathogens.map((row: any, rowIndex: number) => (
+                        <div key={rowIndex} className="flex flex-row">
+                            {Object.values(row).map((value: any, colIndex: number) => (
+                                <span key={colIndex}>{value}</span>
+                            ))}
+                        </div>
+                    ))}
+                </div> */}
+
             </form>
         </FormProvider>
     );

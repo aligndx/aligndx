@@ -1,7 +1,5 @@
 import { cn } from "@/lib/utils";
-import { HTMLAttributes, useEffect, useState } from "react";
-import { useDuckDb } from "duckdb-wasm-kit";
-import { toast } from "@/components/ui/sonner";
+import { HTMLAttributes} from "react";
 import {
     Table,
     TableBody,
@@ -9,104 +7,35 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"; // Importing shadcn table components
-import { ScrollArea } from "@/components/ui/scroll-area"; // Importing shadcn scrollarea
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon, InformationCircle } from '@/components/icons'
-import { handleExport, insertRemoteFile } from "./actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export interface Source {
-    id: string;  // Table name
-    url: string; // URL for the source file
-}
-
 interface SpreadSheetProps extends HTMLAttributes<HTMLDivElement> {
-    sources?: Source[];  // Array of sources with id and url
-    data: any[];  // Final data array (after merge/join), passed without id
-    onDataChange: (value: any[]) => void;  // Callback to pass final joined data
+    data: any[];
+    loading: boolean;
+    metadata: Record<string, any>;
+    onExport: () => void;  // Callback to pass final joined data
 }
-
-const columnMetadata = {
-    name: "Scientific name of the species",
-    taxonomy_id: "Unique identifier for the taxonomy",
-    taxonomy_lvl: "Level of the taxonomy (e.g., species, genus)",
-    sample: "Sample identifier",
-    abundance_num: "Numerical abundance of the species",
-    abundance_frac: "Fractional abundance of the species"
-};
 
 export default function SpreadSheet({
-    sources,
     data = [],  // Default data to an empty array
-    onDataChange,
+    onExport,
+    loading,
+    metadata,
     className,
 }: SpreadSheetProps) {
-    const { db, loading, error } = useDuckDb();
-    const [metadata, setMetadata] = useState<any>(columnMetadata)
-
-    useEffect(() => {
-        const loadTable = async () => {
-            if (sources?.length && db) {
-                try {
-                    // Insert all selected sources into DuckDB
-                    for (const source of sources) {
-                        await insertRemoteFile(db, source.url, source.id);
-                    }
-
-                    let result;
-                    const conn = await db.connect();
-
-                    if (sources.length === 1) {
-                        // If only one source, select all from that table
-                        result = await conn.query(`SELECT * FROM ${sources[0].id} LIMIT 100`);
-                    } else if (sources.length > 1) {
-                        // If multiple sources, dynamically generate JOIN query
-                        const joinQuery = generateJoinQuery(sources);
-                        result = await conn.query(joinQuery);
-                    }
-
-                    // Get the result as an array of rows
-                    if (result) {
-                        onDataChange(result.toArray());
-                    }
-
-                    await conn.close();
-                } catch (err) {
-                    console.error(err);
-                    toast.error("Couldn't load or join the data");
-                }
-            } else {
-                onDataChange([]);
-            }
-        };
-
-        loadTable();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sources, db]);
-
-
-    // Function to generate a dynamic JOIN query based on the selected sources
-    const generateJoinQuery = (sources: Source[]) => {
-        // Assuming a common column like `id` for joining, adjust as per your schema
-        const joinCondition = "ON table1.id = table2.id"; // Example join condition; adapt as necessary
-
-        const tableNames = sources.map((source, index) => `table${index + 1} AS ${source.id}`).join(', ');
-        const joinClauses = sources.slice(1).map((_, index) => `JOIN ${sources[index + 1].id} AS table${index + 2} ${joinCondition}`).join(' ');
-
-        return `SELECT * FROM ${sources[0].id} AS table1 ${joinClauses} LIMIT 100`;
-    };
-
-
+    // Only render the content if there is data to display
     if (loading || data.length == 0) return <SpreadSheetSkeleton />;
 
-
-    const renderContent = (
-        <>
+    return (
+        <div className={cn("flex flex-col h-full ", className)}>
             <header className="flex items-center justify-end p-4">
-                <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={() => db && sources && handleExport(db, sources[0].id)}>
+                <Button size="sm" className="flex items-center justify-center gap-2" variant="outline" onClick={onExport}>
                     <DownloadIcon className="h-4 w-4" />
                     Export
                 </Button>
@@ -153,13 +82,6 @@ export default function SpreadSheet({
                     </Table>
                 </ScrollArea>
             </div>
-        </>
-    );
-
-    // Only render the content if there is data to display
-    return (
-        <div className={cn("flex flex-col h-full ", className)}>
-            {renderContent}
         </div>
     );
 }
