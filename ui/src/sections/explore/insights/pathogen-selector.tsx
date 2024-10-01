@@ -18,7 +18,7 @@ const panels = [
     { value: "WHO priority pathogens", label: "WHO priority pathogens" },
 ];
 
-export function PathogenSelector({ pathogens, onPathogensChange, className, ...props }: PathogenSelectorProps) {
+export function PathogenSelector({ pathogens, onPathogensChange, ...props }: PathogenSelectorProps) {
     const methods = useForm({
         mode: "onChange",
         defaultValues: {
@@ -30,14 +30,14 @@ export function PathogenSelector({ pathogens, onPathogensChange, className, ...p
     const selectedPanel = methods.watch("panel");
 
     useEffect(() => {
-        const loadTable = async (panel: string) => {
-            if (!db || loading || !panel) return;
+        const loadTable = async () => {
+            if (!db || loading || !selectedPanel) return;
     
             try {
                 await insertRemoteFile(db, APDB_RAW, "apdb");
                 const conn = await db.connect();
     
-                const organismArrow = await conn.query(`SELECT organism FROM apdb WHERE "${panel}" = 'Y'`);
+                const organismArrow = await conn.query(`SELECT organism FROM apdb WHERE "${selectedPanel}" = 'Y'`);
                 const organismList = organismArrow.toArray().map((row) => row["Organism"]);
                 onPathogensChange(organismList)
                 await conn.close();
@@ -47,9 +47,9 @@ export function PathogenSelector({ pathogens, onPathogensChange, className, ...p
             }
         };
         // Transform panels into pathogens
-        loadTable(selectedPanel)
+        loadTable()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [db, selectedPanel]);
+    }, [db, selectedPanel, loading]);
 
     const description = (
         <span>
@@ -63,7 +63,7 @@ export function PathogenSelector({ pathogens, onPathogensChange, className, ...p
 
     return (
         <FormProvider {...methods}>
-            <form className={cn("flex flex-col gap-4", className)} {...props}>
+            <form  {...props}>
                 <FormSelect
                     name="panel"
                     label="Pathogen Panel"

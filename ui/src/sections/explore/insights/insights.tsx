@@ -102,7 +102,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
     }
 
     async function filterByPathogens(rootTableId: string, pathogens: string[], db: AsyncDuckDB, loading: boolean) {
-        if (!db || loading || sources.length === 0) return;
+        if (!db || loading) return;
         try {
             const conn = await db.connect();
             const pathogensListStr = pathogens.map(org => `'${org}'`).join(", ");
@@ -111,7 +111,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
             await conn.close();
         } catch (err) {
             console.error("Error loading data into DuckDB:", err);
-            toast.error("Couldn't load or join the data");
+            toast.error("Error filtering");
         }
     }
 
@@ -138,16 +138,28 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
     }, [sources, db, loading]);
 
     useEffect(() => {
-        if (data.length > 0 && db && pathogens) {
+        if (db && pathogens.length > 0) {
             filterByPathogens(rootTableId, pathogens, db, loading);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pathogens, data, loading])
+    }, [pathogens, loading])
 
 
     const onExport = useCallback(() => {
         if (db) handleExport(db, rootTableId);
     }, [db]);
+
+    const pathogenStatistic = () => {
+        const pathogensToScreen = pathogens.length
+        const organisms = data.length
+        if (pathogensToScreen > organisms) {
+            return (
+                <p>Pathogens Detected | {organisms} of {pathogensToScreen} screened</p>
+            )
+        }
+
+        return null
+    }
 
     return (
         <div className="flex flex-col flex-grow h-full">
@@ -165,7 +177,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
                 {data.length > 0 && (
                     <div className="border-l flex flex-col flex-grow p-10 gap-4">
                         <h1 className="font-bold">Summary Statistics </h1>
-                        <p>Pathogens Detected | 1 of 260 screened</p>
+                        {pathogenStatistic()}
                     </div>
                 )}
             </div>
