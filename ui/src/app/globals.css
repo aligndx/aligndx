@@ -29,7 +29,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    
+
     /* Tooltip specific variables */
     --tooltip-bg: hsl(var(--popover)); /* Light mode background */
     --tooltip-text: hsl(var(--popover-foreground)); /* Light mode text */
@@ -61,7 +61,7 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    
+
     /* Dark mode tooltip variables */
     --tooltip-bg: hsl(var(--card)); /* Dark mode background */
     --tooltip-text: hsl(var(--card-foreground)); /* Dark mode text */
@@ -84,5 +84,59 @@
 
   [aria-label="tip"] text {
     fill: var(--tooltip-text) !important;
+  }
+}
+
+@layer components {
+  /* Base prose styles */
+  .prose {
+    color: hsl(var(--foreground));
+    a {
+      color: hsl(var(--primary));
+    }
+    strong {
+      color: hsl(var(--foreground));
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color: hsl(var(--foreground));
+    }
+    code {
+      color: hsl(var(--foreground));
+    }
+    blockquote {
+      border-left-color: hsl(var(--muted-foreground));
+      color: hsl(var(--foreground));
+    }
+  }
+
+  /* Prose styles for dark mode */
+  .dark .prose {
+    color: hsl(var(--foreground));
+    a {
+      color: hsl(var(--primary));
+    }
+    strong {
+      color: hsl(var(--foreground));
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color: hsl(var(--foreground));
+    }
+    code {
+      color: hsl(var(--foreground));
+    }
+    blockquote {
+      border-left-color: hsl(var(--muted-foreground));
+      color: hsl(var(--foreground));
+    }
   }
 }

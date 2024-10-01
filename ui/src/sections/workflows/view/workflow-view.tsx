@@ -27,14 +27,17 @@ export default function WorkflowView() {
                             data && <WorkflowForm workflow={data[0]} />
                     }
                 </TabsContent>
-                <TabsContent value="faq" className="flex flex-col h-full p-4 overflow-scroll">
+                <TabsContent value="faq" className="flex flex-col h-full w-full">
                     {data && data[0].description ? (
-                        <div
-                            style={{ whiteSpace: "pre-wrap" }} // Preserve whitespace and line breaks
-                            dangerouslySetInnerHTML={{ __html: data[0].description }}
-                        />
+                        <ScrollArea className="h-max p-4">
+                            <article
+                                className="prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: data[0].description }}
+                            />
+                        </ScrollArea>
                     ) : null}
                 </TabsContent>
+
 
 
             </Tabs>
