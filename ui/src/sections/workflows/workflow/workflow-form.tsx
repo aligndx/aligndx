@@ -164,7 +164,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
     return (
         <div className="flex flex-grow flex-row gap-2">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 p-4 gap-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 gap-4">
                     <FormInput
                         name="name"
                         label="Name"
