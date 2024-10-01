@@ -4,7 +4,7 @@ import Hero from "../hero";
 
 export default function MarketingView() {
     return (
-        <div className="flex flex-col py-10">
+        <div className="flex flex-col">
             <Hero />
             <Content />
             <Features />
