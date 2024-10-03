@@ -57,7 +57,7 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	defer os.Remove(jsonFilePath)
 
 	// Defer the cleanup immediately after jobDir creation
-	// defer os.RemoveAll(jobDir)
+	defer os.RemoveAll(jobDir)
 
 	nxfDir := fmt.Sprintf("%s/nxf", jobDir)
 	resultsdir := fmt.Sprintf("%s/%s_results", jobDir, inputs.Name)
