@@ -14,13 +14,19 @@ import (
 
 // Config struct holds configuration values
 type Config struct {
+	API  APIConfig  `koanf:"api"`
 	MQ   MQConfig   `koanf:"mq"`
 	DB   DbConfig   `koanf:"db"`
 	SMTP SMTPConfig `koanf:"smtp"`
 	S3   S3Config   `koanf:"s3"`
 }
 
-// Message Queue settings
+type APIConfig struct {
+	URL                  string `koanf:"url"`
+	DefaultAdminEmail    string `koanf:"defaultadminemail"`
+	DefaultAdminPassword string `koanf:"defaultadminpassword"`
+}
+
 type MQConfig struct {
 	URL    string `koanf:"url"`
 	Stream string `koanf:"stream"`
@@ -63,6 +69,11 @@ func NewConfigService(logger *logger.LoggerWrapper) *ConfigService {
 // NewConfig creates a new Config instance with default values
 func NewConfig() *Config {
 	return &Config{
+		API: APIConfig{
+			URL:                  pocketbase.New().Settings().Meta.AppUrl,
+			DefaultAdminEmail:    "",
+			DefaultAdminPassword: "",
+		},
 		MQ: MQConfig{
 			URL:    nats.DefaultURL,
 			Stream: "JOBS",

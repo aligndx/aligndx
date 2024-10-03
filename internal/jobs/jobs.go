@@ -4,128 +4,182 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/logger"
 )
 
-type JobHandler func(ctx context.Context, inputs map[string]interface{}) error
+type BaseJobHandler func(ctx context.Context, inputs interface{}) error
 
 type Job struct {
-	JobID     string                 `json:"job_id"`
-	JobInputs map[string]interface{} `json:"job_inputs"`
-	JobSchema string                 `json:"job_schema"`
+	JobID     string      `json:"job_id"`
+	JobInputs interface{} `json:"job_inputs"`
+	JobSchema string      `json:"job_schema"`
+}
+
+type Event struct {
+	Type      string  `json:"type"`
+	Message   string  `json:"message"`
+	TimeStamp string  `json:"timestamp"`
+	MetaData  *string `json:"metadata,omitempty"`
 }
 
 type JobServiceInterface interface {
-	QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error
-	RegisterJobHandler(schema string, handler JobHandler)
-	ProcessJobs(ctx context.Context) error
+	QueueJob(ctx context.Context, jobID string, jobInputs interface{}, jobSchema string) error
+	RegisterJobHandler(schema string, handler BaseJobHandler)
+	ProcessJobs(ctx context.Context, maxConcurrency int) error
+	SubscribeToJob(ctx context.Context, jobId string, emit func([]byte)) error
 }
 
 type MessageQueueService interface {
 	Publish(ctx context.Context, subject string, data []byte) error
-	Subscribe(ctx context.Context, handler func([]byte)) error
+	Subscribe(ctx context.Context, subject string, consumerName string, handler func([]byte)) error
 }
 
 type JobService struct {
-	mq       MessageQueueService
-	log      *logger.LoggerWrapper
-	cfg      *config.Config
-	handlers map[string]JobHandler
-	stream   string
+	mq            MessageQueueService
+	log           *logger.LoggerWrapper
+	cfg           *config.Config
+	handlers      map[string]BaseJobHandler
+	stream        string
+	subjectPrefix string
 }
 
 type JobStatus string
 
 const (
+	StatusCreated    JobStatus = "created"
 	StatusQueued     JobStatus = "queued"
 	StatusProcessing JobStatus = "processing"
 	StatusFinished   JobStatus = "finished"
 	StatusError      JobStatus = "error"
 )
 
-func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *config.Config, stream string) JobServiceInterface {
+func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *config.Config, stream string, subjectPrefix string) JobServiceInterface {
 	return &JobService{
-		mq:       mq,
-		log:      log,
-		cfg:      cfg,
-		handlers: make(map[string]JobHandler),
-		stream:   stream,
+		mq:            mq,
+		log:           log,
+		cfg:           cfg,
+		handlers:      make(map[string]BaseJobHandler),
+		stream:        stream,
+		subjectPrefix: subjectPrefix,
 	}
 }
 
-func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) {
-	statusUpdate := map[string]interface{}{"status": status}
-	statusData, _ := json.Marshal(statusUpdate)
-	s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.stream, jobID), statusData)
+func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) error {
+	// Create an event to represent the job status update
+	event := Event{
+		Type:      "job.status",
+		Message:   fmt.Sprintf("Job %s status updated to %s", jobID, status),
+		TimeStamp: time.Now().Format(time.RFC3339),
+	}
+
+	// Marshal the Event struct to JSON
+	eventData, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("error marshaling event data: %w", err)
+	}
+
+	// Publish the event data to the message queue
+	err = s.mq.Publish(ctx, fmt.Sprintf("%s.%s.status", s.subjectPrefix, jobID), eventData)
+	if err != nil {
+		return fmt.Errorf("error publishing job status: %w", err)
+	}
+
+	return nil
 }
 
-func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs map[string]interface{}, jobSchema string) error {
+func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs interface{}, jobSchema string) error {
 	job := Job{
 		JobID:     jobID,
 		JobInputs: jobInputs,
 		JobSchema: jobSchema,
 	}
 
+	// Marshal the Job struct to JSON
 	jobData, err := json.Marshal(job)
 	if err != nil {
-		s.log.Error("Error marshaling job data", map[string]interface{}{"error": err})
-		return err
-	}
-	// publish to single queue
-	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.stream), jobData)
-	if err != nil {
-		s.log.Error("Error publishing job", map[string]interface{}{"error": err})
-		return err
+		return fmt.Errorf("error marshaling job data: %w", err)
 	}
 
-	s.updateJobStatus(ctx, job.JobID, string(StatusQueued))
+	// Publish to the queue
+	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.subjectPrefix), jobData)
+	if err != nil {
+		return fmt.Errorf("error publishing job: %w", err)
+	}
+
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusQueued)); err != nil {
+		return err
+	}
 
 	s.log.Info("Job queued", map[string]interface{}{"job_id": jobID})
 	return nil
 }
 
 func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
-	// Unmarshal the message data into Job structure
 	var job Job
 	if err := json.Unmarshal(msgData, &job); err != nil {
-		s.log.Error("Error unmarshalling job data", map[string]interface{}{"error": err})
-		return err
+		return fmt.Errorf("error unmarshalling job data: %w", err)
 	}
 
-	// Find the handler based on the job's schema
 	handler, exists := s.handlers[job.JobSchema]
 	if !exists {
-		errMsg := fmt.Sprintf("No handler registered for schema: %s", job.JobSchema)
-		s.log.Error(errMsg, nil)
 		s.updateJobStatus(ctx, job.JobID, string(StatusError))
-		return fmt.Errorf(errMsg)
+		return fmt.Errorf("no handler registered for schema: %s", job.JobSchema)
 	}
 
-	// Process the job using the found handler
-	s.updateJobStatus(ctx, job.JobID, string(StatusProcessing))
-	if err := handler(ctx, job.JobInputs); err != nil {
-		s.log.Error("Error processing job", map[string]interface{}{
-			"job_id": job.JobID, "error": err,
-		})
-		s.updateJobStatus(ctx, job.JobID, string(StatusError))
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusProcessing)); err != nil {
 		return err
 	}
-	s.updateJobStatus(ctx, job.JobID, string(StatusFinished))
-	s.log.Info("Job processed successfully", map[string]interface{}{"job_id": job.JobID})
+
+	// Directly pass the deserialized byte data to handler
+	if err := handler(ctx, job.JobInputs); err != nil {
+		s.updateJobStatus(ctx, job.JobID, string(StatusError))
+		return fmt.Errorf("error processing job (job_id: %s): %w", job.JobID, err)
+	}
+
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusFinished)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (s *JobService) ProcessJobs(ctx context.Context) error {
-	return s.mq.Subscribe(ctx, func(msg []byte) {
-		if err := s.processJob(ctx, msg); err != nil {
-			s.log.Error("Failed to handle message", map[string]interface{}{"error": err})
-		}
+func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error {
+	// Create a buffered channel (semaphore) with maxConcurrency slots
+	semaphore := make(chan struct{}, maxConcurrency)
+	expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
+	consumerName := "request-worker"
+	return s.mq.Subscribe(ctx, expectedSubject, consumerName, func(msgData []byte) {
+		// Acquire a slot in the semaphore
+		semaphore <- struct{}{}
+
+		// Process the job in a separate goroutine
+		go func() {
+			defer func() {
+				// Release the slot in the semaphore after the job is done
+				<-semaphore
+			}()
+
+			if err := s.processJob(ctx, msgData); err != nil {
+				s.log.Error("Failed to process job", map[string]interface{}{"error": err.Error()})
+			} else {
+				s.log.Info("Job processed successfully")
+			}
+		}()
 	})
 }
 
-func (s *JobService) RegisterJobHandler(schema string, handler JobHandler) {
+func (s *JobService) RegisterJobHandler(schema string, handler BaseJobHandler) {
 	s.handlers[schema] = handler
 	s.log.Info("Job handler registered", map[string]interface{}{"job_schema": schema})
+}
+
+func (s *JobService) SubscribeToJob(ctx context.Context, jobId string, emit func([]byte)) error {
+	subject := fmt.Sprintf("%s.%s.>", s.subjectPrefix, jobId)
+
+	return s.mq.Subscribe(ctx, subject, jobId, func(msgData []byte) {
+		emit(msgData)
+	})
 }

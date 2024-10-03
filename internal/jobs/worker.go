@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -25,9 +26,8 @@ func NewWorker(jobService JobServiceInterface, log *logger.LoggerWrapper, cfg *c
 	}
 }
 
-func (w *Worker) Start() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func (w *Worker) Start(ctx context.Context, cancel context.CancelFunc) {
+	var wg sync.WaitGroup
 
 	// Capture OS signals for graceful shutdown
 	sigs := make(chan os.Signal, 1)
@@ -35,26 +35,25 @@ func (w *Worker) Start() {
 
 	go func() {
 		<-sigs
-		w.log.Info("Shutting down worker...", nil)
+		w.log.Info("Shutting down worker...")
 		cancel()
 	}()
 
-	w.log.Info("Starting worker to process jobs...", nil)
+	w.log.Info("Starting worker to process jobs...")
 
-	// Continuously process jobs
-	for {
-		err := w.jobService.ProcessJobs(ctx)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := w.jobService.ProcessJobs(ctx, 2)
 		if err != nil {
-			w.log.Error("Error processing jobs", map[string]interface{}{"error": err})
-			time.Sleep(5 * time.Second) // Backoff before retrying
+			w.log.Error("Error processing jobs", map[string]interface{}{"error": err.Error()})
+			time.Sleep(5 * time.Second)
 		}
+	}()
 
-		select {
-		case <-ctx.Done():
-			w.log.Info("Worker has been shut down", nil)
-			return
-		default:
-			// Continue processing jobs
-		}
-	}
+	<-ctx.Done()
+	w.log.Info("Worker has been shut down")
+
+	// Wait for all goroutines to finish
+	wg.Wait()
 }

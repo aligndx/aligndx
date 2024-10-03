@@ -1,0 +1,28 @@
+plugins {
+  id 'nf-nats@1.0.0'
+}
+
+params {
+
+  nats_enabled = {{.NatsEnabled}}
+  nats_url = '{{.NatsURL}}'
+  nats_subject = '{{.NatsSubject}}'
+  nats_events = [{{range $index, $element := .NatsEvents}}{{if $index}}, {{end}}'{{$element}}'{{end}}]
+  nats_jetstream_enabled = {{.NatsJetStreamEnabled}}
+
+  max_cpus   = 2
+  max_memory = '2.GB'
+  max_time   = '1.h'
+}
+
+nats {
+    enabled = params.nats_enabled
+    url = params.nats_url
+    subject = params.nats_subject
+    events = params.nats_events
+    jetstream = params.nats_jetstream_enabled
+}
+
+docker {
+    runOptions = '-u $(id -u):$(id -g)' // Use current user's UID and GID
+}
