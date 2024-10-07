@@ -1,4 +1,4 @@
-package pocketbaseclient
+package pb_client
 
 import (
 	"bytes"

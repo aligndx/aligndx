@@ -8,6 +8,7 @@ import (
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/logger"
+	"github.com/aligndx/aligndx/internal/pb_client"
 )
 
 type BaseJobHandler func(ctx context.Context, inputs interface{}) error
@@ -68,6 +69,25 @@ func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *confi
 }
 
 func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) error {
+	configService := config.NewConfigService(s.log)
+	cfg := configService.LoadConfig()
+	client := pb_client.NewPocketBaseClient(cfg.API.URL)
+
+	// Authenticate as admin
+	err := client.Authenticate(cfg.API.DefaultAdminEmail, cfg.API.DefaultAdminPassword, true)
+	if err != nil {
+		return fmt.Errorf("failed to authenticate as admin: %w", err)
+	}
+
+	updateData := map[string]interface{}{
+		"status": status,
+	}
+
+	_, err = client.Update("submissions", jobID, updateData)
+	if err != nil {
+		return fmt.Errorf("failed to update submission record with jobID %s: %w", jobID, err)
+	}
+
 	// Create an event to represent the job status update
 	event := Event{
 		Type:      "job.status",
