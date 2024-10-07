@@ -9,13 +9,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 )
 
 // PocketBaseClient represents the PocketBase API client
 type PocketBaseClient struct {
-	BaseURL    string
-	HTTPClient *http.Client
-	AuthToken  string
+	BaseURL      string
+	HTTPClient   *http.Client
+	AuthToken    string
+	AuthTokenExp time.Time
 }
 
 // NewPocketBaseClient creates a new PocketBaseClient instance
@@ -26,11 +28,17 @@ func NewPocketBaseClient(baseURL string) *PocketBaseClient {
 	}
 }
 
-// Authenticate authenticates the user and stores the auth token in the client instance
-func (c *PocketBaseClient) Authenticate(email, password string) error {
-	url := fmt.Sprintf("%s/api/collections/users/auth-with-password", c.BaseURL)
+// Authenticate authenticates a user or admin and stores the auth token in the client instance
+func (c *PocketBaseClient) Authenticate(email, password string, isAdmin bool) error {
+	var url string
+	if isAdmin {
+		url = fmt.Sprintf("%s/api/admins/auth-with-password", c.BaseURL)
+	} else {
+		url = fmt.Sprintf("%s/api/collections/users/auth-with-password", c.BaseURL)
+	}
+
 	body := map[string]string{
-		"email":    email,
+		"identity": email,
 		"password": password,
 	}
 	bodyBytes, _ := json.Marshal(body)
@@ -57,47 +65,35 @@ func (c *PocketBaseClient) Authenticate(email, password string) error {
 
 	if token, ok := responseMap["token"].(string); ok {
 		c.AuthToken = token
+		c.AuthTokenExp = time.Now().Add(1 * time.Hour) // Assuming the token expires in 1 hour
 		return nil
 	}
 
 	return fmt.Errorf("failed to parse authentication token")
 }
 
-// AuthenticateAsAdmin authenticates an admin user and stores the auth token in the client instance
-func (c *PocketBaseClient) AuthenticateAsAdmin(email, password string) error {
-	url := fmt.Sprintf("%s/api/admins/auth-with-password", c.BaseURL)
-	body := map[string]string{
-		"identity": email,
-		"password": password,
+// sendRequest sends an HTTP request and handles token expiration automatically
+func (c *PocketBaseClient) sendRequest(req *http.Request) (*http.Response, error) {
+	// Check if the token is expired or about to expire
+	if time.Now().After(c.AuthTokenExp) {
+		fmt.Println("Token expired, attempting to re-authenticate...")
+		// Re-authenticate
+		return nil, fmt.Errorf("token expired, please re-authenticate")
 	}
-	bodyBytes, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
+	c.setAuthHeader(req)
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to authenticate as admin, status code: %d", resp.StatusCode)
+		return nil, err
 	}
 
-	var responseMap map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&responseMap); err != nil {
-		return err
+	// If unauthorized, indicate that re-authentication is needed
+	if resp.StatusCode == http.StatusUnauthorized {
+		fmt.Println("Token expired or invalid, please re-authenticate...")
+		return nil, fmt.Errorf("token expired or invalid, please re-authenticate")
 	}
 
-	if token, ok := responseMap["token"].(string); ok {
-		c.AuthToken = token
-		return nil
-	}
-
-	return fmt.Errorf("failed to parse admin authentication token")
+	return resp, nil
 }
 
 // Create creates a new record in the specified collection
@@ -109,9 +105,9 @@ func (c *PocketBaseClient) Create(collection string, data map[string]interface{}
 	if err != nil {
 		return nil, err
 	}
-	c.setAuthHeader(req)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.HTTPClient.Do(req)
+
+	resp, err := c.sendRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -164,12 +160,11 @@ func (c *PocketBaseClient) CreateWithMultipart(collection string, fields map[str
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
-	c.setAuthHeader(req)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.sendRequest(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send HTTP request: %w", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -194,9 +189,9 @@ func (c *PocketBaseClient) Update(collection string, recordID string, data map[s
 	if err != nil {
 		return nil, err
 	}
-	c.setAuthHeader(req)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.HTTPClient.Do(req)
+
+	resp, err := c.sendRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -221,9 +216,8 @@ func (c *PocketBaseClient) Delete(collection string, recordID string) error {
 	if err != nil {
 		return err
 	}
-	c.setAuthHeader(req)
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.sendRequest(req)
 	if err != nil {
 		return err
 	}
@@ -243,9 +237,8 @@ func (c *PocketBaseClient) List(collection string, params url.Values) ([]map[str
 	if err != nil {
 		return nil, err
 	}
-	c.setAuthHeader(req)
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.sendRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -279,53 +272,6 @@ func (c *PocketBaseClient) List(collection string, params url.Values) ([]map[str
 // setAuthHeader sets the Authorization header if an AuthToken is available
 func (c *PocketBaseClient) setAuthHeader(req *http.Request) {
 	if c.AuthToken != "" {
-		req.Header.Set("Authorization", c.AuthToken)
+		req.Header.Set("Authorization", "Bearer "+c.AuthToken)
 	}
 }
-
-// Usage Example
-/*
-func main() {
-	client := NewPocketBaseClient("http://127.0.0.1:8090")
-	err := client.Authenticate("user@example.com", "password")
-	if err != nil {
-		fmt.Println("Error authenticating:", err)
-		return
-	}
-
-	// Create a new record
-	data := map[string]interface{}{
-		"name": "John Doe",
-		"age": 30,
-	}
-	record, err := client.Create("exampleCollection", data)
-	if err != nil {
-		fmt.Println("Error creating record:", err)
-		return
-	}
-	fmt.Println("Created record:", record)
-
-	// Create a new record with multipart
-	fields := map[string]string{
-		"name": "Jane Doe",
-		"type": "file",
-	}
-	files := map[string]string{
-		"file": "./example.txt",
-	}
-	record, err = client.CreateWithMultipart("exampleCollection", fields, files)
-	if err != nil {
-		fmt.Println("Error creating record with multipart:", err)
-		return
-	}
-	fmt.Println("Created record with multipart:", record)
-
-	// Authenticate as admin
-	err = client.AuthenticateAsAdmin("admin@example.com", "adminpassword")
-	if err != nil {
-		fmt.Println("Error authenticating as admin:", err)
-		return
-	}
-	fmt.Println("Authenticated as admin")
-}
-*/
