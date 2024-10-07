@@ -6,7 +6,7 @@ export enum Status {
     Created = "created",
     Queued = "queued",
     Processing = "processing",
-    Finished = "finished",
+    Completed = "completed",
     Error = "error"
 }
 

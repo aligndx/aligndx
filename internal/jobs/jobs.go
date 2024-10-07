@@ -53,7 +53,7 @@ const (
 	StatusCreated    JobStatus = "created"
 	StatusQueued     JobStatus = "queued"
 	StatusProcessing JobStatus = "processing"
-	StatusFinished   JobStatus = "finished"
+	StatusCompleted  JobStatus = "completed"
 	StatusError      JobStatus = "error"
 )
 
@@ -159,7 +159,7 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 		return fmt.Errorf("error processing job (job_id: %s): %w", job.JobID, err)
 	}
 
-	if err := s.updateJobStatus(ctx, job.JobID, string(StatusFinished)); err != nil {
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusCompleted)); err != nil {
 		return err
 	}
 
