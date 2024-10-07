@@ -69,12 +69,10 @@ func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *confi
 }
 
 func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) error {
-	configService := config.NewConfigService(s.log)
-	cfg := configService.LoadConfig()
-	client := pb_client.NewPocketBaseClient(cfg.API.URL)
+	client := pb_client.NewPocketBaseClient(s.cfg.API.URL)
 
 	// Authenticate as admin
-	err := client.Authenticate(cfg.API.DefaultAdminEmail, cfg.API.DefaultAdminPassword, true)
+	err := client.Authenticate(s.cfg.API.DefaultAdminEmail, s.cfg.API.DefaultAdminPassword, true)
 	if err != nil {
 		return fmt.Errorf("failed to authenticate as admin: %w", err)
 	}
