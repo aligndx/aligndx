@@ -130,7 +130,7 @@ export const useColumns = () => {
                       updateSearchParams({ "id": submissionId }, routes.dashboard.explore);
                     }}> <MagnifyingGlass /> </Button></TooltipTrigger>
                   <TooltipContent>
-                    <p>explore</p>
+                    <p>Explore</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

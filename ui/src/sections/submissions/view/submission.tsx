@@ -1,7 +1,7 @@
 'use client'
 
 import { useApiService } from "@/services/api";
-import { useSearchParams } from "@/routes";
+import { routes, useSearchParams, useUpdateSearchParams } from "@/routes";
 import { useEffect, useState } from "react";
 import { Tracker } from "@/components/ui/tracker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +12,7 @@ import { capitalize, cn } from "@/lib/utils";
 import { Event } from "@/types/event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { MagnifyingGlass } from "@/components/icons";
 
 export default function Submission() {
     const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
@@ -21,6 +22,7 @@ export default function Submission() {
     const { subscribeToSubmission, useGetSubmission } = submissions;
 
     const { data } = useGetSubmission(submissionId || "");
+    const updateSearchParams = useUpdateSearchParams();
 
     // State to manage the expanded rows
     const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
@@ -50,11 +52,22 @@ export default function Submission() {
     return (
         <div className="flex flex-col gap-4 h-full flex-grow">
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                     <h1 className="text-lg">
                         {data?.name}
                     </h1>
-                    <Badge>Status | {capitalize(data?.status || "")}</Badge>
+                    <Button
+                        variant="secondary"
+                        disabled={data?.status != "completed"}
+                        onClick={() => {
+                            updateSearchParams({ "id": data?.id }, routes.dashboard.explore);
+                        }}
+                        className="flex items-center justify-center gap-2"
+                    >
+                        <MagnifyingGlass />
+                        Explore Results
+                    </Button>
+                    {/* <Badge>Status | {capitalize(data?.status || "")}</Badge> */}
                 </div>
                 <Tracker data={generateTrackerData(submissionUpdates)} />
             </div>
