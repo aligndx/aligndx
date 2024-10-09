@@ -47,9 +47,8 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
         setPathogens(pathogens)
     }
 
-    // Refactored function to get URLs
     async function getURLs(subs: Submission[]) {
-        await refetch(); // Ensure queryData is refreshed
+        await refetch();
 
         // Wait for queryData to be populated and ready
         if (!queryData || queryData.length === 0) {
@@ -57,25 +56,24 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
             return [];
         }
 
-        const urlPromises = subs.map(async (sub) => {
-            // Use a fresh copy of queryData for each iteration
+        const urls: Source[] = [];
+
+        // Loop through each submission sequentially
+        for (const sub of subs) {
             const dataOfInterest = queryData?.find((item: any) => item.submission === sub.id);
             if (dataOfInterest?.id) {
                 try {
                     const url = await dataService.getPrivateDataURLQuery(dataOfInterest.id);
-                    return { id: dataOfInterest.id, url };
+                    urls.push({ id: dataOfInterest.id, url });
                 } catch (error) {
                     console.error(`Failed to get URL for submission: ${sub.id}`, error);
-                    return undefined;
                 }
             }
-            return undefined;
-        });
+        }
 
-        // Wait for all URLs to be fetched
-        const urls = await Promise.all(urlPromises);
-        return urls.filter((url) => url !== undefined) as Source[];
+        return urls; 
     }
+
 
     async function loadTable(rootTableId: string, sources: Source[], db: AsyncDuckDB, loading: boolean) {
         if (!db || loading || sources.length === 0) return;
