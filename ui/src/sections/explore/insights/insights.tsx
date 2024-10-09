@@ -7,6 +7,8 @@ import { PathogenSelector } from "./pathogen-selector";
 import { AsyncDuckDB, useDuckDb } from "duckdb-wasm-kit";
 import { handleExport, insertRemoteFile } from "./actions";
 import { toast } from "@/components/ui/sonner";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { cn } from "@/lib/utils";
 
 export interface Source {
     id: string; // Table name
@@ -33,6 +35,7 @@ interface InsightsProps {
 export default function Insights({ data, onDataChange, selectedSubs, onSubChange }: InsightsProps) {
     const { data: dataService } = useApiService();
     const { db, loading } = useDuckDb();
+    const isMobile = useMediaQuery("md", "down")
 
     const filter = `name = "bracken_combined.filtered.transformed_long.tsv"`;
     const { data: queryData, refetch, isLoading } = dataService.useGetDatasQuery({ filter });
@@ -149,7 +152,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
 
     const pathogenStatistic = () => {
         const pathogensToScreen = pathogens.length
-        const organisms = data.length
+        const organisms = data.length/selectedSubs.length
         if (pathogensToScreen > organisms) {
             return (
                 <p>Pathogens Detected | {organisms} of {pathogensToScreen} screened</p>
@@ -161,7 +164,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
 
     return (
         <div className="flex flex-col flex-grow h-full">
-            <div className="flex flex-row border-b h-full">
+            <div className={cn("flex border-b h-full", isMobile ? "flex-col" : "flex-row")}>
                 <div className="flex flex-col flex-grow p-10 gap-4">
                     <div className="flex">
                         <SubmissionSelector value={selectedSubs} onChange={onSubChange} />
@@ -173,7 +176,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
                     )}
                 </div>
                 {data.length > 0 && (
-                    <div className="border-l flex flex-col flex-grow p-10 gap-4">
+                    <div className={cn("flex flex-col flex-grow p-10 gap-4", isMobile ? "" : "border-l")}>
                         <h1 className="font-bold">Summary Statistics </h1>
                         {pathogenStatistic()}
                     </div>
