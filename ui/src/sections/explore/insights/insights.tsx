@@ -7,6 +7,8 @@ import { PathogenSelector } from "./pathogen-selector";
 import { AsyncDuckDB, useDuckDb } from "duckdb-wasm-kit";
 import { handleExport, insertRemoteFile } from "./actions";
 import { toast } from "@/components/ui/sonner";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { cn } from "@/lib/utils";
 
 export interface Source {
     id: string; // Table name
@@ -33,6 +35,7 @@ interface InsightsProps {
 export default function Insights({ data, onDataChange, selectedSubs, onSubChange }: InsightsProps) {
     const { data: dataService } = useApiService();
     const { db, loading } = useDuckDb();
+    const isMobile = useMediaQuery("md", "down")
 
     const filter = `name = "bracken_combined.filtered.transformed_long.tsv"`;
     const { data: queryData, refetch, isLoading } = dataService.useGetDatasQuery({ filter });
@@ -47,9 +50,8 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
         setPathogens(pathogens)
     }
 
-    // Refactored function to get URLs
     async function getURLs(subs: Submission[]) {
-        await refetch(); // Ensure queryData is refreshed
+        await refetch();
 
         // Wait for queryData to be populated and ready
         if (!queryData || queryData.length === 0) {
@@ -57,25 +59,24 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
             return [];
         }
 
-        const urlPromises = subs.map(async (sub) => {
-            // Use a fresh copy of queryData for each iteration
+        const urls: Source[] = [];
+
+        // Loop through each submission sequentially
+        for (const sub of subs) {
             const dataOfInterest = queryData?.find((item: any) => item.submission === sub.id);
             if (dataOfInterest?.id) {
                 try {
                     const url = await dataService.getPrivateDataURLQuery(dataOfInterest.id);
-                    return { id: dataOfInterest.id, url };
+                    urls.push({ id: dataOfInterest.id, url });
                 } catch (error) {
                     console.error(`Failed to get URL for submission: ${sub.id}`, error);
-                    return undefined;
                 }
             }
-            return undefined;
-        });
+        }
 
-        // Wait for all URLs to be fetched
-        const urls = await Promise.all(urlPromises);
-        return urls.filter((url) => url !== undefined) as Source[];
+        return urls; 
     }
+
 
     async function loadTable(rootTableId: string, sources: Source[], db: AsyncDuckDB, loading: boolean) {
         if (!db || loading || sources.length === 0) return;
@@ -151,7 +152,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
 
     const pathogenStatistic = () => {
         const pathogensToScreen = pathogens.length
-        const organisms = data.length
+        const organisms = data.length && selectedSubs.length && data.length/selectedSubs.length
         if (pathogensToScreen > organisms) {
             return (
                 <p>Pathogens Detected | {organisms} of {pathogensToScreen} screened</p>
@@ -163,7 +164,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
 
     return (
         <div className="flex flex-col flex-grow h-full">
-            <div className="flex flex-row border-b h-full">
+            <div className={cn("flex border-b h-full", isMobile ? "flex-col" : "flex-row")}>
                 <div className="flex flex-col flex-grow p-10 gap-4">
                     <div className="flex">
                         <SubmissionSelector value={selectedSubs} onChange={onSubChange} />
@@ -175,7 +176,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
                     )}
                 </div>
                 {data.length > 0 && (
-                    <div className="border-l flex flex-col flex-grow p-10 gap-4">
+                    <div className={cn("flex flex-col flex-grow p-10 gap-4", isMobile ? "" : "border-l")}>
                         <h1 className="font-bold">Summary Statistics </h1>
                         {pathogenStatistic()}
                     </div>

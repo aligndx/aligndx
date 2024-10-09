@@ -150,23 +150,27 @@ export function SubmissionSelector({
             {/* Conditionally render Drawer for mobile and Popover for desktop */}
             {isMobile ? (
                 <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                    <DrawerTrigger asChild>
-                        <Button
-                            variant="outline"
-                            role="combobox"
-                            className="justify-between"
-                            onClick={() => setDrawerOpen(true)} // Open drawer on mobile
-                        >
-                            {value.length > 1 ? (
-                                <Badge>{value.length} selected</Badge>
-                            ) : value.length === 1 ? (
-                                value[0].name
-                            ) : (
-                                "Select submissions..."
-                            )}
-                            <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </DrawerTrigger>
+                    <div className="flex flex-col gap-2">
+                        <Label>Source(s)</Label>
+                        <p className={"text-sm text-muted-foreground"}> The data to explore. </p>
+                        <DrawerTrigger asChild>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                className="justify-between"
+                                onClick={() => setDrawerOpen(true)} // Open drawer on mobile
+                            >
+                                {value.length > 1 ? (
+                                    <Badge>{value.length} selected</Badge>
+                                ) : value.length === 1 ? (
+                                    value[0].name
+                                ) : (
+                                    "Select submissions..."
+                                )}
+                                <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </DrawerTrigger>
+                    </div>
                     <DrawerContent>
                         <div className="flex flex-col gap-4 p-4">
                             <DrawerTitle >Source(s)</DrawerTitle>

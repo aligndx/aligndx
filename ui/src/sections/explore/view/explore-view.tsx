@@ -26,7 +26,7 @@ export default function ExploreView() {
         <Tabs defaultValue="insights" className="flex flex-col h-full transition-all duration-300 overflow-hidden">
             <TabsList className="flex items-center justify-start" variant="underlined">
                 <TabsTrigger value="insights">Insights</TabsTrigger>
-                <TabsTrigger disabled={data === null} value="visualize">Visualize</TabsTrigger>
+                <TabsTrigger disabled={data === null || data.length === 0} value="visualize">Visualize</TabsTrigger>
             </TabsList>
             <TabsContent value="insights" className="flex flex-col h-full">
                 <Insights
