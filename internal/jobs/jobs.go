@@ -8,6 +8,7 @@ import (
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/logger"
+	"github.com/aligndx/aligndx/internal/pb_client"
 )
 
 type BaseJobHandler func(ctx context.Context, inputs interface{}) error
@@ -52,7 +53,7 @@ const (
 	StatusCreated    JobStatus = "created"
 	StatusQueued     JobStatus = "queued"
 	StatusProcessing JobStatus = "processing"
-	StatusFinished   JobStatus = "finished"
+	StatusCompleted  JobStatus = "completed"
 	StatusError      JobStatus = "error"
 )
 
@@ -68,6 +69,23 @@ func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *confi
 }
 
 func (s *JobService) updateJobStatus(ctx context.Context, jobID, status string) error {
+	client := pb_client.NewPocketBaseClient(s.cfg.API.URL)
+
+	// Authenticate as admin
+	err := client.Authenticate(s.cfg.API.DefaultAdminEmail, s.cfg.API.DefaultAdminPassword, true)
+	if err != nil {
+		return fmt.Errorf("failed to authenticate as admin: %w", err)
+	}
+
+	updateData := map[string]interface{}{
+		"status": status,
+	}
+
+	_, err = client.Update("submissions", jobID, updateData)
+	if err != nil {
+		return fmt.Errorf("failed to update submission record with jobID %s: %w", jobID, err)
+	}
+
 	// Create an event to represent the job status update
 	event := Event{
 		Type:      "job.status",
@@ -139,7 +157,7 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 		return fmt.Errorf("error processing job (job_id: %s): %w", job.JobID, err)
 	}
 
-	if err := s.updateJobStatus(ctx, job.JobID, string(StatusFinished)); err != nil {
+	if err := s.updateJobStatus(ctx, job.JobID, string(StatusCompleted)); err != nil {
 		return err
 	}
 

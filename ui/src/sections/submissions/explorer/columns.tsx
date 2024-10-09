@@ -103,7 +103,7 @@ export const useColumns = () => {
           [Status.Created]: "#3498db",      // Blue
           [Status.Queued]: "#f39c12",       // Orange
           [Status.Processing]: "#f1c40f",   // Yellow
-          [Status.Finished]: "#2ecc71",     // Green
+          [Status.Completed]: "#2ecc71",     // Green
           [Status.Error]: "#e74c3c"         // Red
         };
         const statusColor = StatusColorMap[status || Status.Created]
@@ -130,7 +130,7 @@ export const useColumns = () => {
                       updateSearchParams({ "id": submissionId }, routes.dashboard.explore);
                     }}> <MagnifyingGlass /> </Button></TooltipTrigger>
                   <TooltipContent>
-                    <p>explore</p>
+                    <p>Explore</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
