@@ -152,7 +152,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
 
     const pathogenStatistic = () => {
         const pathogensToScreen = pathogens.length
-        const organisms = data.length/selectedSubs.length
+        const organisms = data.length && selectedSubs.length && data.length/selectedSubs.length
         if (pathogensToScreen > organisms) {
             return (
                 <p>Pathogens Detected | {organisms} of {pathogensToScreen} screened</p>
