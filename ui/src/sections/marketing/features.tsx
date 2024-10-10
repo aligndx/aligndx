@@ -93,8 +93,11 @@ export default function Features() {
     return (
         <div className="flex flex-col gap-6 py-40">
             <h2 className="font-bold text-center font-heading text-3xl sm:text-5xl md:text-6xl">
-                What we provide
+                Packed with features
             </h2>
+            <caption>
+                From pathogen detection all the way to visualization. Gain complex insights into your data, at your pace.
+            </caption>
             <div className="mx-auto grid text-center gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 px-10 py-5">
                 <FeatureCards />
             </div>

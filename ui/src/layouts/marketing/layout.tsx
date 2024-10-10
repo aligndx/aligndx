@@ -10,7 +10,7 @@ export default function MarketingLayout({ children }: Props) {
     return (
         <div className="relative flex min-h-screen flex-col overflow-hidden">
             <div className="custom-bg"></div>
-            <Header className="px-6 py-2 z-10 backdrop-blur-sm"  />
+            <Header className="px-6 py-2"  />
             <main className="flex-grow z-10">
                 {children}
             </main>
