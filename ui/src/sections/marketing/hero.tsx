@@ -1,11 +1,16 @@
+'use client'
+
 import AnimatedShinyText from "@/components/ui/animated-shiny-text";
 import { buttonVariants } from "@/components/ui/button";
 import GradualSpacing from "@/components/ui/gradual-spacing";
 import { cn } from "@/lib/utils";
 import { routes } from "@/routes";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Hero() {
+    const { theme } = useTheme();
     return (
         <div className="relative flex flex-col text-center gap-10 py-40 overflow-hidden">
             <AnimatedShinyText className="inline-flex items-center justify-center transition ease-out">
@@ -28,6 +33,23 @@ export default function Hero() {
                     Get Started Now
                 </Link>
             </div>
+            <div className="relative flex items-center justify-center overflow-hidden">
+                {/* The Image Component */}
+                <Image
+                    src={theme === "light" ?  "/marketing/hero-light.png":"/marketing/hero-dark.png"}
+                    width={2000}
+                    height={1000}
+                    alt="dashboard-screenshot"
+                    className="relative"
+                />
+
+                {/* Gradient Overlay with Opacity */}
+                <div className="absolute bottom-0 w-full h-[60%] bg-gradient-to-t from-background to-transparent pointer-events-none "></div>
+            </div>
+
+
+
+
         </div>
     );
 }
