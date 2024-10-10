@@ -5,7 +5,6 @@ const BASE_ROUTES = {
 
 export const routes = {
     home: "/dashboard/upload",
-    marketing: "/marketing",
     auth: {
         signin: `${BASE_ROUTES.ROOT}/signin`,
         signup: `${BASE_ROUTES.ROOT}/signup`,
@@ -32,4 +31,4 @@ export const routes = {
     },
 }
 
-export const publicRoutes = [routes.auth.signin, routes.auth.signup, routes.auth.activate, routes.auth.forgotPassword, routes.auth.resetPassword, routes.marketing]
+export const publicRoutes = [routes.auth.signin, routes.auth.signup, routes.auth.activate, routes.auth.forgotPassword, routes.auth.resetPassword, "/"]

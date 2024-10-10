@@ -20,7 +20,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     useEffect(() => {
         const checkAuth = async () => {
             if (!isAuthenticated && !isPublicRoute) {
-                await router.push(routes.auth.signin);
+                router.push(routes.auth.signin);
             } else {
                 setLoading(false);
             }

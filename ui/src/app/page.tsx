@@ -1,6 +1,8 @@
-import { routes } from '@/routes';
-import { redirect } from 'next/navigation';
+import { MarketingView } from "@/sections/marketing/view";
+import { MarketingLayout as Layout } from "@/layouts/marketing"
 
-export default async function HomePage() {
-  redirect(routes.marketing);
+export default function HomePage() {
+  return <Layout>
+    <MarketingView />
+  </Layout>
 }
