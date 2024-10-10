@@ -9,10 +9,13 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 
+{/* Import the necessary components */ }
+import 'next/image';
+
 export default function Hero() {
     const { theme } = useTheme();
     return (
-        <div className="relative flex flex-col text-center gap-10 py-40 overflow-hidden">
+        <div className="relative flex flex-col text-center gap-10 py-40 max-h-screen">
             <AnimatedShinyText className="inline-flex items-center justify-center transition ease-out">
                 Introducing AlignDx.
             </AnimatedShinyText>
@@ -33,23 +36,23 @@ export default function Hero() {
                     Get Started Now
                 </Link>
             </div>
-            <div className="relative flex items-center justify-center overflow-hidden">
-                {/* The Image Component */}
+
+            {/* Image Section */}
+            <div className="relative w-full overflow-hidden">
                 <Image
-                    src={theme === "light" ?  "/marketing/hero-light.png":"/marketing/hero-dark.png"}
-                    width={2000}
-                    height={1000}
+                    src={theme === "light" ? "/marketing/hero-light.png" : "/marketing/hero-dark.png"}
                     alt="dashboard-screenshot"
-                    className="relative"
+                    layout="responsive"
+                    width={1000}
+                    height={1000}
+                    objectFit="cover"
+                    objectPosition="top"  // Ensures the top part of the image remains visible
+                    className="rounded-lg shadow-lg"
                 />
 
                 {/* Gradient Overlay with Opacity */}
-                <div className="absolute bottom-0 w-full h-[60%] bg-gradient-to-t from-background to-transparent pointer-events-none "></div>
+                <div className="absolute bottom-0 w-full h-[60%] bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
             </div>
-
-
-
-
         </div>
     );
 }

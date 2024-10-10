@@ -7,8 +7,8 @@ export default function MarketingView() {
         <div className="flex flex-col ">
             <div className="px-20">
                 <Hero />
-                <Features />
             </div>
+            <Features />
             <Content />
         </div>
 
