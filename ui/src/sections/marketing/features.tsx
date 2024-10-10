@@ -92,7 +92,7 @@ function FeatureCards() {
 
 export default function Features() {
     return (
-        <div className="flex flex-col gap-6 py-40 bg-secondary">
+        <div className="flex flex-col gap-6 py-40 ">
             <h2 className="font-bold text-center font-heading text-3xl sm:text-5xl md:text-6xl">
                 Packed with features
             </h2>

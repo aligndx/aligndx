@@ -15,7 +15,7 @@ import 'next/image';
 export default function Hero() {
     const { theme } = useTheme();
     return (
-        <div className="relative flex flex-col text-center gap-10 py-40 max-h-screen">
+        <div className="relative flex flex-col text-center gap-10 pt-40 pb-10 max-h-screen">
             <AnimatedShinyText className="inline-flex items-center justify-center transition ease-out">
                 Introducing AlignDx.
             </AnimatedShinyText>
