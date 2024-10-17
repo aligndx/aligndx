@@ -21,9 +21,9 @@ export default function Hero() {
             </AnimatedShinyText>
             <GradualSpacing
                 className="font-display text-center text-4xl font-bold -tracking-wider md:text-6xl lg:text-7xl md:leading-[5rem] "
-                text="Transform Surveillance."
+                text="Simplify Surveillance."
             />
-            <h1>Your Complete Platform for Pathogen Detection.</h1>
+            <h1>Detect pathogens and gain valuable insights.</h1>
 
             <div className="flex justify-center z-10">
                 <Link
