@@ -11,8 +11,9 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 export interface Source {
-    id: string; // Table name
-    url: string; // URL for the source file
+    id: string;
+    url: string;
+    name: string;
 }
 
 const columnMetadata = {
@@ -64,10 +65,10 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
         // Loop through each submission sequentially
         for (const sub of subs) {
             const dataOfInterest = queryData?.find((item: any) => item.submission === sub.id);
-            if (dataOfInterest?.id) {
+            if (dataOfInterest?.id && dataOfInterest?.name) {
                 try {
                     const url = await dataService.getPrivateDataURLQuery(dataOfInterest.id);
-                    urls.push({ id: dataOfInterest.id, url });
+                    urls.push({ id: dataOfInterest.id, url, name : sub.name });
                 } catch (error) {
                     console.error(`Failed to get URL for submission: ${sub.id}`, error);
                 }
@@ -88,8 +89,8 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
             for (const source of sources) {
                 await insertRemoteFile(db, source.url, source.id);
             }
-
-            const unionQueries = sources.map((source) => `SELECT * FROM ${source.id}`).join(" UNION ALL ");
+            console.log(sources)
+            const unionQueries = sources.map((source) => `SELECT *, '${source.name}' AS submission FROM ${source.id}`).join(" UNION ALL ");
             await conn.query(`CREATE OR REPLACE TABLE ${rootTableId} AS ${unionQueries};`);
 
             const result = await conn.query(`SELECT * FROM ${rootTableId};`);
