@@ -4,6 +4,7 @@ const BASE_ROUTES = {
 }
 
 export const routes = {
+    root: `${BASE_ROUTES.ROOT}/`,
     home: "/dashboard/upload",
     auth: {
         signin: `${BASE_ROUTES.ROOT}/signin`,
