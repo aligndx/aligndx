@@ -2,7 +2,7 @@
 
 import { useEffect, ReactNode, useState } from 'react';
 import { useAuth } from './auth-context';
-import { useRouter, usePathname, routes} from '@/routes';
+import { useRouter, usePathname, routes } from '@/routes';
 import { publicRoutes } from '@/routes/routes';
 import SplashScreen from '@/components/splash-screen/splash-screen';
 
@@ -20,16 +20,21 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     useEffect(() => {
         const checkAuth = async () => {
             if (!isAuthenticated && !isPublicRoute) {
-                await router.push(routes.auth.signin);
-            } else {
+                router.push(routes.auth.signin);
+            }
+            else if (isAuthenticated && pathname === routes.root) {
+                router.push(routes.dashboard.root); // Adjust to your dashboard route
+            }
+            else {
                 setLoading(false);
             }
         };
         checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, isPublicRoute, router]);
-    
+
     if (loading || !isAuthenticated && !isPublicRoute) {
-        return <SplashScreen />; 
+        return <SplashScreen />;
     }
 
     return <>{children}</>;

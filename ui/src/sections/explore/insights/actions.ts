@@ -19,7 +19,7 @@ export const insertRemoteFile = async (
 
         // No need to manually install/load HTTPFS. DuckDB will autoload it when the URL is queried.
         await conn.query(`
-        CREATE OR REPLACE TABLE ${tableName} AS 
+        CREATE OR REPLACE TABLE '${tableName}' AS 
         SELECT * FROM '${fileUrl}';
       `);
 

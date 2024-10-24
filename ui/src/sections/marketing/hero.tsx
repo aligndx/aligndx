@@ -1,32 +1,57 @@
-import { Boxes } from "@/components/ui/background-boxes";
+'use client'
+
+import AnimatedShinyText from "@/components/ui/animated-shiny-text";
 import { buttonVariants } from "@/components/ui/button";
+import GradualSpacing from "@/components/ui/gradual-spacing";
 import { cn } from "@/lib/utils";
 import { routes } from "@/routes";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 import Link from "next/link";
 
+{/* Import the necessary components */ }
+import 'next/image';
+
 export default function Hero() {
+    const { theme } = useTheme();
     return (
-        <div className="relative flex flex-col text-center gap-6 py-40 overflow-hidden">
-             {/* <Boxes colors={["--slate-500"]} className="opacity-20 z-10" /> */}
-            <div className="flex flex-col gap-4 z-10">
-                <h1 className="text-primary font-semibold font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl">
-                    <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                        Aligning Efforts, Detecting Pathogens
-                    </span>
-                </h1>
-                <h1>Cutting-edge Surveillance for Global Health</h1>
-            </div>
+        <div className="relative flex flex-col text-center gap-10 pt-40 pb-10 max-h-screen">
+            <AnimatedShinyText className="inline-flex items-center justify-center transition ease-out">
+                Introducing AlignDx.
+            </AnimatedShinyText>
+            <GradualSpacing
+                className="font-display text-center text-4xl font-bold -tracking-wider md:text-6xl lg:text-7xl md:leading-[5rem] "
+                text="Simplify Surveillance."
+            />
+            <h1>Detect pathogens and gain valuable insights.</h1>
 
             <div className="flex justify-center z-10">
                 <Link
                     href={routes.auth.signup}
                     className={cn(
-                        buttonVariants({ variant: "default", size: "sm" }),
+                        buttonVariants({ variant: "gooeyLeft", size: "sm" }),
                         "font-medium transition-colors"
                     )}
                 >
                     Get Started Now
                 </Link>
+            </div>
+
+            {/* Image Section */}
+            <div className="relative w-full overflow-hidden">
+                <Image
+                    src={theme === "light" ? "/marketing/hero-light.png" : "/marketing/hero-dark.png"}
+                    alt="dashboard-screenshot"
+                    layout="responsive"
+                    width={1000}
+                    height={1000}
+                    objectFit="cover"
+                    objectPosition="top"  // Ensures the top part of the image remains visible
+                    className="rounded-lg shadow-lg"
+                />
+
+                {/* Gradient Overlay with Opacity */}
+                <div className="absolute bottom-0 w-full h-[60%] bg-gradient-to-t from-background to-transparent pointer-events-none"></div>
             </div>
         </div>
     );

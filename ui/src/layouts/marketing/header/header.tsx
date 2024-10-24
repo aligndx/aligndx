@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export default function Header({ className }: HeaderProps) {
     return (
-        <header className={cn("border-b sticky", className)}>
+        <header className={cn("sticky", className)}>
             <MainNav items={[]} />
         </header>
     )

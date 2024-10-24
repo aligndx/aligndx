@@ -39,7 +39,7 @@ export function MainNav({ items, children }: NavProps) {
                         </Link>
                     ))}
                 </div> */}
-                <Logo />
+                <Logo full={false} />
                 <div className="flex flex-1 justify-end gap-6 items-center">
                     <Link
                         href={routes.auth.signin}

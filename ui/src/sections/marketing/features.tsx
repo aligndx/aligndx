@@ -1,6 +1,7 @@
 'use client'
 
 import { Chart, MagnifyingGlass } from "@/components/icons";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { Card, CardContent } from "@/components/ui/card";
 import { WorkflowIcon } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -43,30 +44,30 @@ function FeatureCards() {
     const features = [
         {
             heading: "Automated Workflows",
-            highlight: "Streamline",
-            details: "your pathogen detection processes with our fully automated workflows.",
+            highlight: "Say goodbye",
+            details: "to manual tasks. We take complexity out of pathogen detection so you can focus on what truly matters.",
             color: "#76C7C0",
             icon: <WorkflowIcon />
 
         },
         {
             heading: "Data Exploration",
-            highlight: "Harness",
-            details: "Harness the power of all your samples. Track historical data sets and gain valuable insights",
+            highlight: "Unlock",
+            details: "the full power of your data. Track historical trends, compare samples, and make informed decisions using advanced data exploration tools.",
             color: "#29c463",
             icon: <MagnifyingGlass />
         },
         {
             heading: "Real Time Updates",
-            highlight: "Never",
-            details: "miss a second. Get real-time updates for your analyses.",
+            highlight: "Stay informed",
+            details: "with live updates. AlignDx ensures you receive results as they happen, so you're always in the know.",
             color: "#F4B400",
             icon: <HiLightningBolt />
         },
         {
             heading: "Visualizations",
             highlight: "Leverage",
-            details: "our built-in analytics tools for deeper insights and faster results.",
+            details: "your data. Use our built-in analytics and visualization tools to gain deeper insights quickly and efficiently",
             color: "#2862ea",
             icon: <Chart />
         },
@@ -91,10 +92,13 @@ function FeatureCards() {
 
 export default function Features() {
     return (
-        <div className="flex flex-col gap-6 py-40">
+        <div className="flex flex-col gap-6 py-40 ">
             <h2 className="font-bold text-center font-heading text-3xl sm:text-5xl md:text-6xl">
-                What we provide
+                Packed with features
             </h2>
+            <caption>
+                From pathogen detection all the way to visualization. Gain complex insights into your data, at your pace.    Designed with researchers in mind, AlignDx streamlines your detection workflows, empowering you to make faster, more informed decisions.
+            </caption>
             <div className="mx-auto grid text-center gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 px-10 py-5">
                 <FeatureCards />
             </div>

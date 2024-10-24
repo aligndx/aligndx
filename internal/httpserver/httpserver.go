@@ -1,49 +1,37 @@
-package main
+package httpserver
 
 import (
 	"context"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
+
+	"os"
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/jobs"
 	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"
-	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
-	_ "github.com/aligndx/aligndx/internal/migrations"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/spf13/cobra"
 )
 
-var log *logger.LoggerWrapper
-
-func main() {
-	ctx := context.Background()
+// StartHTTPServer starts the HTTP server with all required services and configurations
+func StartHTTPServer(ctx context.Context, rootcmd *cobra.Command, cfg *config.Config, jobService jobs.JobServiceInterface, log *logger.LoggerWrapper) (*pocketbase.PocketBase, error) {
 	app := pocketbase.New()
-	log = logger.NewLoggerWrapper("zerolog", ctx)
-	configService := config.NewConfigService(log)
-	cfg := configService.LoadConfig()
 
 	log.Info("App started")
-
-	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
-	if err != nil {
-		log.Fatal("Failed to initialize message queue service", map[string]interface{}{"error": err})
-		return
-	}
-	jobService := jobs.NewJobService(mqService, log, cfg, cfg.MQ.Stream, "jobs")
 
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 
 	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
-		// configService.SetPBSettings(app)
+		// Placeholder for post-bootstrap logic
 		return nil
 	})
 
@@ -57,15 +45,12 @@ func main() {
 		if admin != nil {
 			return nil // ignore for admins
 		}
+
 		record := e.Record
 		jobID := e.Record.Id
 
 		result := map[string]interface{}{}
 		record.UnmarshalJSONField("params", &result)
-		if err != nil {
-			log.Error("Failed to unmarshal params field", map[string]interface{}{"error": err})
-			return err
-		}
 
 		// Fetch workflow record ID and other details
 		workflowRecordID := record.GetString("workflow")
@@ -76,7 +61,6 @@ func main() {
 		}
 
 		userID := e.HttpContext.Get(apis.ContextAuthRecordKey).(*models.Record).Id
-
 		workflowRepo := workflowRecord.GetString("repository")
 		schema := map[string]interface{}{}
 		workflowRecord.UnmarshalJSONField("schema", &schema)
@@ -90,10 +74,10 @@ func main() {
 			UserID:             userID,
 		}
 
-		queue_err := jobService.QueueJob(ctx, jobID, workflowInputs, "workflow")
-		if queue_err != nil {
-			log.Error("Failed to queue job", map[string]interface{}{"error": err})
-			return err
+		queueErr := jobService.QueueJob(ctx, jobID, workflowInputs, "workflow")
+		if queueErr != nil {
+			log.Error("Failed to queue job", map[string]interface{}{"error": queueErr})
+			return queueErr
 		}
 
 		log.Info(fmt.Sprintf("Job %s successfully queued", jobID))
@@ -111,30 +95,24 @@ func main() {
 			w.Header().Set("Cache-Control", "no-cache")
 			w.Header().Set("Connection", "keep-alive")
 
-			// Get the flusher interface
 			flusher, ok := w.Writer.(http.Flusher)
 			if !ok {
 				http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 				return nil
 			}
 
-			// Immediately flush headers to establish connection
 			flusher.Flush()
 
-			// Get jobId from URL parameters
 			jobID := c.PathParam("jobId")
 			if jobID == "" {
 				return echo.NewHTTPError(http.StatusBadRequest, "Missing jobId parameter")
 			}
 
-			// Create a context that will be canceled when the client disconnects
 			clientCtx := c.Request().Context()
 
-			// Subscribe to job updates using the simplified logic
 			err := jobService.SubscribeToJob(clientCtx, jobID, func(msgData []byte) {
-				// Stream data to SSE client
 				fmt.Fprintf(w, "data: %s\n\n", msgData)
-				flusher.Flush() // Ensure the data is sent immediately
+				flusher.Flush()
 			})
 
 			if err != nil {
@@ -142,7 +120,7 @@ func main() {
 				return err
 			}
 
-			<-clientCtx.Done() // Wait for client to disconnect or context cancellation
+			<-clientCtx.Done()
 
 			log.Info(fmt.Sprintf("SSE client disconnected, ip: %v", c.RealIP()))
 			return nil
@@ -151,16 +129,12 @@ func main() {
 		return nil
 	})
 
-	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
-		// enable auto creation of migration files when making collection changes in the Admin UI
-		// (the isGoRun check is to enable it only during development)
-		Dir:         cfg.DB.MigrationsDir, // path to migration files
+	migratecmd.MustRegister(app, rootcmd, migratecmd.Config{
+		Dir:         cfg.DB.MigrationsDir,
 		Automigrate: isGoRun,
 	})
 
-	if err := app.Start(); err != nil {
-		log.Fatal("Error starting the application", map[string]interface{}{"error": err})
-	}
+	return app, nil
 }
 
 // Event represents a Server-Sent Event (SSE) message
@@ -184,7 +158,6 @@ func (e *Event) MarshalTo(w io.Writer) error {
 		}
 	}
 
-	// Writing data line by line as per SSE format
 	if _, err := fmt.Fprintf(w, "data: %s\n\n", e.Data); err != nil {
 		return err
 	}
