@@ -89,7 +89,6 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
             for (const source of sources) {
                 await insertRemoteFile(db, source.url, source.id);
             }
-            console.log(sources)
             const unionQueries = sources.map((source) => `SELECT *, '${source.name}' AS submission FROM ${source.id}`).join(" UNION ALL ");
             await conn.query(`CREATE OR REPLACE TABLE ${rootTableId} AS ${unionQueries};`);
 
