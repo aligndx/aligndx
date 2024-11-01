@@ -9,6 +9,7 @@ import { handleExport, insertRemoteFile } from "./actions";
 import { toast } from "@/components/ui/sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import SummaryStatistics from "./summary-statistics";
 
 export interface Source {
     id: string;
@@ -150,18 +151,6 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
         if (db) handleExport(db, rootTableId);
     }, [db]);
 
-    const pathogenStatistic = () => {
-        const pathogensToScreen = pathogens.length
-        const organisms = data.length && selectedSubs.length && data.length/selectedSubs.length
-        if (pathogensToScreen > organisms) {
-            return (
-                <p>Pathogens Detected | {organisms} of {pathogensToScreen} screened</p>
-            )
-        }
-
-        return null
-    }
-
     return (
         <div className="flex flex-col flex-grow h-full">
             <div className={cn("flex border-b h-full", isMobile ? "flex-col" : "flex-row")}>
@@ -177,8 +166,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
                 </div>
                 {data.length > 0 && (
                     <div className={cn("flex flex-col flex-grow p-10 gap-4", isMobile ? "" : "border-l")}>
-                        <h1 className="font-bold">Summary Statistics </h1>
-                        {pathogenStatistic()}
+                        <SummaryStatistics pathogens={pathogens} data={data} selectedSubs={selectedSubs}/>
                     </div>
                 )}
             </div>
