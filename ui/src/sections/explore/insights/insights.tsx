@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import SummaryStatistics from "./summary-statistics";
+import { Switch } from "@/components/ui/switch";
 
 export interface Source {
     id: string;
@@ -52,6 +53,12 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
         setPathogens(pathogens)
     }
 
+    const [showAllPathogens, setShowAllPathogens] = useState(false);
+
+    const toggleShowAllPathogens = () => {
+        setShowAllPathogens(!showAllPathogens);
+    };
+
     async function getURLs(subs: Submission[]) {
         await refetch();
 
@@ -69,14 +76,14 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
             if (dataOfInterest?.id && dataOfInterest?.name) {
                 try {
                     const url = await dataService.getPrivateDataURLQuery(dataOfInterest.id);
-                    urls.push({ id: dataOfInterest.id, url, name : sub.name });
+                    urls.push({ id: dataOfInterest.id, url, name: sub.name });
                 } catch (error) {
                     console.error(`Failed to get URL for submission: ${sub.id}`, error);
                 }
             }
         }
 
-        return urls; 
+        return urls;
     }
 
 
@@ -103,19 +110,47 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
         }
     }
 
-    async function filterByPathogens(rootTableId: string, pathogens: string[], db: AsyncDuckDB, loading: boolean) {
+    async function filterByPathogens(rootTableId: string, pathogens: string[], db: AsyncDuckDB, loading: boolean, showAll: boolean) {
         if (!db || loading) return;
         try {
             const conn = await db.connect();
+
             const pathogensListStr = pathogens.map(org => `'${org}'`).join(", ");
-            const filteredTable = await conn.query(`SELECT * FROM ${rootTableId} WHERE name IN (${pathogensListStr})`);
+
+            let filteredTable;
+
+            if (showAll) {
+                // Show all pathogens, including undetected ones with "N/A" values
+                filteredTable = await conn.query(`
+                    SELECT
+                        pathogen_list.name AS name,
+                        COALESCE(data.taxonomy_id, 'N/A') AS taxonomy_id,
+                        COALESCE(data.taxonomy_lvl, 'N/A') AS taxonomy_lvl,
+                        COALESCE(data.sample, 'N/A') AS sample,
+                        COALESCE(data.abundance_num, 'N/A') AS abundance_num,
+                        COALESCE(data.abundance_frac, 'N/A') AS abundance_frac,
+                        COALESCE(data.submission, 'N/A') AS submission
+                    FROM 
+                        (SELECT unnest(array[${pathogensListStr}]) AS name) AS pathogen_list
+                    LEFT JOIN 
+                        ${rootTableId} AS data
+                    ON pathogen_list.name = data.name
+                `);
+            } else {
+                // Show only detected pathogens
+                filteredTable = await conn.query(`
+                    SELECT * FROM ${rootTableId} WHERE name IN (${pathogensListStr})
+                `);
+            }
+
             onDataChange(filteredTable.toArray());
             await conn.close();
         } catch (err) {
             console.error("Error loading data into DuckDB:", err);
-            toast.error("Error filtering");
+            toast.error("Error filtering pathogens");
         }
     }
+
 
     useEffect(() => {
         if (selectedSubs.length === 0) {
@@ -141,10 +176,10 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
 
     useEffect(() => {
         if (db && pathogens.length > 0) {
-            filterByPathogens(rootTableId, pathogens, db, loading);
+            filterByPathogens(rootTableId, pathogens, db, loading, showAllPathogens);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pathogens, loading])
+    }, [pathogens, loading, showAllPathogens])
 
 
     const onExport = useCallback(() => {
@@ -166,13 +201,22 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
                 </div>
                 {data.length > 0 && (
                     <div className={cn("flex flex-col flex-grow p-10 gap-4", isMobile ? "" : "border-l")}>
-                        <SummaryStatistics pathogens={pathogens} data={data} selectedSubs={selectedSubs}/>
+                        <SummaryStatistics pathogens={pathogens} data={data} selectedSubs={selectedSubs} />
                     </div>
                 )}
             </div>
             {selectedSubs.length > 0 && (
                 <div className="flex flex-col flex-grow h-full">
-                    <h1 className="font-bold px-10 pt-10">Detected Pathogens </h1>
+                    <div className="flex flex-row items-center justify-start px-10 pt-4 gap-4">
+                        <h1 className="font-bold"> {showAllPathogens ? "Screened Pathogens":"Detected Pathogens"}</h1>
+                        <Switch
+                            id="showAllPathogensSwitch"
+                            checked={showAllPathogens}
+                            onCheckedChange={toggleShowAllPathogens}
+                        />
+                    </div>
+
+
                     <SpreadSheet data={data} metadata={metadata} onExport={onExport} loading={loading || isLoading} />
                 </div>
             )}
