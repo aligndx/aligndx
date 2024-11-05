@@ -9,7 +9,7 @@ import (
 
 func WorkerCommand() *cobra.Command {
 	command := &cobra.Command{
-		Use:   "worker start",
+		Use:   "worker",
 		Short: "Starts a worker",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(context.Background())

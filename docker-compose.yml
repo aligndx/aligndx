@@ -1,0 +1,34 @@
+services:
+  nats:
+    image: nats:latest
+    command: ["--jetstream"]
+    ports:
+      - "4222:4222" # Default port for NATS messaging
+      - "8222:8222" # Optional monitoring port
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: ./build/aligndx/Dockerfile
+    command: ["serve", "--http=0.0.0.0:8090"]
+    ports:
+      - "8090:8090"
+    environment:
+      MQ_URL: "nats://nats:4222"
+    restart: unless-stopped
+    depends_on:
+      - nats
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./build/aligndx/Dockerfile
+    command: ["worker"]
+    environment:
+      MQ_URL: "nats://nats:4222"
+      API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
+      API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
+    restart: unless-stopped
+    depends_on:
+      - nats
