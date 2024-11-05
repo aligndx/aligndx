@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -9,9 +10,39 @@ import (
 	"time"
 
 	"github.com/aligndx/aligndx/internal/config"
+	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"
+	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
 )
 
+// Start initializes the worker's dependencies and starts the job processing.
+func StartWorker(ctx context.Context, cancel context.CancelFunc) error {
+
+	// Initialize logger
+	log := logger.NewLoggerWrapper("zerolog", ctx)
+
+	// Load configuration
+	configService := config.NewConfigService(log)
+	cfg := configService.LoadConfig()
+
+	// Setup message queue
+	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
+	if err != nil {
+		return fmt.Errorf("failed to initialize message queue service: %w", err)
+	}
+
+	// Initialize job service
+	jobService := NewJobService(mqService, log, cfg, cfg.MQ.Stream, "jobs")
+
+	// Register job handlers
+	jobService.RegisterJobHandler("workflow", workflow.WorkflowHandler)
+
+	// Create a worker instance and run it
+	worker := NewWorker(jobService, log, cfg)
+	return worker.Run(ctx, cancel) // Changed from Start to Run for clarity
+}
+
+// Worker struct manages the job processing.
 type Worker struct {
 	jobService JobServiceInterface
 	log        *logger.LoggerWrapper
@@ -26,13 +57,13 @@ func NewWorker(jobService JobServiceInterface, log *logger.LoggerWrapper, cfg *c
 	}
 }
 
-func (w *Worker) Start(ctx context.Context, cancel context.CancelFunc) {
+// Run starts processing jobs and listens for graceful shutdown signals.
+func (w *Worker) Run(ctx context.Context, cancel context.CancelFunc) error { // Changed from Start to Run
 	var wg sync.WaitGroup
-
-	// Capture OS signals for graceful shutdown
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+	// Handle shutdown signal
 	go func() {
 		<-sigs
 		w.log.Info("Shutting down worker...")
@@ -41,6 +72,7 @@ func (w *Worker) Start(ctx context.Context, cancel context.CancelFunc) {
 
 	w.log.Info("Starting worker to process jobs...")
 
+	// Start processing jobs
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -53,7 +85,6 @@ func (w *Worker) Start(ctx context.Context, cancel context.CancelFunc) {
 
 	<-ctx.Done()
 	w.log.Info("Worker has been shut down")
-
-	// Wait for all goroutines to finish
 	wg.Wait()
+	return nil
 }
