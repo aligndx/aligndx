@@ -15,7 +15,6 @@ func WorkerCommand() *cobra.Command {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			// Call worker's Start function
 			return jobs.StartWorker(ctx, cancel)
 		},
 	}
