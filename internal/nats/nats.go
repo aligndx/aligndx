@@ -8,7 +8,7 @@ import (
 	"github.com/nats-io/nats-server/v2/server"
 )
 
-func StartNATSServer(ctx context.Context) error {
+func StartNATSServer(ctx context.Context, blocking bool) error {
 	log := logger.NewLoggerWrapper("zerolog", ctx)
 
 	opts := &server.Options{
@@ -23,19 +23,32 @@ func StartNATSServer(ctx context.Context) error {
 		return err
 	}
 
+	// Start the NATS server in a goroutine
 	go func() {
 		log.Info("Starting NATS server")
 		ns.Start()
 	}()
 
+	// Wait for NATS to be ready for connections
 	if !ns.ReadyForConnections(4 * time.Second) {
 		log.Fatal("NATS server not ready for connections")
 		return err
 	}
 
 	log.Info("NATS server ready for connections")
-	ns.WaitForShutdown()
 
-	log.Info("NATS server has shut down")
+	if blocking {
+		// If blocking is true, block until the server is shut down
+		ns.WaitForShutdown()
+		log.Info("NATS server has shut down")
+	} else {
+		// If non-blocking, handle shutdown using context cancellation
+		go func() {
+			<-ctx.Done() // Wait for the context cancellation
+			log.Info("Shutting down NATS server")
+			ns.Shutdown()
+		}()
+	}
+
 	return nil
 }

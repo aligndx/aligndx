@@ -12,7 +12,7 @@ var natsCmd = &cobra.Command{
 	Short: "Start NATS server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		return nats.StartNATSServer(ctx)
+		return nats.StartNATSServer(ctx, true)
 	},
 }
 
