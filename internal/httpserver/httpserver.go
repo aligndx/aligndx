@@ -189,13 +189,6 @@ func StartHTTPServer(ctx context.Context, rootCmd *cobra.Command) error {
 		return err
 	}
 
-	// Ensure the app is bootstrapped and ready to serve
-	err = app.Start() // This registers and executes all necessary commands including the serve command
-	if err != nil {
-		log.Fatal("Failed to start PocketBase app", map[string]interface{}{"error": err})
-		return err
-	}
-
-	return nil
+	return app.Start()
 
 }
