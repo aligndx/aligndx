@@ -22,7 +22,7 @@ services:
     ports:
       - "8090:8090"
     environment:
-      MQ_URL: "nats://nats:4222"
+      MQ_URL: ${MQ_URL}
     restart: unless-stopped
     depends_on:
       - nats
@@ -35,9 +35,10 @@ services:
       dockerfile: ./build/aligndx/Dockerfile
     command: ["worker"]
     environment:
-      MQ_URL: "nats://nats:4222"
+      MQ_URL: ${MQ_URL}
       API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
       API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
+      API_URL: http://api:8090
     restart: unless-stopped
     depends_on:
       - nats
