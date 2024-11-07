@@ -1,0 +1,13 @@
+{
+  email aligndx@uwaterloo.ca  # Replace with your email for automatic HTTPS registration
+}
+
+# Proxy UI service
+aligndx.uwaterloo.ca {
+  reverse_proxy ui:3000
+}
+
+# Proxy API service
+aligndx.uwaterloo.ca/api {
+  reverse_proxy api:8090
+}

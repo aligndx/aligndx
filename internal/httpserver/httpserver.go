@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/jobs"
 	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"
+	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
@@ -22,8 +24,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// StartHTTPServer starts the HTTP server with all required services and configurations
-func StartHTTPServer(ctx context.Context, rootcmd *cobra.Command, cfg *config.Config, jobService jobs.JobServiceInterface, log *logger.LoggerWrapper) (*pocketbase.PocketBase, error) {
+// ConfigureHttpsServer sets up services and configurations
+func ConfigureHttpsServer(ctx context.Context, rootcmd *cobra.Command, cfg *config.Config, jobService jobs.JobServiceInterface, log *logger.LoggerWrapper) (*pocketbase.PocketBase, error) {
 	app := pocketbase.New()
 
 	log.Info("App started")
@@ -163,4 +165,61 @@ func (e *Event) MarshalTo(w io.Writer) error {
 	}
 
 	return nil
+}
+
+func StartHTTPServer(ctx context.Context, rootCmd *cobra.Command, args []string, allowedOrigins []string, httpAddr string, httpsAddr string) error {
+	log := logger.NewLoggerWrapper("zerolog", ctx)
+
+	// Load configuration
+	configService := config.NewConfigService(log)
+	cfg := configService.LoadConfig()
+
+	// Initialize message queue service
+	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
+	if err != nil {
+		log.Fatal("Failed to initialize message queue service", map[string]interface{}{"error": err})
+		return err
+	}
+
+	// Initialize job service
+	jobService := jobs.NewJobService(mqService, log, cfg, cfg.MQ.Stream, "jobs")
+
+	app, err := ConfigureHttpsServer(ctx, rootCmd, cfg, jobService, log)
+	if err != nil {
+		log.Fatal("Failed to configure HTTP server", map[string]interface{}{"error": err})
+		return err
+	}
+
+	if err := app.Bootstrap(); err != nil {
+		log.Fatal("Failed to Boostrap HTTP server", map[string]interface{}{"error": err})
+		return err
+	}
+
+	if len(args) > 0 {
+		if httpAddr == "" {
+			httpAddr = "0.0.0.0:80"
+		}
+		if httpsAddr == "" {
+			httpsAddr = "0.0.0.0:443"
+		}
+	} else {
+		if httpAddr == "" {
+			httpAddr = "127.0.0.1:8090"
+		}
+	}
+
+	_, err = apis.Serve(app, apis.ServeConfig{
+		HttpAddr:           httpAddr,
+		HttpsAddr:          httpsAddr,
+		ShowStartBanner:    true,
+		AllowedOrigins:     allowedOrigins,
+		CertificateDomains: args,
+	})
+
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+
+	return err
+
 }

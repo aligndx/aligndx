@@ -1,0 +1,10 @@
+# Ignore the build directory with Dockerfile
+build/
+
+# Ignore local development files
+.git
+.env
+node_modules/
+tmp/
+pb_data/
+docker-compose.yml

@@ -1,0 +1,65 @@
+services:
+  nats:
+    image: nats:latest
+    command: ["--jetstream"]
+    # command: ["--jetstream", "-m", "8222"]
+    ports:
+      - "4222:4222" # Default port for NATS messaging
+      # - "8222:8222" # Optional monitoring port
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: ./ui
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+  
+  api:
+    build:
+      context: .
+      dockerfile: ./build/aligndx/Dockerfile
+    command: ["serve", "--http=0.0.0.0:8090"]
+    ports:
+      - "8090:8090"
+    environment:
+      MQ_URL: ${MQ_URL}
+    restart: unless-stopped
+    depends_on:
+      - nats
+    volumes:
+      - ./pb_data:/pb_data
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./build/aligndx/Dockerfile
+    command: ["worker"]
+    environment:
+      MQ_URL: ${MQ_URL}
+      API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
+      API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
+      API_URL: http://api:8090
+    restart: unless-stopped
+    depends_on:
+      - nats
+    volumes:
+      - ./pb_data:/pb_data
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - api
+      - ui
+
+volumes:
+  caddy_data:
+  caddy_config:

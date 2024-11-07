@@ -1,10 +1,9 @@
 package workflow
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
 	"text/template"
 )
 
@@ -16,12 +15,10 @@ type NFConfigParams struct {
 	NatsJetStreamEnabled bool
 }
 
+//go:embed nextflow.config.tmpl
+var nextflowConfigTemplate string
+
 func generateConfig(nats_url string, nats_subject string) (string, error) {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return "", fmt.Errorf("unable to get the file path")
-	}
-	currentDir := filepath.Dir(filename)
 
 	// Set up the variables for the template
 	params := NFConfigParams{
@@ -32,10 +29,10 @@ func generateConfig(nats_url string, nats_subject string) (string, error) {
 		NatsJetStreamEnabled: false,
 	}
 
-	// Open the template file
-	tmpl, err := template.ParseFiles(fmt.Sprintf("%s/nextflow.config.tmpl", currentDir))
+	// Step 2: Parse the embedded template
+	tmpl, err := template.New("nextflowConfig").Parse(nextflowConfigTemplate)
 	if err != nil {
-		return "", fmt.Errorf("error reading template file: %w", err)
+		return "", fmt.Errorf("error parsing embedded template: %w", err)
 	}
 
 	// Create a temporary file
@@ -44,7 +41,7 @@ func generateConfig(nats_url string, nats_subject string) (string, error) {
 		return "", fmt.Errorf("error creating temporary file: %w", err)
 	}
 
-	// Execute the template with the provided variables and write to the temporary file
+	// Step 3: Execute the template with the provided variables and write to the temporary file
 	err = tmpl.Execute(tempFile, params)
 	if err != nil {
 		tempFile.Close() // Ensure the file is closed if an error occurs
