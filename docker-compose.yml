@@ -2,9 +2,10 @@ services:
   nats:
     image: nats:latest
     command: ["--jetstream"]
+    # command: ["--jetstream", "-m", "8222"]
     ports:
       - "4222:4222" # Default port for NATS messaging
-      - "8222:8222" # Optional monitoring port
+      # - "8222:8222" # Optional monitoring port
     restart: unless-stopped
 
   ui:
