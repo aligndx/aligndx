@@ -1,1 +1,0 @@
-export {default as InsightsView} from './view/insights-view'
