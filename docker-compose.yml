@@ -45,3 +45,21 @@ services:
       - nats
     volumes:
       - ./pb_data:/pb_data
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - api
+      - ui
+
+volumes:
+  caddy_data:
+  caddy_config:
