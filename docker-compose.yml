@@ -7,6 +7,13 @@ services:
       - "8222:8222" # Optional monitoring port
     restart: unless-stopped
 
+  ui:
+    build:
+      context: ./ui
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+  
   api:
     build:
       context: .
@@ -19,6 +26,8 @@ services:
     restart: unless-stopped
     depends_on:
       - nats
+    volumes:
+      - ./pb_data:/pb_data
 
   worker:
     build:
@@ -32,3 +41,5 @@ services:
     restart: unless-stopped
     depends_on:
       - nats
+    volumes:
+      - ./pb_data:/pb_data
