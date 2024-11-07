@@ -17,13 +17,13 @@ export default function Hero() {
     return (
         <div className="relative flex flex-col text-center gap-10 pt-40 pb-10 max-h-screen">
             <AnimatedShinyText className="inline-flex items-center justify-center transition ease-out">
-                Introducing AlignDx.
+                The Aligndx Platform.
             </AnimatedShinyText>
             <GradualSpacing
                 className="font-display text-center text-4xl font-bold -tracking-wider md:text-6xl lg:text-7xl md:leading-[5rem] "
-                text="Simplify Surveillance."
+                text="Detect and Visualize."
             />
-            <h1>Detect pathogens and gain valuable insights.</h1>
+            <h1>A workflow for Kraken2-based pathogen detection and visualization using curated pathogen panels.</h1>
 
             <div className="flex justify-center z-10">
                 <Link
