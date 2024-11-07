@@ -8,6 +8,6 @@ aligndx.uwaterloo.ca {
 }
 
 # Proxy API service
-aligndx.uwaterloo.ca/api {
+aligndx.uwaterloo.ca/api* {
   reverse_proxy api:8090
 }
