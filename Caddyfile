@@ -1,13 +1,29 @@
 {
-  email aligndx@uwaterloo.ca  # Replace with your email for automatic HTTPS registration
+  email {$EMAIL}
 }
 
-# Proxy UI service
-aligndx.uwaterloo.ca {
+{$DOMAIN} {
   reverse_proxy ui:3000
-}
 
-# Proxy API service
-aligndx.uwaterloo.ca/api* {
-  reverse_proxy api:8090
+  # Proxy API service
+  handle_path /api/* {
+      # Rewrite the path to remove the /api prefix
+      rewrite /api/* /{path.2}
+
+      request_body {
+          max_size 10MB
+      }
+
+      reverse_proxy api:8090 {
+          header_up Connection ""
+          header_up X-Real-IP {remote_host}
+          header_up X-Forwarded-For {remote_host}
+          header_up X-Forwarded-Proto {scheme}
+          header_up Host {host}
+          transport http {
+              read_timeout 360s
+          }
+      }
+  }
+   
 }
