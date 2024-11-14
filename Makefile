@@ -1,4 +1,4 @@
-COMPOSE_FILE = deploy/compose/docker-compose.yml
+COMPOSE_FILE = deploy/docker-compose.yml
 ENV_FILE = .env
 
 # Up: Start the containers
