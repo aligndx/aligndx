@@ -127,8 +127,9 @@ func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs inter
 		return fmt.Errorf("error publishing job: %w", err)
 	}
 
-	if err := s.updateJobStatus(ctx, job.JobID, string(StatusQueued)); err != nil {
-		return err
+	err = s.updateJobStatus(ctx, job.JobID, string(StatusQueued))
+	if err != nil {
+		return fmt.Errorf("error updating job status: %w", err)
 	}
 
 	s.log.Info("Job queued", map[string]interface{}{"job_id": jobID})
