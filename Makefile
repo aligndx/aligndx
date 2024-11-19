@@ -1,5 +1,6 @@
 COMPOSE_FILE = deploy/docker-compose.yml
 ENV_FILE = .env
+.PHONY: build
 
 # Up: Start the containers
 up:
