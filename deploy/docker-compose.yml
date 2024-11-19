@@ -27,6 +27,9 @@ services:
       - "8090:8090"
     environment:
       MQ_URL: ${MQ_URL}
+      API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
+      API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
+      API_URL: http://localhost:8090
     restart: unless-stopped
     depends_on:
       - nats
