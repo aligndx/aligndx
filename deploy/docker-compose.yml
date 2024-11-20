@@ -9,11 +9,11 @@ services:
 
   ui:
     build:
-      context: ../ui  # Adjusted path
-    environment:
-      API_URL: ${API_URL}
-      APDB_URL: ${APDB_URL}
-      APDB_RAW_URL: ${APDB_RAW_URL}
+      context: ../ui  # Adjusted path 
+    environment:  
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_APDB_URL: ${NEXT_PUBLIC_APDB_URL}
+      NEXT_PUBLIC_APDB_RAW_URL: ${NEXT_PUBLIC_APDB_RAW_URL}
     ports:
       - "3000:3000"
     restart: unless-stopped
