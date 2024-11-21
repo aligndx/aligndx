@@ -36,21 +36,21 @@ services:
     volumes:
       - ../pb_data:/pb_data  # Adjusted path
 
-  worker:
-    build:
-      context: ..
-      dockerfile: ./build/aligndx/Dockerfile
-    command: ["worker"]
-    environment:
-      MQ_URL: ${MQ_URL}
-      API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
-      API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
-      API_URL: http://api:8090
-    restart: unless-stopped
-    depends_on:
-      - nats
-    volumes:
-      - ../pb_data:/pb_data  # Adjusted path
+  # worker:
+  #   build:
+  #     context: ..
+  #     dockerfile: ./build/aligndx/Dockerfile
+  #   command: ["worker"]
+  #   environment:
+  #     MQ_URL: ${MQ_URL}
+  #     API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
+  #     API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
+  #     API_URL: http://api:8090
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - nats
+  #   volumes:
+  #     - ../pb_data:/pb_data  # Adjusted path
 
   caddy:
     image: caddy:latest
