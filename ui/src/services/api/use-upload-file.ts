@@ -1,8 +1,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 import type { Data } from "@/types/data";
-import PocketBase, { RecordModel } from 'pocketbase';
-import { API } from "@/config-global";
+import PocketBase from 'pocketbase';
 
 interface UseUploadFileProps {
     pb: PocketBase
@@ -94,7 +93,7 @@ export function useUploadFileHook(
                         reject(new Error(errorMessage));
                     };
 
-                    xhr.open('POST', `${API}/api/collections/data/records`);
+                    xhr.open('POST', `${pb.baseUrl}/api/collections/data/records`);
                     xhr.setRequestHeader('Authorization', pb.authStore.token);
                     xhr.send(formData);
                 });

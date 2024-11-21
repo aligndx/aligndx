@@ -7,7 +7,7 @@
     reverse_proxy ui:3000
 
     # Proxy API service
-    handle /api/* {
+    handle_path /api/* {
         reverse_proxy api:8090 {
             header_up Connection ""
             header_up X-Real-IP {remote_host}
@@ -19,19 +19,4 @@
             }
         }
     }
-
-   handle /admin/* {
-        uri replace /admin /_
-        reverse_proxy api:8090 {
-            header_up Connection ""
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-            header_up Host {host}
-            transport http {
-                read_timeout 360s
-            }
-        }
-    }
- 
 }
