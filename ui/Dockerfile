@@ -17,17 +17,26 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Define build arguments to pass environment variables during build time
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APDB_URL
+ARG NEXT_PUBLIC_APDB_RAW_URL
+
+# Set environment variables during build
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_APDB_URL=$NEXT_PUBLIC_APDB_URL
+ENV NEXT_PUBLIC_APDB_RAW_URL=$NEXT_PUBLIC_APDB_RAW_URL
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \

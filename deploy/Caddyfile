@@ -7,7 +7,7 @@
     reverse_proxy ui:3000
 
     # Proxy API service
-    handle_path /api/* {
+    handle_path /service/* {
         reverse_proxy api:8090 {
             header_up Connection ""
             header_up X-Real-IP {remote_host}

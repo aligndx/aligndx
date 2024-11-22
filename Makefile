@@ -1,6 +1,16 @@
-COMPOSE_FILE = deploy/docker-compose.yml
+COMPOSE_FILE_PROD = deploy/docker-compose.yml
+COMPOSE_FILE_DEV = deploy/docker-compose.dev.yml
 ENV_FILE = .env
-.PHONY: build
+
+# Default compose file
+COMPOSE_FILE = $(COMPOSE_FILE_DEV)
+
+# If COMPOSE_ENV is set to "prod", use the production compose file
+ifeq ($(COMPOSE_ENV),prod)
+    COMPOSE_FILE = $(COMPOSE_FILE_PROD)
+endif
+
+.PHONY: build up down logs restart status clean
 
 # Up: Start the containers
 up:
