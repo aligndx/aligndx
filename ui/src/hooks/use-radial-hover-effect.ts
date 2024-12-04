@@ -15,7 +15,7 @@ export function useRadialHoverEffect(radius = 100) {
   const background = useMotionTemplate`
     radial-gradient(
       ${visible ? `${radius}px` : "0px"} circle at ${mouseX}px ${mouseY}px,
-      var(--blue-500),
+      hsl(var(--primary)),
       transparent 80%
     )
   `;
