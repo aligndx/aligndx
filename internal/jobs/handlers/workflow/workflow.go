@@ -44,6 +44,7 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 
 	baseDir := fmt.Sprintf("%s/pb_data/workflows", currentDir)
 	jobDir := fmt.Sprintf("%s/pb_data/workflows/%s", currentDir, inputs.JobID)
+	logPath := fmt.Sprintf("%s/pb_data/workflows/logs/%s.nextflow.log", currentDir, inputs.JobID)
 	inputsDir := fmt.Sprintf("%s/inputs", jobDir)
 
 	os.MkdirAll(baseDir, 0777)
@@ -65,7 +66,7 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	config := local.NewLocalConfig(
 		[]string{
 			fmt.Sprintf("%s/nextflow", baseDir),
-			"-log", fmt.Sprintf("%s/nextflow.log", jobDir),
+			"-log", logPath,
 			"run", inputs.WorkflowRepository,
 			"-latest", // Ensure the latest code is pulled
 			"-c", configFilePath,
