@@ -17,7 +17,7 @@ func NewCustomServeCommand() *cobra.Command {
 		Short: "Initialize aligndx server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
-			return httpserver.StartHTTPServer(ctx, rootCmd, args, allowedOrigins, httpAddr, httpsAddr)
+			return httpserver.StartHTTPServer(ctx, rootCmd, args, allowedOrigins, httpAddr, httpsAddr, true)
 		},
 	}
 

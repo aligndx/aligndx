@@ -169,7 +169,7 @@ func (e *Event) MarshalTo(w io.Writer) error {
 	return nil
 }
 
-func StartHTTPServer(ctx context.Context, rootCmd *cobra.Command, args []string, allowedOrigins []string, httpAddr string, httpsAddr string) error {
+func StartHTTPServer(ctx context.Context, rootCmd *cobra.Command, args []string, allowedOrigins []string, httpAddr string, httpsAddr string, showStartBanner bool) error {
 	log := logger.NewLoggerWrapper("zerolog", ctx)
 
 	// Load configuration
@@ -213,7 +213,7 @@ func StartHTTPServer(ctx context.Context, rootCmd *cobra.Command, args []string,
 	_, err = apis.Serve(app, apis.ServeConfig{
 		HttpAddr:           httpAddr,
 		HttpsAddr:          httpsAddr,
-		ShowStartBanner:    true,
+		ShowStartBanner:    showStartBanner,
 		AllowedOrigins:     allowedOrigins,
 		CertificateDomains: args,
 	})
