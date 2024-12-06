@@ -8,6 +8,7 @@ import (
 	"github.com/aligndx/aligndx/internal/jobs"
 	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/aligndx/aligndx/internal/nats"
+	"github.com/aligndx/aligndx/internal/uiserver"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,7 @@ var startCmd = &cobra.Command{
 
 		// Step 2: Start worker and serve concurrently
 		var wg sync.WaitGroup
-		wg.Add(2)
+		wg.Add(3)
 
 		// Start worker
 		go func() {
@@ -47,13 +48,20 @@ var startCmd = &cobra.Command{
 			defer wg.Done()
 			log.Info("Starting HTTP server...")
 			allowedOrigins := []string{"*"}
-			httpAddr := ""  // Set your desired HTTP address here
-			httpsAddr := "" // Set your desired HTTPS address here
+			httpAddr := "0.0.0.0:8090" // Set your desired HTTP address here
+			httpsAddr := ""            // Set your desired HTTPS address here
 			if err := httpserver.StartHTTPServer(ctx, rootCmd, args, allowedOrigins, httpAddr, httpsAddr, false); err != nil {
 				log.Fatal("HTTP server exited with error: %v\n", map[string]interface{}{"error": err})
 			} else {
 				log.Info("HTTP server started successfully.")
 			}
+		}()
+
+		// Start UI server
+		go func() {
+			defer wg.Done()
+			log.Info("Starting UI server...")
+			uiserver.StartUIServer("3000")
 		}()
 
 		// Wait for worker and server to complete
