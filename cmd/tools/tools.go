@@ -8,5 +8,5 @@ var ToolsCmd = &cobra.Command{
 }
 
 func init() {
-	ToolsCmd.AddCommand(NewCustomServeCommand(), natsCmd, uiCmd, WorkerCommand())
+	ToolsCmd.AddCommand(NewCustomServeCommand(), NATSCommand(), UIServeCommand(), WorkerCommand())
 }
