@@ -1,4 +1,4 @@
-package cmd
+package tools
 
 import (
 	"github.com/aligndx/aligndx/internal/uiserver"
@@ -16,6 +16,5 @@ var uiCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(uiCmd)
 	uiCmd.Flags().StringVarP(&port, "port", "p", "3000", "Port to serve the UI on")
 }

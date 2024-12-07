@@ -1,4 +1,4 @@
-package cmd
+package tools
 
 import (
 	"context"
@@ -17,7 +17,7 @@ func NewCustomServeCommand() *cobra.Command {
 		Short: "Initialize aligndx server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
-			return httpserver.StartHTTPServer(ctx, rootCmd, args, allowedOrigins, httpAddr, httpsAddr, true)
+			return httpserver.StartHTTPServer(ctx, ToolsCmd, args, allowedOrigins, httpAddr, httpsAddr, true)
 		},
 	}
 
@@ -43,9 +43,4 @@ func NewCustomServeCommand() *cobra.Command {
 	)
 
 	return command
-}
-
-func init() {
-	// Add your custom serve command to the rootCmd
-	rootCmd.AddCommand(NewCustomServeCommand())
 }

@@ -1,4 +1,4 @@
-package cmd
+package tools
 
 import (
 	"context"
@@ -14,8 +14,4 @@ var natsCmd = &cobra.Command{
 		ctx := context.Background()
 		return nats.StartNATSServer(ctx, true)
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(natsCmd)
 }
