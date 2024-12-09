@@ -83,6 +83,7 @@ func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 			fmt.Sprintf("NXF_WORK=%s/work", nxfDir),
 			fmt.Sprintf("NXF_TEMP=%s/tmp", nxfDir),
 			fmt.Sprintf("NXF_CACHE_DIR=%s/cache", nxfDir),
+			fmt.Sprintf("NXF_PLUGINS_TEST_REPOSITORY=%s", cfg.NXF.PluginsTestRepository),
 		}),
 	)
 

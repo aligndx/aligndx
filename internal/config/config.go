@@ -19,6 +19,7 @@ type Config struct {
 	DB   DbConfig   `koanf:"db"`
 	SMTP SMTPConfig `koanf:"smtp"`
 	S3   S3Config   `koanf:"s3"`
+	NXF  NXFConfig  `konaf:"nxf"`
 }
 
 type APIConfig struct {
@@ -52,6 +53,10 @@ type S3Config struct {
 	Endpoint       string `koanf:"endpoint"`
 	Region         string `koanf:"region"`
 	ForcePathStyle bool   `koanf:"pathStyle"`
+}
+
+type NXFConfig struct {
+	PluginsTestRepository string `koanf:"pluginstestrepository"`
 }
 
 type ConfigService struct {
@@ -96,6 +101,9 @@ func NewConfig() *Config {
 			Endpoint:       "default-endpoint",
 			Region:         "us-west-1",
 			ForcePathStyle: false,
+		},
+		NXF: NXFConfig{
+			PluginsTestRepository: "",
 		},
 	}
 }
