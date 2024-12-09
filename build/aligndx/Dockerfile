@@ -1,4 +1,4 @@
-FROM node:16-alpine AS ui-builder
+FROM node:18-alpine AS ui-builder
 WORKDIR /ui
 COPY ui/ ./
 RUN npm run build
