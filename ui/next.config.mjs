@@ -1,7 +1,16 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const standaloneConfig = {
     output: 'standalone',
-    images: { unoptimized: true } 
 };
+
+/** @type {import('next').NextConfig} */
+const staticConfig = {
+    output: 'export',
+    images: { unoptimized: true }, // Example: Unoptimized for static
+};
+
+const nextConfig = process.env.NEXT_PUBLIC_OUTPUT_MODE === 'static'
+    ? staticConfig
+    : standaloneConfig;
 
 export default nextConfig;

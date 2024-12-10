@@ -1,4 +1,4 @@
-package cmd
+package tools
 
 import (
 	"context"
@@ -20,8 +20,4 @@ func WorkerCommand() *cobra.Command {
 	}
 
 	return command
-}
-
-func init() {
-	rootCmd.AddCommand(WorkerCommand())
 }

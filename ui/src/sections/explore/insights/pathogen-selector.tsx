@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import FormSelect from "@/components/form/form-select";
-import { APDB, APDB_RAW } from "@/config-global";
+import { CONFIG } from "@/config-global";
 import { cn } from "@/lib/utils";
 import { useDuckDb } from "duckdb-wasm-kit";
 import { useEffect, useState } from "react";
@@ -43,7 +43,7 @@ export function PathogenSelector({ pathogens, onPathogensChange, ...props }: Pat
             if (!db || loading || !selectedPanel) return;
 
             try {
-                await insertRemoteFile(db, APDB_RAW, "apdb");
+                await insertRemoteFile(db, CONFIG.APDB_RAW, "apdb");
                 const conn = await db.connect();
 
                 const organismArrow = await conn.query(`SELECT organism FROM apdb WHERE "${selectedPanel}" = 'Y'`);
@@ -78,7 +78,7 @@ export function PathogenSelector({ pathogens, onPathogensChange, ...props }: Pat
     const description = (
         <span>
             Select a panel for screening. Generated from the{" "}
-            <a href={APDB} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline">
+            <a href={CONFIG.APDB} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline">
                 APDB
             </a>.
         </span>

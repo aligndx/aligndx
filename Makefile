@@ -10,7 +10,7 @@ ifeq ($(COMPOSE_ENV),prod)
     COMPOSE_FILE = $(COMPOSE_FILE_PROD)
 endif
 
-.PHONY: build up down logs restart status clean
+.PHONY: build up down logs restart status clean build-ui release lint test
 
 # Up: Start the containers
 up:
@@ -39,3 +39,18 @@ status:
 # Clean: Stop containers and remove volumes
 clean:
 	docker compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down -v
+
+build-ui:
+	./scripts/build-ui.sh
+
+# Lint: Run golangci-lint
+lint:
+	golangci-lint run ./...
+
+# Test: Run Go tests
+test:
+	go test -v ./...
+
+# Release: Build the UI and create a release with GoReleaser
+release: build-ui
+	goreleaser release
