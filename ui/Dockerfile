@@ -25,13 +25,9 @@ COPY . .
 
 # Define build arguments to pass environment variables during build time
 ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_APDB_URL
-ARG NEXT_PUBLIC_APDB_RAW_URL
 
 # Set environment variables during build
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_APDB_URL=$NEXT_PUBLIC_APDB_URL
-ENV NEXT_PUBLIC_APDB_RAW_URL=$NEXT_PUBLIC_APDB_RAW_URL
 ENV NEXT_PUBLIC_OUTPUT_MODE="standalone"
 
 # Next.js collects completely anonymous telemetry data about general usage.

@@ -13,8 +13,6 @@ services:
       dockerfile: ./Dockerfile.dev
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      NEXT_PUBLIC_APDB_URL: ${NEXT_PUBLIC_APDB_URL}
-      NEXT_PUBLIC_APDB_RAW_URL: ${NEXT_PUBLIC_APDB_RAW_URL}
     ports:
       - "3000:3000"
     restart: unless-stopped
