@@ -1,4 +1,4 @@
-import { API } from '@/config-global';
+import { CONFIG } from '@/config-global';
 import PocketBase, { SendOptions } from 'pocketbase';
 
 interface HttpError extends Error {
@@ -25,4 +25,4 @@ export class Client extends PocketBase {
         }
     }
 }
-export const client = new Client(API);
+export const client = new Client(CONFIG.API);
