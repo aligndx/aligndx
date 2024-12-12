@@ -28,10 +28,10 @@ services:
     ports:
       - "8090:8090"
     environment:
-      MQ_URL: "nats://nats:4222"
-      API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
-      API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
-      API_URL: http://localhost:8090
+      ALIGNDX_MQ_URL: "nats://nats:4222"
+      ALIGNDX_API_DEFAULTADMINEMAIL: ${API_DEFAULTADMINEMAIL}
+      ALIGNDX_API_DEFAULTADMINPASSWORD: ${API_DEFAULTADMINPASSWORD}
+      ALIGNDX_API_URL: http://localhost:8090
     restart: unless-stopped
     depends_on:
       - nats
