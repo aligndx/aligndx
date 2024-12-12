@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"log"
 	"strings"
 	"sync"
@@ -160,4 +161,18 @@ func (c *ConfigManager) Reload() {
 	if err := c.loadConfig(); err != nil {
 		log.Fatalf("error reloading configuration: %v", err)
 	}
+}
+
+func (c *ConfigManager) DebugConfig() {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	configData, err := json.MarshalIndent(c.data, "", "  ")
+	if err != nil {
+		log.Printf("error serializing configuration for debugging: %v", err)
+		return
+	}
+
+	log.Println("Current Configuration:")
+	log.Println(string(configData))
 }

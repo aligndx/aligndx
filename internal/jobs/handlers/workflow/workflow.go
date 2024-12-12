@@ -25,8 +25,8 @@ type WorkflowInputs struct {
 // WorkflowHandlerSpecific contains specific job logic
 func WorkflowHandlerSpecific(ctx context.Context, inputs WorkflowInputs) error {
 	log := logger.NewLoggerWrapper("zerolog", ctx)
-	configService := config.NewConfigService(log)
-	cfg := configService.LoadConfig()
+	configManager := config.NewConfigManager()
+	cfg := configManager.GetConfig()
 
 	currentDir, err := os.Getwd()
 	if err != nil {

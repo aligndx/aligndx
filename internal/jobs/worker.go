@@ -20,10 +20,8 @@ func StartWorker(ctx context.Context, cancel context.CancelFunc) error {
 
 	// Initialize logger
 	log := logger.NewLoggerWrapper("zerolog", ctx)
-
-	// Load configuration
-	configService := config.NewConfigService(log)
-	cfg := configService.LoadConfig()
+	configManager := config.NewConfigManager()
+	cfg := configManager.GetConfig()
 
 	// Setup message queue
 	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
