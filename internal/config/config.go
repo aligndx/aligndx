@@ -1,42 +1,48 @@
 package config
 
 import (
+	"log"
 	"strings"
+	"sync"
 
-	"github.com/aligndx/aligndx/internal/logger"
-	"github.com/joho/godotenv"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/v2"
 	"github.com/nats-io/nats.go"
 	"github.com/pocketbase/pocketbase"
-	s "github.com/pocketbase/pocketbase/models/settings"
 )
 
-// Config struct holds configuration values
+// Prefix for environment variables
+const envPrefix = "ALIGNDX_"
+
+// Config represents the top-level configuration structure
 type Config struct {
 	API  APIConfig  `koanf:"api"`
 	MQ   MQConfig   `koanf:"mq"`
 	DB   DbConfig   `koanf:"db"`
 	SMTP SMTPConfig `koanf:"smtp"`
 	S3   S3Config   `koanf:"s3"`
-	NXF  NXFConfig  `konaf:"nxf"`
+	NXF  NXFConfig  `koanf:"nxf"`
 }
 
+// APIConfig holds configuration for the API
 type APIConfig struct {
 	URL                  string `koanf:"url"`
-	DefaultAdminEmail    string `koanf:"defaultadminemail"`
-	DefaultAdminPassword string `koanf:"defaultadminpassword"`
+	DefaultAdminEmail    string `koanf:"default_admin_email"`
+	DefaultAdminPassword string `koanf:"default_admin_password"`
 }
 
+// MQConfig holds configuration for the message queue
 type MQConfig struct {
 	URL    string `koanf:"url"`
 	Stream string `koanf:"stream"`
 }
 
+// DbConfig holds database-related configuration
 type DbConfig struct {
-	MigrationsDir string `koanf:"migrations.dir"`
+	MigrationsDir string `koanf:"migrations_dir"`
 }
 
+// SMTPConfig holds SMTP configuration
 type SMTPConfig struct {
 	Enabled  bool   `koanf:"enabled"`
 	Host     string `koanf:"host"`
@@ -45,132 +51,113 @@ type SMTPConfig struct {
 	Tls      bool   `koanf:"tls"`
 }
 
+// S3Config holds configuration for S3 storage
 type S3Config struct {
 	Enabled        bool   `koanf:"enabled"`
 	Bucket         string `koanf:"bucket"`
-	AccessKey      string `koanf:"access.key"`
+	AccessKey      string `koanf:"access_key"`
 	Secret         string `koanf:"secret"`
 	Endpoint       string `koanf:"endpoint"`
 	Region         string `koanf:"region"`
-	ForcePathStyle bool   `koanf:"force.path.style"`
+	ForcePathStyle bool   `koanf:"force_path_style"`
 }
 
+// NXFConfig holds configuration for NXF
 type NXFConfig struct {
-	DefaultDir            string `koanf:"default.dir"`
-	PluginsTestRepository string `koanf:"plugins.test.repository"`
+	DefaultDir            string `koanf:"default_dir"`
+	PluginsTestRepository string `koanf:"plugins_test_repository"`
 }
 
-type ConfigService struct {
-	logger *logger.LoggerWrapper
-	config *Config
+// ConfigManager handles configuration loading and access
+type ConfigManager struct {
+	mu   sync.RWMutex
+	ko   *koanf.Koanf
+	data *Config
 }
 
-func NewConfigService(logger *logger.LoggerWrapper) *ConfigService {
-	return &ConfigService{
-		logger: logger,
-		config: NewConfig(),
+// NewConfigManager initializes the configuration with defaults and loads environment variables
+func NewConfigManager() *ConfigManager {
+	ko := koanf.New(".")
+	manager := &ConfigManager{
+		ko: ko,
+		data: &Config{
+			API: APIConfig{
+				URL:                  pocketbase.New().Settings().Meta.AppUrl,
+				DefaultAdminEmail:    "",
+				DefaultAdminPassword: "",
+			},
+			MQ: MQConfig{
+				URL:    nats.DefaultURL,
+				Stream: "JOBS",
+			},
+			DB: DbConfig{
+				MigrationsDir: "internal/migrations",
+			},
+			SMTP: SMTPConfig{
+				Enabled:  false,
+				Host:     "localhost",
+				Port:     25,
+				Password: "123456",
+				Tls:      false,
+			},
+			S3: S3Config{
+				Enabled:        false,
+				Bucket:         "default-bucket",
+				AccessKey:      "default-access-key",
+				Secret:         "default-secret",
+				Endpoint:       "default-endpoint",
+				Region:         "us-west-1",
+				ForcePathStyle: false,
+			},
+			NXF: NXFConfig{
+				DefaultDir:            "workflows",
+				PluginsTestRepository: "",
+			},
+		},
 	}
+
+	if err := manager.loadConfig(); err != nil {
+		log.Fatalf("error loading configuration: %v", err)
+	}
+
+	return manager
 }
 
-// NewConfig creates a new Config instance with default values
-func NewConfig() *Config {
-	return &Config{
-		API: APIConfig{
-			URL:                  pocketbase.New().Settings().Meta.AppUrl,
-			DefaultAdminEmail:    "",
-			DefaultAdminPassword: "",
-		},
-		MQ: MQConfig{
-			URL:    nats.DefaultURL,
-			Stream: "JOBS",
-		},
-		DB: DbConfig{
-			MigrationsDir: "internal/migrations",
-		},
-		SMTP: SMTPConfig{
-			Enabled:  false,
-			Host:     "localhost",
-			Port:     25,
-			Password: "123456",
-			Tls:      false,
-		},
-		S3: S3Config{
-			Enabled:        false,
-			Bucket:         "default-bucket",
-			AccessKey:      "default-access-key",
-			Secret:         "default-secret",
-			Endpoint:       "default-endpoint",
-			Region:         "us-west-1",
-			ForcePathStyle: false,
-		},
-		NXF: NXFConfig{
-			DefaultDir:            "workflows",
-			PluginsTestRepository: "",
-		},
+// loadConfig loads environment variables into the configuration struct
+func (c *ConfigManager) loadConfig() error {
+	transform := func(s string) string {
+		// Strip the prefix, replace underscores with dots, and convert to lowercase
+		return strings.Replace(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".", -1)
 	}
+
+	// Load environment variables with the defined prefix and transformation
+	if err := c.ko.Load(env.Provider(envPrefix, ".", transform), nil); err != nil {
+		return err
+	}
+
+	// Unmarshal loaded values into the Config struct
+	return c.ko.Unmarshal("", c.data)
 }
 
-// loadConfig loads configuration from environment variables or a .env file
-func (cs *ConfigService) LoadConfig() *Config {
-	// Load .env file if present
-	if err := godotenv.Load(); err != nil {
-		cs.logger.Warn("No .env file found, relying on environment variables", map[string]interface{}{"error": err})
-	}
-
-	k := koanf.New(".")
-
-	// Load environment variables and map them to the configuration structure
-	k.Load(env.Provider("", ".", func(s string) string {
-		return strings.ToLower(strings.ReplaceAll(s, "_", "."))
-	}), nil)
-
-	err := k.Unmarshal("", cs.config)
-	if err != nil {
-		cs.logger.Warn("Could not load config", map[string]interface{}{"error": err})
-	}
-	return cs.config
+// GetConfig safely retrieves the current configuration data
+func (c *ConfigManager) GetConfig() *Config {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.data
 }
 
-func (cs *ConfigService) UpdateSettings(settings *s.Settings) *s.Settings {
-	settings.Meta.AppName = "server"
-	if cs.config.SMTP.Enabled {
-		settings.Smtp = s.SmtpConfig{
-			Enabled:  cs.config.SMTP.Enabled,
-			Host:     cs.config.SMTP.Host,
-			Port:     cs.config.SMTP.Port,
-			Password: cs.config.SMTP.Password,
-			Tls:      cs.config.SMTP.Tls,
-		}
-	}
-
-	if cs.config.S3.Enabled {
-		settings.S3 = s.S3Config{
-			Enabled:        cs.config.S3.Enabled,
-			Bucket:         cs.config.S3.Bucket,
-			AccessKey:      cs.config.S3.AccessKey,
-			Secret:         cs.config.S3.Secret,
-			Endpoint:       cs.config.S3.Endpoint,
-			Region:         cs.config.S3.Region,
-			ForcePathStyle: cs.config.S3.ForcePathStyle,
-		}
-	}
-	return settings
+// SetConfig safely updates the configuration data
+func (c *ConfigManager) SetConfig(newConfig *Config) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.data = newConfig
 }
-func (cs *ConfigService) SetPBSettings(app *pocketbase.PocketBase) {
-	dao := app.Dao()
-	if dao == nil {
-		cs.logger.Fatal("app.Dao() returned nil")
-	}
 
-	settings, err := dao.FindSettings()
-	if err != nil {
-		cs.logger.Warn("Failed to find settings, using default settings", map[string]interface{}{"error": err})
-		settings = &s.Settings{} // Initialize settings with a default value
-	}
-	newSettings := cs.UpdateSettings(settings)
-	err = dao.SaveSettings(newSettings)
-	if err != nil {
-		cs.logger.Warn("Failed to save settings", map[string]interface{}{"error": err.Error()})
-		return
+// Reload reloads environment variables into the configuration
+func (c *ConfigManager) Reload() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if err := c.loadConfig(); err != nil {
+		log.Fatalf("error reloading configuration: %v", err)
 	}
 }
