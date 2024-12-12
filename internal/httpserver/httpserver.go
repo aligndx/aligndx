@@ -172,9 +172,8 @@ func (e *Event) MarshalTo(w io.Writer) error {
 func StartHTTPServer(ctx context.Context, rootCmd *cobra.Command, args []string, allowedOrigins []string, httpAddr string, httpsAddr string, showStartBanner bool) error {
 	log := logger.NewLoggerWrapper("zerolog", ctx)
 
-	// Load configuration
-	configService := config.NewConfigService(log)
-	cfg := configService.LoadConfig()
+	configManager := config.NewConfigManager()
+	cfg := configManager.GetConfig()
 
 	// Initialize message queue service
 	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)

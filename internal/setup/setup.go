@@ -14,6 +14,8 @@ import (
 // Style for the main output, applying a left margin for better formatting.
 var mainStyle = lipgloss.NewStyle().MarginLeft(1)
 
+var workflowsDir = "workflows"
+
 // taskResult stores the outcome of a task.
 // - description: The name of the task.
 // - done: Whether the task is completed.
@@ -130,8 +132,8 @@ func createWorkflowFolder() error {
 		return fmt.Errorf("unable to determine current directory: %v", err)
 	}
 
-	workflowDir := filepath.Join(currentDir, "pb_data", "workflow") // Target folder path.
-	return os.MkdirAll(workflowDir, 0755)                           // Create folder with permissions.
+	workflowDir := filepath.Join(currentDir, "pb_data", workflowsDir) // Target folder path.
+	return os.MkdirAll(workflowDir, 0755)                             // Create folder with permissions.
 }
 
 // checkJava checks if Java is installed by running "java -version".
@@ -152,7 +154,7 @@ func installNextflow() error {
 	if err != nil {
 		return fmt.Errorf("unable to determine current directory: %v", err)
 	}
-	workflowDir := filepath.Join(currentDir, "pb_data", "workflow")
+	workflowDir := filepath.Join(currentDir, "pb_data", workflowsDir)
 	nextflowPath := filepath.Join(workflowDir, "nextflow")
 
 	// Check if Nextflow is already installed.
