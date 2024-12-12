@@ -28,8 +28,8 @@ type Config struct {
 // APIConfig holds configuration for the API
 type APIConfig struct {
 	URL                  string `koanf:"url"`
-	DefaultAdminEmail    string `koanf:"default_admin_email"`
-	DefaultAdminPassword string `koanf:"default_admin_password"`
+	DefaultAdminEmail    string `koanf:"defaultadminemail"`
+	DefaultAdminPassword string `koanf:"defaultadminpassword"`
 }
 
 // MQConfig holds configuration for the message queue
@@ -40,7 +40,7 @@ type MQConfig struct {
 
 // DbConfig holds database-related configuration
 type DbConfig struct {
-	MigrationsDir string `koanf:"migrations_dir"`
+	MigrationsDir string `koanf:"migrationsdir"`
 }
 
 // SMTPConfig holds SMTP configuration
@@ -56,17 +56,17 @@ type SMTPConfig struct {
 type S3Config struct {
 	Enabled        bool   `koanf:"enabled"`
 	Bucket         string `koanf:"bucket"`
-	AccessKey      string `koanf:"access_key"`
+	AccessKey      string `koanf:"accesskey"`
 	Secret         string `koanf:"secret"`
 	Endpoint       string `koanf:"endpoint"`
 	Region         string `koanf:"region"`
-	ForcePathStyle bool   `koanf:"force_path_style"`
+	ForcePathStyle bool   `koanf:"forcepathstyle"`
 }
 
 // NXFConfig holds configuration for NXF
 type NXFConfig struct {
-	DefaultDir            string `koanf:"default_dir"`
-	PluginsTestRepository string `koanf:"plugins_test_repository"`
+	DefaultDir            string `koanf:"defaultdir"`
+	PluginsTestRepository string `koanf:"pluginstestrepository"`
 }
 
 // ConfigManager handles configuration loading and access
@@ -127,10 +127,9 @@ func NewConfigManager() *ConfigManager {
 // loadConfig loads environment variables into the configuration struct
 func (c *ConfigManager) loadConfig() error {
 	transform := func(s string) string {
-		// Strip the prefix, replace underscores with dots, and convert to lowercase
-		return strings.Replace(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".", -1)
+		transformed := strings.Replace(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".", -1)
+		return transformed
 	}
-
 	// Load environment variables with the defined prefix and transformation
 	if err := c.ko.Load(env.Provider(envPrefix, ".", transform), nil); err != nil {
 		return err
