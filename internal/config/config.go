@@ -42,21 +42,22 @@ type SMTPConfig struct {
 	Host     string `koanf:"host"`
 	Port     int    `koanf:"port"`
 	Password string `koanf:"password"`
-	Tls      bool   `koanf:"tlsenabled"`
+	Tls      bool   `koanf:"tls"`
 }
 
 type S3Config struct {
 	Enabled        bool   `koanf:"enabled"`
 	Bucket         string `koanf:"bucket"`
-	AccessKey      string `koanf:"accesskey"`
+	AccessKey      string `koanf:"access.key"`
 	Secret         string `koanf:"secret"`
 	Endpoint       string `koanf:"endpoint"`
 	Region         string `koanf:"region"`
-	ForcePathStyle bool   `koanf:"pathStyle"`
+	ForcePathStyle bool   `koanf:"force.path.style"`
 }
 
 type NXFConfig struct {
-	PluginsTestRepository string `koanf:"pluginstestrepository"`
+	DefaultDir            string `koanf:"default.dir"`
+	PluginsTestRepository string `koanf:"plugins.test.repository"`
 }
 
 type ConfigService struct {
@@ -103,6 +104,7 @@ func NewConfig() *Config {
 			ForcePathStyle: false,
 		},
 		NXF: NXFConfig{
+			DefaultDir:            "workflows",
 			PluginsTestRepository: "",
 		},
 	}
