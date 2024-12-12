@@ -1,6 +1,8 @@
 FROM node:18-alpine AS ui-builder
 WORKDIR /ui
 COPY ui/ ./
+ENV NEXT_PUBLIC_OUTPUT_MODE="static"
+RUN npm install
 RUN npm run build
 
 FROM golang:1.22-alpine AS builder
