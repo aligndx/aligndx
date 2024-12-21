@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/joho/godotenv"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/v2"
 	"github.com/nats-io/nats.go"
@@ -129,6 +130,11 @@ func (c *ConfigManager) loadConfig() error {
 	transform := func(s string) string {
 		transformed := strings.Replace(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".", -1)
 		return transformed
+	}
+
+	// Load .env file with overriding existing variables
+	if err := godotenv.Overload(); err != nil {
+		log.Println("No .env file found")
 	}
 	// Load environment variables with the defined prefix and transformation
 	if err := c.ko.Load(env.Provider(envPrefix, ".", transform), nil); err != nil {
