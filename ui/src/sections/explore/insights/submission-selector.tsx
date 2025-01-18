@@ -21,7 +21,7 @@ import { Drawer, DrawerContent, DrawerTrigger, DrawerDescription, DrawerTitle } 
 import { CaretUpDown, CheckBoxIcon, CheckBoxOutlineBlankIcon, CheckIcon } from "@/components/icons"
 import { Badge } from "@/components/ui/badge"
 import { useApiService } from "@/services/api"
-import { Submission } from "@/types/submission"
+import { Submission, Status } from "@/types/submission"
 import { useSearchParams, useUpdateSearchParams } from "@/routes"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Label } from "@/components/ui/label"
@@ -118,11 +118,12 @@ export function SubmissionSelector({
             <CommandList>
                 {isLoading ? (
                     <CommandEmpty>Loading submissions...</CommandEmpty>
-                ) : data?.length === 0 ? (
+                ) : (data?.filter(submission => submission.status === Status.Completed) || []).length === 0 ? (
                     <CommandEmpty>No submissions available</CommandEmpty>
                 ) : (
                     <CommandGroup>
-                        {(data || []).map((submission: Submission) => (
+                        {(data?.filter(submission => submission.status === Status.Completed) || []).map((submission: Submission) => (
+
                             <CommandItem
                                 key={submission.id}
                                 value={submission.name}
