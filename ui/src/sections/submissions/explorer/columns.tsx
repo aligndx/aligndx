@@ -6,7 +6,6 @@ import { ColumnDef } from "@tanstack/react-table"
 import { MagnifyingGlass, StatusIcon } from "@/components/icons"
 import { routes, useUpdateSearchParams } from "@/routes"
 import { Status, Submission } from "@/types/submission"
-import { Data } from "@/types/data"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 
@@ -19,26 +18,7 @@ export const useColumns = () => {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
-    },
-    // {
-    //   accessorKey: "workflow",
-    //   header: ({ column }) => (
-    //     <DataTableColumnHeader column={column} title="Workflow" />
-    //   ),
-    //   cell: ({ row }) => {
-    //     const workflow = row.original.workflow;
-
-    //     if (typeof workflow === 'string') {
-    //       return <div>{workflow}</div>;
-    //     }
-
-    //     return (
-    //       <div>
-    //         {workflow?.name}
-    //       </div>
-    //     );
-    //   },
-    // },
+    }, 
     {
       accessorKey: "created",
       header: ({ column }) => (
