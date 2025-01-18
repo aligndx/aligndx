@@ -64,35 +64,6 @@ export const useColumns = () => {
       }
     },
     {
-      accessorKey: "outputs",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Outputs" />
-      ),
-      cell: ({ row }) => {
-        const outputs = row.original.outputs;
-
-        if (typeof outputs === 'string') {
-          return <div>{outputs}</div>;
-        }
-
-        return (
-          <div>
-            {outputs.map((output: Data, index: number) => (
-              <Button
-                key={index}
-                variant="linkHover2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateSearchParams({ "id": output.id }, routes.dashboard.data);
-                }}>
-                {output?.name}
-              </Button>
-            ))}
-          </div>
-        );
-      },
-    },
-    {
       accessorKey: "status",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
@@ -101,11 +72,11 @@ export const useColumns = () => {
         const status = row.original.status
         const StatusColorMap: Record<Status, string> = {
           [Status.Created]: "#3498db",      // Blue
-          [Status.Queued]: "#f39c12",       // Orange
-          [Status.Processing]: "#f1c40f",   // Yellow
-          [Status.Completed]: "#2ecc71",     // Green
+          [Status.Queued]: "#e67e22",       // Darker Orange 
+          [Status.Processing]: "#f39c12",   // Bright Yellow 
+          [Status.Completed]: "#2ecc71",    // Green
           [Status.Error]: "#e74c3c"         // Red
-        };
+      };
         const statusColor = StatusColorMap[status || Status.Created]
         return (
           <Badge style={{ backgroundColor: statusColor }}>{status}</Badge>
@@ -118,6 +89,7 @@ export const useColumns = () => {
       id: "actions",
       cell: ({ row }) => {
         const submissionId = row.original.id
+        const disabled = row.original.status != Status.Completed
 
         return (
           <div className="flex">
@@ -125,7 +97,7 @@ export const useColumns = () => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant={"icon"} onClick={(e) => {
+                    <Button disabled={disabled} variant={"icon"} onClick={(e) => {
                       e.stopPropagation();
                       updateSearchParams({ "id": submissionId }, routes.dashboard.explore);
                     }}> <MagnifyingGlass /> </Button></TooltipTrigger>
