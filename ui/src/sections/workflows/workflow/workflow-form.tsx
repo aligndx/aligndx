@@ -46,6 +46,7 @@ interface WorkflowFormProps {
 }
 
 export default function WorkflowForm({ workflow }: WorkflowFormProps) {
+    const [disabled, setDisabled] = useState(false)
     const updateSearchParams = useUpdateSearchParams()
 
     const jsonSchema = workflow.schema
@@ -86,6 +87,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
     const { onUpload, progresses, isUploading } = data.useUploadFileMutation([]);
 
     async function onSubmit(values: z.infer<typeof extendedFormSchema>) {
+        setDisabled(true)
         const { name, ...rest } = values;
         const inputs = { ...rest };
 
@@ -155,6 +157,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
             });
 
         } catch (error) {
+            setDisabled(false)
             console.error("Error:", error);
             toast.error("There was an error submitting the form");
         }
@@ -211,7 +214,7 @@ export default function WorkflowForm({ workflow }: WorkflowFormProps) {
 
                     })}
 
-                    <Button variant="expandIcon" Icon={ArrowRight} iconPlacement="right" className="text-background-foreground" type="submit">Submit</Button>
+                    <Button disabled={disabled} variant="expandIcon" Icon={ArrowRight} iconPlacement="right" className="text-background-foreground" type="submit">Submit</Button>
                 </form>
             </Form>
         </div>
