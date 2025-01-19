@@ -4,6 +4,7 @@ import {
     ColumnDef,
     ColumnFiltersState,
     Row,
+    RowModel,
     SortingState,
     flexRender,
     getCoreRowModel,
@@ -22,24 +23,27 @@ import {
 } from "@/components/ui/table"
 import React from "react"
 import { Input } from "@/components/ui/input"
-import { routes, useUpdateSearchParams } from "@/routes"
+import { Button } from "@/components/ui/button"
+import { Trash } from "@/components/icons"
 
 interface DataTableProps<TData extends { id: string }, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[],
-    loading: boolean
+    loading: boolean,
+    deleteAction: (rows: Row<TData>[]) => void 
 }
 
 export function DataTable<TData extends { id: string }, TValue>({
     columns,
     data,
-    loading
+    loading,
+    deleteAction
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
         []
     )
-    const updateSearchParams = useUpdateSearchParams()
+    const [rowSelection, setRowSelection] = React.useState({})
 
     const table = useReactTable({
         data,
@@ -49,11 +53,13 @@ export function DataTable<TData extends { id: string }, TValue>({
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
+        onRowSelectionChange: setRowSelection,
         state: {
             sorting,
-            columnFilters
+            columnFilters,
+            rowSelection
         },
-    })
+    }) 
 
     return (
         <div>
@@ -66,6 +72,15 @@ export function DataTable<TData extends { id: string }, TValue>({
                     }
                     className="max-w-sm"
                 />
+                {
+                    table.getFilteredSelectedRowModel().rows.length > 0 ?
+                        <Button variant={"outline"} className="flex justify-between gap-4" onClick={() => deleteAction(table.getFilteredSelectedRowModel().rows)}>
+                            <Trash />
+                            Delete ({table.getFilteredSelectedRowModel().rows.length})
+                        </Button>
+                        :
+                        null
+                }
             </div>
             <div className="border-b border-t-0">
                 <Table >
@@ -96,7 +111,7 @@ export function DataTable<TData extends { id: string }, TValue>({
                                         // className="hover:cursor-pointer"
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
-                                        // onClick={() => updateSearchParams({"id" : row.original.id}, routes.dashboard.submissions.submission)}
+                                    // onClick={() => updateSearchParams({"id" : row.original.id}, routes.dashboard.submissions.submission)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>

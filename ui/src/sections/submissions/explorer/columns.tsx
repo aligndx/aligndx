@@ -8,17 +8,42 @@ import { routes, useUpdateSearchParams } from "@/routes"
 import { Status, Submission } from "@/types/submission"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export const useColumns = () => {
   const updateSearchParams = useUpdateSearchParams();
 
   const columns: ColumnDef<Submission>[] = [
     {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          className="border-primary-foreground"
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          className="border-primary-foreground"
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
-    }, 
+    },
     {
       accessorKey: "created",
       header: ({ column }) => (
@@ -56,7 +81,7 @@ export const useColumns = () => {
           [Status.Processing]: "#f39c12",   // Bright Yellow 
           [Status.Completed]: "#2ecc71",    // Green
           [Status.Error]: "#e74c3c"         // Red
-      };
+        };
         const statusColor = StatusColorMap[status || Status.Created]
         return (
           <Badge style={{ backgroundColor: statusColor }}>{status}</Badge>
