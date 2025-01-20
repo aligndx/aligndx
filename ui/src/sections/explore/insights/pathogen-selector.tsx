@@ -1,6 +1,7 @@
 import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useDuckDbQuery } from "duckdb-wasm-kit";
+import { Label } from "@/components/ui/label";
 
 interface PathogenSelectorProps extends React.HTMLProps<HTMLDivElement> {
     pathogens: string[]; // array of selected pathogen IDs
@@ -15,7 +16,7 @@ interface Pathogen {
 interface Panel {
     id: string;
     name: string;
-    pathogenIds: string[]; // IDs of pathogens in this panel
+    pathogenIds: Set<string>; // IDs of pathogens in this panel
 }
 
 export function PathogenSelector({
@@ -29,11 +30,14 @@ export function PathogenSelector({
 
     // Define the SQL query for pathogens
     const pathogenSql = `
-    SELECT column4 AS id, column5 AS name
-    FROM read_csv_auto('https://genome-idx.s3.amazonaws.com/kraken/pluspfp_08gb_20231009/inspect.txt')
-    WHERE column3 IN ('S', 'S1', 'S2')
-    ORDER BY LOWER(name);
+        SELECT 
+            column4 AS id, 
+            trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')) AS name
+        FROM read_csv_auto('https://genome-idx.s3.amazonaws.com/kraken/pluspfp_08gb_20231009/inspect.txt')
+        WHERE column3 IN ('S', 'S1', 'S2')
+        ORDER BY LOWER(trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')));
     `;
+
 
     // Define the SQL query for panels
     const panelSql = `
@@ -72,6 +76,7 @@ export function PathogenSelector({
                 id: row.id,
                 name: row.name,
             }));
+            console.log(pathogensFromQuery)
             setAllPathogens(pathogensFromQuery);
         }
     }, [pathogenArrow]);
@@ -83,7 +88,7 @@ export function PathogenSelector({
             const panelsFromQuery: Panel[] = rows.map((row: any) => ({
                 id: row.name,
                 name: row.name,
-                pathogenIds: row.pathogenIds,
+                pathogenIds: new Set(row.pathogenIds), // Use Set instead of array
             }));
             setPanels(panelsFromQuery);
         }
@@ -94,9 +99,21 @@ export function PathogenSelector({
     }, [selectedPathogenIds, allPathogens]);
 
     const filteredPathogens = React.useMemo(() => {
-        if (!selectedPanel) return allPathogens;
-        return allPathogens.filter(p => selectedPanel.pathogenIds.includes(p.id));
-    }, [selectedPanel, allPathogens]);
+        if (!selectedPanel) {
+            // No panel selected: include all pathogens
+            return allPathogens;
+        }
+        // Panel selected: filter pathogens by panel's pathogenIds
+        const pathogensInPanel = allPathogens.filter(p => selectedPanel.pathogenIds.has(p.id));
+
+        // Ensure selected pathogens (not in the panel) are still included in the list
+        const remainingPathogens = allPathogens.filter(
+            p => !selectedPathogenIds.includes(p.id) && !selectedPanel.pathogenIds.has(p.id)
+        );
+
+        return [...pathogensInPanel, ...remainingPathogens];
+    }, [selectedPanel, allPathogens, selectedPathogenIds]);
+
 
     if (loadingPathogens || loadingPanels) {
         return <div>Loading data...</div>;
@@ -107,6 +124,12 @@ export function PathogenSelector({
 
     return (
         <div {...props}>
+            <Label>
+                Pathogen(s)
+            </Label>
+            <p className="text-sm text-muted-foreground">
+                Select individual pathogens or choose from a pre-selected panel.
+            </p>
             <div className="flex">
                 {/* Panels Combobox */}
                 <Combobox<Panel>
@@ -117,7 +140,7 @@ export function PathogenSelector({
                         setSelectedPanel(newPanel);
                         if (newPanel) {
                             const panelPathogens = allPathogens.filter(p =>
-                                newPanel.pathogenIds.includes(p.id)
+                                newPanel.pathogenIds.has(p.id)
                             );
                             const panelPathogenIds = panelPathogens.map(p => p.id);
                             onPathogensChange(panelPathogenIds);
@@ -148,3 +171,4 @@ export function PathogenSelector({
         </div>
     );
 }
+
