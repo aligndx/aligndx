@@ -34,7 +34,7 @@ export function PathogenSelector({
         SELECT 
             column4 AS id, 
             trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')) AS name
-        FROM read_csv_auto('https://genome-idx.s3.amazonaws.com/kraken/pluspfp_08gb_20231009/inspect.txt')
+        FROM read_csv_auto('${CONFIG.KRAKEN_INDEX}')
         WHERE column3 IN ('S', 'S1', 'S2')
         ORDER BY LOWER(trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')));
     `;
