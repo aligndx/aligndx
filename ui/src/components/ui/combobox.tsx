@@ -28,6 +28,7 @@ import { CaretUpDown, CheckBoxIcon, CheckBoxOutlineBlankIcon, CheckIcon } from "
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface ComboboxProps<T> {
     items: T[]; // List of items to display
@@ -44,13 +45,13 @@ interface ComboboxProps<T> {
     searchPlaceholder?: string;
 }
 
+
 export function Combobox<T extends { id: string; name: string }>({
     items,
     value: controlledValue,
     onChange,
     multiple = true,
     disabled = false,
-    limit,
     itemToString = (item) => item.name,
     title = "Select Item(s)",
     description = "",
@@ -99,74 +100,110 @@ export function Combobox<T extends { id: string; name: string }>({
         }
     };
 
-    // Filter and sort items: Show selected first
-    const filteredItems = items
-        .sort((a, b) => {
-            const aSelected = selectedItems.some((s) => s.id === a.id);
-            const bSelected = selectedItems.some((s) => s.id === b.id);
-            if (aSelected === bSelected) return 0;
-            return aSelected ? -1 : 1;
-        })
-        .slice(0, limit ?? items.length);
 
-    const DropdownContent = () => (
-        <Command>
-            <div className="flex flex-row items-center justify-between p-2">
-                <Button
-                    className="flex items-center gap-2"
-                    onClick={handleSelectAll}
-                    variant="ghost"
-                    size="sm"
+    const DropdownContent = () => {
+        const [filteredOptions, setFilteredOptions] = React.useState<T[]>(items);
+
+        const parentRef = React.useRef(null)
+
+        const rowVirtualizer = useVirtualizer({
+            count: filteredOptions.length,
+            getScrollElement: () => parentRef.current,
+            estimateSize: () => 35,
+        })
+
+
+        const handleSearch = (search: string) => {
+            setFilteredOptions(
+                items.filter((item) =>
+                    itemToString(item).toLowerCase().includes(search.toLowerCase())
+                )
+            );
+        };
+
+        return (
+            // Disable filtering for virtualization
+            <Command
+                shouldFilter={false}
+            >
+                <div className="flex flex-row items-center justify-between p-2">
+                    <Button
+                        className="flex items-center gap-2"
+                        onClick={handleSelectAll}
+                        variant="ghost"
+                        size="sm"
+                        disabled={disabled}
+                    >
+                        <CheckBoxIcon />
+                        Select All
+                    </Button>
+                    <Button
+                        className="flex items-center gap-2"
+                        onClick={handleClearAll}
+                        variant="ghost"
+                        size="sm"
+                        disabled={disabled}
+                    >
+                        <CheckBoxOutlineBlankIcon />
+                        Clear All
+                    </Button>
+                </div>
+                <CommandSeparator />
+                <CommandInput
+                    onValueChange={handleSearch}
+                    placeholder={searchPlaceholder}
+                    className="h-9"
                     disabled={disabled}
-                >
-                    <CheckBoxIcon />
-                    Select All
-                </Button>
-                <Button
-                    className="flex items-center gap-2"
-                    onClick={handleClearAll}
-                    variant="ghost"
-                    size="sm"
-                    disabled={disabled}
-                >
-                    <CheckBoxOutlineBlankIcon />
-                    Clear All
-                </Button>
-            </div>
-            <CommandSeparator />
-            <CommandInput
-                placeholder={searchPlaceholder}
-                className="h-9"
-                disabled={disabled}
-            />
-            <CommandList>
-                {filteredItems.length === 0 ? (
-                    <CommandEmpty>No items found</CommandEmpty>
-                ) : (
-                    <CommandGroup>
-                        {filteredItems.map((item) => (
-                            <CommandItem
-                                key={item.id}
-                                value={itemToString(item)}
-                                onSelect={() => handleChange(item)}
-                                disabled={disabled}
+                />
+                <CommandList className="overflow-hidden">
+                    {filteredOptions.length === 0 ? (
+                        <CommandEmpty>No items found</CommandEmpty>
+                    ) : (
+                        <CommandGroup ref={parentRef} className="overflow-auto max-h-60">
+                            {/* Outer container for virtualized items */}
+                            <div
+                                style={{
+                                    height: `${rowVirtualizer.getTotalSize()}px`,
+                                    width: "100%",
+                                    position: "relative",
+                                }}
                             >
-                                {itemToString(item)}
-                                <CheckIcon
-                                    className={cn(
-                                        "ml-auto h-4 w-4",
-                                        selectedItems.some((val) => val.id === item.id)
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                    )}
-                                />
-                            </CommandItem>
-                        ))}
-                    </CommandGroup>
-                )}
-            </CommandList>
-        </Command>
-    );
+                                {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+                                    const item = filteredOptions[virtualItem.index];
+                                    return (
+                                        <CommandItem
+                                            key={item.id}
+                                            value={itemToString(item)}
+                                            onSelect={() => handleChange(item)}
+                                            disabled={disabled}
+                                            style={{
+                                                position: "absolute",
+                                                top: 0,
+                                                left: 0,
+                                                width: "100%",
+                                                height: `${virtualItem.size}px`,
+                                                transform: `translateY(${virtualItem.start}px)`,
+                                            }}
+                                        >
+                                            {itemToString(item)}
+                                            <CheckIcon
+                                                className={cn(
+                                                    "ml-auto h-4 w-4",
+                                                    selectedItems.some((val) => val.id === item.id)
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
+                                                )}
+                                            />
+                                        </CommandItem>
+                                    );
+                                })}
+                            </div>
+                        </CommandGroup>
+                    )}
+                </CommandList>
+            </Command>
+        )
+    }
 
     const ButtonContent = React.forwardRef<HTMLButtonElement, {}>((props, ref) => (
         <Button
