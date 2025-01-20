@@ -2,6 +2,8 @@ import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useDuckDbQuery } from "duckdb-wasm-kit";
 import { Label } from "@/components/ui/label";
+import { CONFIG } from "@/config-global";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PathogenSelectorProps extends React.HTMLProps<HTMLDivElement> {
     pathogens: string[]; // array of selected pathogen IDs
@@ -46,7 +48,7 @@ export function PathogenSelector({
             TaxID,
             panel_name,
             panel_value
-        FROM read_csv_auto('https://raw.githubusercontent.com/aligndx/apdb/main/panels.csv')
+        FROM read_csv_auto('${CONFIG.APDB_RAW}')
         UNPIVOT (panel_value FOR panel_name IN (
             "COVID-19",
             "Human Pathogenic Viruses",
@@ -116,8 +118,9 @@ export function PathogenSelector({
 
 
     if (loadingPathogens || loadingPanels) {
-        return <div>Loading data...</div>;
+        return <PathogenSelectorSkeleton />;
     }
+
     if (pathogenError || panelError) {
         return <div>Error loading data: {pathogenError?.message || panelError?.message}</div>;
     }
@@ -172,3 +175,18 @@ export function PathogenSelector({
     );
 }
 
+function PathogenSelectorSkeleton() {
+    return (
+        <div className="flex flex-col space-y-3">
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-[70px] rounded-xl" />
+                <Skeleton className="h-4 w-[250px]" />
+            </div>
+            <div className="flex gap-1">
+                <Skeleton className="h-10 w-[200px]" />
+                <Skeleton className="h-10 w-[200px]" />
+            </div>
+        </div>
+
+    )
+}
