@@ -26,11 +26,10 @@ export function PathogenSelector({
     onPathogensChange,
     ...props
 }: PathogenSelectorProps) {
-    const [allPathogens, setAllPathogens] = React.useState<Pathogen[]>([]);
-    const [panels, setPanels] = React.useState<Panel[]>([]);
+    const [allPathogens, setAllPathogens] = React.useState<Map<string, Pathogen>>(new Map());
+    const [panels, setPanels] = React.useState<Map<string, Panel>>(new Map());
     const [selectedPanel, setSelectedPanel] = React.useState<Panel | null>(null);
 
-    // Define the SQL query for pathogens
     const pathogenSql = `
         SELECT 
             column4 AS id, 
@@ -40,82 +39,74 @@ export function PathogenSelector({
         ORDER BY LOWER(trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')));
     `;
 
-
-    // Define the SQL query for panels
     const panelSql = `
-    WITH unpivoted_data AS (
-        SELECT
-            TaxID,
-            panel_name,
-            panel_value
-        FROM read_csv_auto('${CONFIG.APDB_RAW}')
-        UNPIVOT (panel_value FOR panel_name IN (
-            "COVID-19",
-            "Human Pathogenic Viruses",
-            "CDC high-consequence viruses",
-            "WHO priority pathogens"
-        ))
-        WHERE panel_value = 'Y'
-    )
-    SELECT 
-        panel_name AS name, 
-        array_agg(TaxID) AS pathogenIds
-    FROM unpivoted_data
-    GROUP BY panel_name;
+        WITH unpivoted_data AS (
+            SELECT
+                TaxID,
+                panel_name,
+                panel_value
+            FROM read_csv_auto('${CONFIG.APDB_RAW}')
+            UNPIVOT (panel_value FOR panel_name IN (
+                "COVID-19",
+                "Human Pathogenic Viruses",
+                "CDC high-consequence viruses",
+                "WHO priority pathogens"
+            ))
+            WHERE panel_value = 'Y'
+        )
+        SELECT 
+            panel_name AS name, 
+            array_agg(TaxID) AS pathogenIds
+        FROM unpivoted_data
+        GROUP BY panel_name;
     `;
 
-    // Fetch pathogens using useDuckDbQuery
     const { arrow: pathogenArrow, loading: loadingPathogens, error: pathogenError } = useDuckDbQuery(pathogenSql);
-
-    // Fetch panels using useDuckDbQuery
     const { arrow: panelArrow, loading: loadingPanels, error: panelError } = useDuckDbQuery(panelSql);
 
-    // Convert the Arrow result for pathogens
     React.useEffect(() => {
         if (pathogenArrow) {
             const rows = pathogenArrow.toArray ? pathogenArrow.toArray() : [];
-            const pathogensFromQuery: Pathogen[] = rows.map((row: any) => ({
-                id: row.id,
-                name: row.name,
-            }));
-            console.log(pathogensFromQuery)
-            setAllPathogens(pathogensFromQuery);
+            const pathogensMap = new Map<string, Pathogen>();
+            rows.forEach((row: any) => {
+                pathogensMap.set(row.id, { id: row.id, name: row.name });
+            });
+            setAllPathogens(pathogensMap);
         }
     }, [pathogenArrow]);
 
-    // Convert the Arrow result for panels
     React.useEffect(() => {
         if (panelArrow) {
             const rows = panelArrow.toArray ? panelArrow.toArray() : [];
-            const panelsFromQuery: Panel[] = rows.map((row: any) => ({
-                id: row.name,
-                name: row.name,
-                pathogenIds: new Set(row.pathogenIds), // Use Set instead of array
-            }));
-            setPanels(panelsFromQuery);
+            const panelsMap = new Map<string, Panel>();
+            rows.forEach((row: any) => {
+                panelsMap.set(row.name, {
+                    id: row.name,
+                    name: row.name,
+                    pathogenIds: new Set(row.pathogenIds),
+                });
+            });
+            setPanels(panelsMap);
         }
     }, [panelArrow]);
 
     const selectedPathogens = React.useMemo(() => {
-        return allPathogens.filter(p => selectedPathogenIds.includes(p.id));
+        return Array.from(selectedPathogenIds)
+            .map(id => allPathogens.get(id))
+            .filter((p): p is Pathogen => Boolean(p)); // Explicitly narrow the type to Pathogen
     }, [selectedPathogenIds, allPathogens]);
+    
 
     const filteredPathogens = React.useMemo(() => {
         if (!selectedPanel) {
-            // No panel selected: include all pathogens
-            return allPathogens;
+            return Array.from(allPathogens.values());
         }
-        // Panel selected: filter pathogens by panel's pathogenIds
-        const pathogensInPanel = allPathogens.filter(p => selectedPanel.pathogenIds.has(p.id));
-
-        // Ensure selected pathogens (not in the panel) are still included in the list
-        const remainingPathogens = allPathogens.filter(
-            p => !selectedPathogenIds.includes(p.id) && !selectedPanel.pathogenIds.has(p.id)
+        const pathogensInPanel = new Set(selectedPanel.pathogenIds);
+        const result = Array.from(allPathogens.values()).filter(
+            p => pathogensInPanel.has(p.id) || selectedPathogenIds.includes(p.id)
         );
-
-        return [...pathogensInPanel, ...remainingPathogens];
+        return result;
     }, [selectedPanel, allPathogens, selectedPathogenIds]);
-
 
     if (loadingPathogens || loadingPanels) {
         return <PathogenSelectorSkeleton />;
@@ -136,16 +127,13 @@ export function PathogenSelector({
             <div className="flex">
                 {/* Panels Combobox */}
                 <Combobox<Panel>
-                    items={panels}
+                    items={Array.from(panels.values())}
                     value={selectedPanel ? [selectedPanel] : []}
                     onChange={(groupArray) => {
                         const newPanel = groupArray[0] || null;
                         setSelectedPanel(newPanel);
                         if (newPanel) {
-                            const panelPathogens = allPathogens.filter(p =>
-                                newPanel.pathogenIds.has(p.id)
-                            );
-                            const panelPathogenIds = panelPathogens.map(p => p.id);
+                            const panelPathogenIds = Array.from(newPanel.pathogenIds);
                             onPathogensChange(panelPathogenIds);
                         } else {
                             onPathogensChange([]);
