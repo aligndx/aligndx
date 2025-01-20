@@ -1,138 +1,150 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import FormSelect from "@/components/form/form-select";
-import { CONFIG } from "@/config-global";
-import { cn } from "@/lib/utils";
-import { useDuckDb } from "duckdb-wasm-kit";
-import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { insertRemoteFile } from "./actions";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { XIcon } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
+import React from "react";
+import { useDuckDbQuery } from "duckdb-wasm-kit";
 
-interface PathogenSelectorProps extends React.HTMLProps<HTMLFormElement> {
-    pathogens: string[];
+interface PathogenSelectorProps extends React.HTMLProps<HTMLDivElement> {
+    pathogens: string[]; // array of selected pathogen IDs
     onPathogensChange: (pathogens: string[]) => void;
 }
 
-const panels = [
-    { value: "Human Pathogenic Viruses", label: "Human Pathogenic Viruses" },
-    { value: "CDC high-consequence viruses", label: "CDC high-consequence viruses" },
-    { value: "WHO priority pathogens", label: "WHO priority pathogens" },
-];
+interface Pathogen {
+    id: string;
+    name: string;
+}
 
-export function PathogenSelector({ pathogens, onPathogensChange, ...props }: PathogenSelectorProps) {
-    const methods = useForm({
-        mode: "onChange",
-        defaultValues: {
-            panel: panels[0].value,
-        },
-    });
-    const { db, loading } = useDuckDb();
-    const [customPathogen, setCustomPathogen] = useState("");
-    const [currentPathogens, setCurrentPathogens] = useState<string[]>(pathogens);
+interface Panel {
+    id: string;
+    name: string;
+    pathogenIds: string[]; // IDs of pathogens in this panel
+}
 
-    const selectedPanel = methods.watch("panel");
+export function PathogenSelector({
+    pathogens: selectedPathogenIds,
+    onPathogensChange,
+    ...props
+}: PathogenSelectorProps) {
+    const [allPathogens, setAllPathogens] = React.useState<Pathogen[]>([]);
+    const [panels, setPanels] = React.useState<Panel[]>([]);
+    const [selectedPanel, setSelectedPanel] = React.useState<Panel | null>(null);
 
-    useEffect(() => {
-        const loadTable = async () => {
-            if (!db || loading || !selectedPanel) return;
+    // Define the SQL query for pathogens
+    const pathogenSql = `
+    SELECT column4 AS id, column5 AS name
+    FROM read_csv_auto('https://genome-idx.s3.amazonaws.com/kraken/pluspfp_08gb_20231009/inspect.txt')
+    WHERE column3 IN ('S', 'S1', 'S2')
+    ORDER BY LOWER(name);
+    `;
 
-            try {
-                await insertRemoteFile(db, CONFIG.APDB_RAW, "apdb");
-                const conn = await db.connect();
+    // Define the SQL query for panels
+    const panelSql = `
+    WITH unpivoted_data AS (
+        SELECT
+            TaxID,
+            panel_name,
+            panel_value
+        FROM read_csv_auto('https://raw.githubusercontent.com/aligndx/apdb/main/panels.csv')
+        UNPIVOT (panel_value FOR panel_name IN (
+            "COVID-19",
+            "Human Pathogenic Viruses",
+            "CDC high-consequence viruses",
+            "WHO priority pathogens"
+        ))
+        WHERE panel_value = 'Y'
+    )
+    SELECT 
+        panel_name AS name, 
+        array_agg(TaxID) AS pathogenIds
+    FROM unpivoted_data
+    GROUP BY panel_name;
+    `;
 
-                const organismArrow = await conn.query(`SELECT organism FROM apdb WHERE "${selectedPanel}" = 'Y'`);
-                const organismList = organismArrow.toArray().map((row) => row["Organism"]);
-                setCurrentPathogens(organismList);
-                onPathogensChange(organismList);
-                await conn.close();
-            } catch (err) {
-                console.error(err);
-                toast.error("Couldn't generate pathogens");
-            }
-        };
-        loadTable();
-    }, [db, selectedPanel, loading]);
+    // Fetch pathogens using useDuckDbQuery
+    const { arrow: pathogenArrow, loading: loadingPathogens, error: pathogenError } = useDuckDbQuery(pathogenSql);
 
-    const handleAddPathogen = () => {
-        if (customPathogen && !currentPathogens.includes(customPathogen)) {
-            const updatedPathogens = [...currentPathogens, customPathogen];
-            setCurrentPathogens(updatedPathogens);
-            onPathogensChange(updatedPathogens);
-            setCustomPathogen("");
+    // Fetch panels using useDuckDbQuery
+    const { arrow: panelArrow, loading: loadingPanels, error: panelError } = useDuckDbQuery(panelSql);
+
+    // Convert the Arrow result for pathogens
+    React.useEffect(() => {
+        if (pathogenArrow) {
+            const rows = pathogenArrow.toArray ? pathogenArrow.toArray() : [];
+            const pathogensFromQuery: Pathogen[] = rows.map((row: any) => ({
+                id: row.id,
+                name: row.name,
+            }));
+            setAllPathogens(pathogensFromQuery);
         }
-    };
+    }, [pathogenArrow]);
 
-    const handleRemovePathogen = (event: React.MouseEvent, pathogen: string) => {
-        event.preventDefault(); // Prevents default form submission behavior
-        const updatedPathogens = currentPathogens.filter((p) => p !== pathogen);
-        setCurrentPathogens(updatedPathogens);
-        onPathogensChange(updatedPathogens);
-    };
+    // Convert the Arrow result for panels
+    React.useEffect(() => {
+        if (panelArrow) {
+            const rows = panelArrow.toArray ? panelArrow.toArray() : [];
+            const panelsFromQuery: Panel[] = rows.map((row: any) => ({
+                id: row.name,
+                name: row.name,
+                pathogenIds: row.pathogenIds,
+            }));
+            setPanels(panelsFromQuery);
+        }
+    }, [panelArrow]);
 
-    const description = (
-        <span>
-            Select a panel for screening. Generated from the{" "}
-            <a href={CONFIG.APDB} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline">
-                APDB
-            </a>.
-        </span>
-    );
+    const selectedPathogens = React.useMemo(() => {
+        return allPathogens.filter(p => selectedPathogenIds.includes(p.id));
+    }, [selectedPathogenIds, allPathogens]);
+
+    const filteredPathogens = React.useMemo(() => {
+        if (!selectedPanel) return allPathogens;
+        return allPathogens.filter(p => selectedPanel.pathogenIds.includes(p.id));
+    }, [selectedPanel, allPathogens]);
+
+    if (loadingPathogens || loadingPanels) {
+        return <div>Loading data...</div>;
+    }
+    if (pathogenError || panelError) {
+        return <div>Error loading data: {pathogenError?.message || panelError?.message}</div>;
+    }
 
     return (
-        <FormProvider {...methods}>
-            <form {...props}>
-                <div className="flex">
-                    <FormSelect
-                        name="panel"
-                        label="Pathogen Panel"
-                        description={description}
-                        options={panels}
-                        placeholder="Select a panel"
-                    />
-                </div>
-                <Label>Pathogens</Label>
-                <p className={cn("text-sm text-muted-foreground")}>
-                    Pathogens from the selected panel.
-                </p>
-                <ScrollArea type="always" orientation="vertical" className="flex h-[200] max-w-[500px] border p-4">
-                    <div className="flex gap-2 flex-wrap">
-                        {currentPathogens.map((pathogen, index) => (
-                            <Badge
-                                key={index}
-                                className="bg-secondary text-secondary-foreground"
-                            >
-                                {pathogen}
-                                <Button
-                                    type="button"
-                                    variant="icon"
-                                    size="icon"
-                                    onClick={(event) => handleRemovePathogen(event, pathogen)}
-                                >
-                                    <XIcon className="h-4" />
-                                </Button>
-                            </Badge>
-                        ))}
-                    </div>
-                </ScrollArea>
+        <div {...props}>
+            <div className="flex">
+                {/* Panels Combobox */}
+                <Combobox<Panel>
+                    items={panels}
+                    value={selectedPanel ? [selectedPanel] : []}
+                    onChange={(groupArray) => {
+                        const newPanel = groupArray[0] || null;
+                        setSelectedPanel(newPanel);
+                        if (newPanel) {
+                            const panelPathogens = allPathogens.filter(p =>
+                                newPanel.pathogenIds.includes(p.id)
+                            );
+                            const panelPathogenIds = panelPathogens.map(p => p.id);
+                            onPathogensChange(panelPathogenIds);
+                        } else {
+                            onPathogensChange([]);
+                        }
+                    }}
+                    multiple={false}
+                    title="Select a panel"
+                    itemToString={(panel) => panel.name}
+                    searchPlaceholder="Search panels..."
+                />
 
-                <div className="mt-4 flex items-center gap-2">
-                    <Input
-                        type="text"
-                        value={customPathogen}
-                        onChange={(e) => setCustomPathogen(e.target.value)}
-                        placeholder="Add a new pathogen"
-                    />
-                    <Button onClick={handleAddPathogen} disabled={!customPathogen.trim()}>
-                        Add Pathogen
-                    </Button>
-                </div>
-            </form>
-        </FormProvider>
+                {/* Pathogens Combobox */}
+                <Combobox<Pathogen>
+                    items={filteredPathogens}
+                    value={selectedPathogens}
+                    onChange={(newSelection) => {
+                        const newPathogenIds = newSelection.map(p => p.id);
+                        onPathogensChange(newPathogenIds);
+                    }}
+                    multiple={true}
+                    title="Select pathogen(s)"
+                    itemToString={(pathogen) => pathogen.name}
+                    searchPlaceholder="Search pathogens..."
+                />
+            </div>
+        </div>
     );
 }

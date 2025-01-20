@@ -39,7 +39,6 @@ export function SubmissionSelector({
       onChange={onChange}
       multiple={multiple}
       disabled={disabled}
-      limit={50}
       label="Source(s)"
       title="Select submission(s)"
       description="Select the submissions you want to analyze"

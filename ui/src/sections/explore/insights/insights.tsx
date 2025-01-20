@@ -195,7 +195,7 @@ export default function Insights({ data, onDataChange, selectedSubs, onSubChange
                     </div>
                     {data.length > 0 && (
                         <div className="flex">
-                            <PathogenSelector className="flex flex-col flex-grow gap-4" pathogens={pathogens} onPathogensChange={onPathogensChange} />
+                            <PathogenSelector className="flex flex-grow" pathogens={pathogens} onPathogensChange={onPathogensChange} />
                         </div>
                     )}
                 </div>
