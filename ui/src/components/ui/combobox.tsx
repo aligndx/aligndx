@@ -126,28 +126,29 @@ export function Combobox<T extends { id: string; name: string }>({
             <Command
                 shouldFilter={false}
             >
-                <div className="flex flex-row items-center justify-between p-2">
-                    <Button
-                        className="flex items-center gap-2"
-                        onClick={handleSelectAll}
-                        variant="ghost"
-                        size="sm"
-                        disabled={disabled}
-                    >
-                        <CheckBoxIcon />
-                        Select All
-                    </Button>
-                    <Button
-                        className="flex items-center gap-2"
-                        onClick={handleClearAll}
-                        variant="ghost"
-                        size="sm"
-                        disabled={disabled}
-                    >
-                        <CheckBoxOutlineBlankIcon />
-                        Clear All
-                    </Button>
-                </div>
+                {multiple ?
+                    <div className="flex flex-row items-center justify-between p-2">
+                        <Button
+                            className="flex items-center gap-2"
+                            onClick={handleSelectAll}
+                            variant="ghost"
+                            size="sm"
+                            disabled={disabled}
+                        >
+                            <CheckBoxIcon />
+                            Select All
+                        </Button>
+                        <Button
+                            className="flex items-center gap-2"
+                            onClick={handleClearAll}
+                            variant="ghost"
+                            size="sm"
+                            disabled={disabled}
+                        >
+                            <CheckBoxOutlineBlankIcon />
+                            Clear All
+                        </Button>
+                    </div> : null}
                 <CommandSeparator />
                 <CommandInput
                     onValueChange={handleSearch}
