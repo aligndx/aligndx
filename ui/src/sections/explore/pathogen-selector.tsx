@@ -6,23 +6,23 @@ import { CONFIG } from "@/config-global";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PathogenSelectorProps extends React.HTMLProps<HTMLDivElement> {
-    pathogens: string[]; // array of selected pathogen IDs
-    onPathogensChange: (pathogens: string[]) => void;
+    pathogens: Pathogen[]; // now expects an array of Pathogen objects
+    onPathogensChange: (pathogens: Pathogen[]) => void;
 }
 
-interface Pathogen {
+export interface Pathogen {
     id: string;
     name: string;
 }
 
-interface Panel {
+export interface Panel {
     id: string;
     name: string;
     pathogenIds: Set<string>; // IDs of pathogens in this panel
 }
 
 export function PathogenSelector({
-    pathogens: selectedPathogenIds,
+    pathogens: selectedPathogens, // now this is an array of Pathogen objects
     onPathogensChange,
     ...props
 }: PathogenSelectorProps) {
@@ -30,36 +30,42 @@ export function PathogenSelector({
     const [panels, setPanels] = React.useState<Map<string, Panel>>(new Map());
     const [selectedPanel, setSelectedPanel] = React.useState<Panel | null>(null);
 
+    // We'll derive selectedPathogenIds from selectedPathogens for internal logic:
+    const selectedPathogenIds = React.useMemo(
+        () => selectedPathogens.map(p => p.id),
+        [selectedPathogens]
+    );
+
     const pathogenSql = `
-        SELECT 
-            column4 AS id, 
-            trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')) AS name
-        FROM read_csv_auto('${CONFIG.KRAKEN_INDEX}')
-        WHERE column3 IN ('S', 'S1', 'S2')
-        ORDER BY LOWER(trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')));
-    `;
+    SELECT 
+        column4 AS id, 
+        trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')) AS name
+    FROM read_csv_auto('${CONFIG.KRAKEN_INDEX}')
+    WHERE column3 IN ('S', 'S1', 'S2')
+    ORDER BY LOWER(trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')));
+  `;
 
     const panelSql = `
-        WITH unpivoted_data AS (
-            SELECT
-                TaxID,
-                panel_name,
-                panel_value
-            FROM read_csv_auto('${CONFIG.APDB_RAW}')
-            UNPIVOT (panel_value FOR panel_name IN (
-                "COVID-19",
-                "Human Pathogenic Viruses",
-                "CDC high-consequence viruses",
-                "WHO priority pathogens"
-            ))
-            WHERE panel_value = 'Y'
-        )
-        SELECT 
-            panel_name AS name, 
-            array_agg(TaxID) AS pathogenIds
-        FROM unpivoted_data
-        GROUP BY panel_name;
-    `;
+    WITH unpivoted_data AS (
+        SELECT
+            TaxID,
+            panel_name,
+            panel_value
+        FROM read_csv_auto('${CONFIG.APDB_RAW}')
+        UNPIVOT (panel_value FOR panel_name IN (
+            "COVID-19",
+            "Human Pathogenic Viruses",
+            "CDC high-consequence viruses",
+            "WHO priority pathogens"
+        ))
+        WHERE panel_value = 'Y'
+    )
+    SELECT 
+        panel_name AS name, 
+        array_agg(TaxID) AS pathogenIds
+    FROM unpivoted_data
+    GROUP BY panel_name;
+  `;
 
     const { arrow: pathogenArrow, loading: loadingPathogens, error: pathogenError } = useDuckDbQuery(pathogenSql);
     const { arrow: panelArrow, loading: loadingPanels, error: panelError } = useDuckDbQuery(panelSql);
@@ -90,23 +96,21 @@ export function PathogenSelector({
         }
     }, [panelArrow]);
 
-    const selectedPathogens = React.useMemo(() => {
-        return Array.from(selectedPathogenIds)
-            .map(id => allPathogens.get(id))
-            .filter((p): p is Pathogen => Boolean(p)); // Explicitly narrow the type to Pathogen
-    }, [selectedPathogenIds, allPathogens]);
-    
-
     const filteredPathogens = React.useMemo(() => {
-        if (!selectedPanel) {
-            return Array.from(allPathogens.values());
-        }
-        const pathogensInPanel = new Set(selectedPanel.pathogenIds);
-        const result = Array.from(allPathogens.values()).filter(
-            p => pathogensInPanel.has(p.id) || selectedPathogenIds.includes(p.id)
-        );
-        return result;
-    }, [selectedPanel, allPathogens, selectedPathogenIds]);
+        const all = Array.from(allPathogens.values());
+        all.sort((a, b) => {
+            const aSelected = selectedPathogenIds.includes(a.id);
+            const bSelected = selectedPathogenIds.includes(b.id);
+
+            // If one is selected and the other isn't, prioritize the selected one
+            if (aSelected && !bSelected) return -1;
+            if (!aSelected && bSelected) return 1;
+
+            // Otherwise, sort alphabetically by name
+            return a.name.localeCompare(b.name);
+        });
+        return all;
+    }, [allPathogens, selectedPathogenIds]);
 
     if (loadingPathogens || loadingPanels) {
         return <PathogenSelectorSkeleton />;
@@ -118,13 +122,11 @@ export function PathogenSelector({
 
     return (
         <div {...props}>
-            <Label>
-                Pathogen(s)
-            </Label>
+            <Label>Pathogen(s)</Label>
             <p className="text-sm text-muted-foreground">
-                Select individual pathogens or choose from a pre-selected panel.
+                Screen individual pathogens or choose from a pre-selected panel.
             </p>
-            <div className="flex">
+            <div className="flex gap-2">
                 {/* Panels Combobox */}
                 <Combobox<Panel>
                     items={Array.from(panels.values())}
@@ -134,7 +136,10 @@ export function PathogenSelector({
                         setSelectedPanel(newPanel);
                         if (newPanel) {
                             const panelPathogenIds = Array.from(newPanel.pathogenIds);
-                            onPathogensChange(panelPathogenIds);
+                            const panelPathogens = panelPathogenIds
+                                .map(id => allPathogens.get(id))
+                                .filter((p): p is Pathogen => !!p);
+                            onPathogensChange(panelPathogens);
                         } else {
                             onPathogensChange([]);
                         }
@@ -150,8 +155,7 @@ export function PathogenSelector({
                     items={filteredPathogens}
                     value={selectedPathogens}
                     onChange={(newSelection) => {
-                        const newPathogenIds = newSelection.map(p => p.id);
-                        onPathogensChange(newPathogenIds);
+                        onPathogensChange(newSelection);
                     }}
                     multiple={true}
                     title="Select pathogen(s)"
@@ -175,6 +179,5 @@ function PathogenSelectorSkeleton() {
                 <Skeleton className="h-10 w-[200px]" />
             </div>
         </div>
-
-    )
+    );
 }
