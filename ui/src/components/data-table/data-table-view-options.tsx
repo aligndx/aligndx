@@ -1,59 +1,91 @@
 "use client"
 
-import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
-import { MixerHorizontal } from "@/components/icons"
-import { Table } from "@tanstack/react-table"
+import * as React from "react"
+import type { Table } from "@tanstack/react-table"
+import { Check, ChevronsUpDown, Settings2 } from "lucide-react"
 
+import { cn, toSentenceCase } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
 }
 
-export default function DataTableViewOptions<TData>({
+export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover modal>
+      <PopoverTrigger asChild>
         <Button
+          ref={triggerRef}
+          aria-label="Toggle columns"
           variant="outline"
+          role="combobox"
           size="sm"
-          className="ml-auto hidden h-8 lg:flex"
+          className="ml-auto gap-2 focus:outline-none focus:ring-1 focus:ring-ring focus-visible:ring-0 lg:flex"
         >
-          <MixerHorizontal className="mr-2 h-4 w-4" />
+          <Settings2 className="size-4" />
           View
+          <ChevronsUpDown className="ml-auto size-4 shrink-0 opacity-50" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[150px]">
-        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {table
-          .getAllColumns()
-          .filter(
-            (column) =>
-              typeof column.accessorFn !== "undefined" && column.getCanHide()
-          )
-          .map((column) => {
-            return (
-              <DropdownMenuCheckboxItem
-                key={column.id}
-                className="capitalize"
-                checked={column.getIsVisible()}
-                onCheckedChange={(value) => column.toggleVisibility(!!value)}
-              >
-                {column.id}
-              </DropdownMenuCheckboxItem>
-            )
-          })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="w-44 p-0"
+        onCloseAutoFocus={() => triggerRef.current?.focus()}
+      >
+        <Command>
+          <CommandInput placeholder="Search columns..." />
+          <CommandList>
+            <CommandEmpty>No columns found.</CommandEmpty>
+            <CommandGroup>
+              {table
+                .getAllColumns()
+                .filter(
+                  (column) =>
+                    typeof column.accessorFn !== "undefined" &&
+                    column.getCanHide()
+                )
+                .map((column) => {
+                  return (
+                    <CommandItem
+                      key={column.id}
+                      onSelect={() =>
+                        column.toggleVisibility(!column.getIsVisible())
+                      }
+                    >
+                      <span className="truncate">
+                        {toSentenceCase(column.id)}
+                      </span>
+                      <Check
+                        className={cn(
+                          "ml-auto size-4 shrink-0",
+                          column.getIsVisible() ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  )
+                })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

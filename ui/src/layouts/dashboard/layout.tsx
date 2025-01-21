@@ -35,7 +35,7 @@ const DashboardLayout: FC<Props> = ({ children }) => {
             <ThemeToggle />
           </div>
         </Header>
-        <main className="flex-grow overflow-y-auto">
+        <main>
           {children}
         </main>
       </div>

@@ -1,1 +1,0 @@
-export { default as SpreadSheet} from './spread-sheet'
