@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table"
 import React from "react"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
-import { DataTableViewOptions } from "@/components/data-table";
+import { DataTableExport, DataTableViewOptions } from "@/components/data-table";
 import { DataTableVisualize } from "./data-table-visualize";
 
 interface DataTableProps<TData extends { id: string }, TValue>
@@ -66,7 +66,10 @@ export function DataTable<TData extends { id: string }, TValue>({
         <div className="h-[36rem]">
             <div className="flex px-6 py-2 justify-between ">
                 <DataTableVisualize table={table} />
-                <DataTableViewOptions table={table} />
+                <div className="flex gap-2">
+                    <DataTableExport table={table} />
+                    <DataTableViewOptions table={table} />
+                </div>
             </div>
 
             <Table {...props} >
