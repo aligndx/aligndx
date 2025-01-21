@@ -182,7 +182,7 @@ export default function ExploreView() {
         <div>
             <div className={cn("flex p-6", isMobile ? "flex-col justify-center gap-6" : "flex-row justify-between gap-2")}>
                 <SubmissionSelector value={selectedSubs} onChange={onSubChange} />
-                {data.length > 0 ?
+                {selectedSubs.length > 0 ?
                     <PathogenSelector className={"flex flex-col gap-2"} pathogens={pathogens} onPathogensChange={onPathogensChange} toggleShowOnlyDetected={toggleShowOnlyDetected} showOnlyDetected={showOnlyDetected} />
                     : null
                 }
@@ -195,7 +195,7 @@ export default function ExploreView() {
                     : null
                 }
  
-                {data.length > 0 ?
+                {selectedSubs.length > 0 ?
 
                     <DataTable columns={columns} data={data || []} loading={loading} />
                     : null
