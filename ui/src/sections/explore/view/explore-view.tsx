@@ -182,20 +182,20 @@ export default function ExploreView() {
         <div>
             <div className={cn("flex p-6", isMobile ? "flex-col justify-center gap-6" : "flex-row justify-between gap-2")}>
                 <SubmissionSelector value={selectedSubs} onChange={onSubChange} />
-                {data.length > 0 ?
+                {selectedSubs.length > 0 ?
                     <PathogenSelector className={"flex flex-col gap-2"} pathogens={pathogens} onPathogensChange={onPathogensChange} toggleShowOnlyDetected={toggleShowOnlyDetected} showOnlyDetected={showOnlyDetected} />
                     : null
                 }
             </div>
             <div className="flex flex-col gap-2">
-                {data.length > 0 && !isMobile ?
+                {selectedSubs.length > 0 && !isMobile ?
                     <div className="flex flex-grow px-2">
                         <SummaryStatistics className="border-none  pb-0" selectedSubs={selectedSubs} />
                     </div>
                     : null
                 }
  
-                {data.length > 0 ?
+                {selectedSubs.length > 0 ?
 
                     <DataTable columns={columns} data={data || []} loading={loading} />
                     : null

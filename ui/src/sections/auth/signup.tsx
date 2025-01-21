@@ -11,6 +11,7 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { useApiService } from "@/services/api"
 import { toast } from "@/components/ui/sonner"
 import { routes, useRouter } from "@/routes"
+import Link from "next/link"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -30,15 +31,16 @@ export default function SignUp() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email : "",
-      password : "",
-      passwordConfirm : "",
+      email: "",
+      password: "",
+      passwordConfirm: "",
     }
   })
 
   const { auth } = useApiService();
   const signup = auth.registerMutation;
   const router = useRouter();
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { email, password, passwordConfirm, ...rest } = values;
@@ -75,7 +77,7 @@ export default function SignUp() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="email@domain.com" {...field} />
+                  <Input autoComplete="email" placeholder="email@domain.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -89,7 +91,7 @@ export default function SignUp() {
                 <FormItem className="flex-1">
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <PasswordInput {...field} />
+                    <PasswordInput {...field} autoComplete="new-password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,7 +104,7 @@ export default function SignUp() {
                 <FormItem className="flex-1">
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <PasswordInput {...field} />
+                    <PasswordInput {...field} autoComplete="new-password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -111,6 +113,13 @@ export default function SignUp() {
           </div>
         </div>
         <Button type="submit">Sign Up</Button>
+
+        <div className="mt-4 text-center text-sm">
+          Already have an account?{" "}
+          <Link href={routes.auth.signin} className="underline">
+            Sign in
+          </Link>
+        </div>
       </form>
     </Form>
   )

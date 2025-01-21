@@ -4,9 +4,10 @@ import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Menu } from "@/components/icons";
 import { useBoolean } from "@/hooks/use-boolean";
+import { routes } from "@/routes";
 
 export type NavItem = {
     title: string
@@ -42,7 +43,23 @@ export function MobileNav({ items, children }: MobileNavProps) {
 
 
                     <SheetDescription>
-                        <nav className="grid grid-flow-row auto-rows-max text-sm">
+                        <nav className="grid grid-flow-row auto-rows-max text-sm space-y-6">
+                            <Link
+                                href={routes.auth.signin}
+                                className={cn(
+                                    buttonVariants({ variant: "ghost", size: "sm" }),
+                                )}
+                            >
+                                Sign in
+                            </Link>
+                            <Link
+                                href={routes.auth.signup}
+                                className={cn(
+                                    buttonVariants({ variant: "outline", size: "sm" }),
+                                )}
+                            >
+                                Sign Up
+                            </Link>
                             {items.map((item, index) => (
                                 <Link
                                     key={index}
