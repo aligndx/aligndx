@@ -114,22 +114,6 @@ export const useColumns = () => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <div className="text-right">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant={"icon"} onClick={(e) => {
-                      e.stopPropagation();
-                      updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
-                    }}>
-                      <StatusIcon />
-                    </Button></TooltipTrigger>
-                  <TooltipContent>
-                    <p>Events</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
           </div>
         )
       },
