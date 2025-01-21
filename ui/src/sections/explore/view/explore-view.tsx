@@ -104,9 +104,9 @@ export default function ExploreView() {
 
 
     const {
-        value: showAllPathogens,
-        onToggle: toggleShowAllPathogens,
-    } = useBoolean(false);
+        value: showOnlyDetected,
+        onToggle: toggleShowOnlyDetected,
+    } = useBoolean(true);
 
     useEffect(() => {
         if (selectedSubs.length === 0) {
@@ -120,7 +120,7 @@ export default function ExploreView() {
 
             // Only proceed with pathogen-related logic if there are selected pathogens and data exists
             if (pathogens.length > 0 && arrayData.length > 0) {
-                if (showAllPathogens) {
+                if (!showOnlyDetected) {
                     // Map submissions to their samples
                     const submissionSamplesMap: Record<string, Set<any>> = {};
 
@@ -174,7 +174,7 @@ export default function ExploreView() {
         } else if (error) {
             console.error("DuckDB query error:", error);
         }
-    }, [arrow, error, pathogens, selectedSubs, showAllPathogens]);
+    }, [arrow, error, pathogens, selectedSubs, showOnlyDetected]);
 
     const columns = useColumns()
     const isMobile = useMediaQuery("sm", "down");
@@ -183,7 +183,7 @@ export default function ExploreView() {
             <div className={cn("flex p-6", isMobile ? "flex-col justify-center gap-6" : "flex-row justify-between gap-2")}>
                 <SubmissionSelector value={selectedSubs} onChange={onSubChange} />
                 {data.length > 0 ?
-                    <PathogenSelector className={"flex flex-col gap-1"} pathogens={pathogens} onPathogensChange={onPathogensChange} />
+                    <PathogenSelector className={"flex flex-col gap-2"} pathogens={pathogens} onPathogensChange={onPathogensChange} toggleShowOnlyDetected={toggleShowOnlyDetected} showOnlyDetected={showOnlyDetected} />
                     : null
                 }
             </div>
@@ -194,18 +194,7 @@ export default function ExploreView() {
                     </div>
                     : null
                 }
-
-                {pathogens.length > 0 ?
-                    <div className="flex flex-row items-center justify-start px-6 pt-4 gap-4">
-                        <h1 className="font-bold"> {showAllPathogens ? "Screened Pathogens" : "Detected Pathogens"}</h1>
-                        <Switch
-                            id="showAllPathogensSwitch"
-                            checked={showAllPathogens}
-                            onCheckedChange={toggleShowAllPathogens}
-                        />
-                    </div> :
-                    null
-                }
+ 
                 {data.length > 0 ?
 
                     <DataTable columns={columns} data={data || []} loading={loading} />

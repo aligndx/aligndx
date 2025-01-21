@@ -4,10 +4,14 @@ import { useDuckDbQuery } from "duckdb-wasm-kit";
 import { Label } from "@/components/ui/label";
 import { CONFIG } from "@/config-global";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { useBoolean } from "@/hooks/use-boolean";
 
 interface PathogenSelectorProps extends React.HTMLProps<HTMLDivElement> {
     pathogens: Pathogen[]; // now expects an array of Pathogen objects
     onPathogensChange: (pathogens: Pathogen[]) => void;
+    showOnlyDetected: boolean;
+    toggleShowOnlyDetected: () => void;
 }
 
 export interface Pathogen {
@@ -24,6 +28,8 @@ export interface Panel {
 export function PathogenSelector({
     pathogens: selectedPathogens, // now this is an array of Pathogen objects
     onPathogensChange,
+    showOnlyDetected,
+    toggleShowOnlyDetected,
     ...props
 }: PathogenSelectorProps) {
     const [allPathogens, setAllPathogens] = React.useState<Map<string, Pathogen>>(new Map());
@@ -96,6 +102,7 @@ export function PathogenSelector({
         }
     }, [panelArrow]);
 
+
     const filteredPathogens = React.useMemo(() => {
         const all = Array.from(allPathogens.values());
         all.sort((a, b) => {
@@ -126,6 +133,12 @@ export function PathogenSelector({
             <p className="text-sm text-muted-foreground">
                 Screen individual pathogens or choose from a pre-selected panel.
             </p>
+            {selectedPathogens.length > 0 ?
+                <div className="flex items-center space-x-2">
+                    <Switch id="only-detected" checked={showOnlyDetected} onCheckedChange={toggleShowOnlyDetected} />
+                    <Label htmlFor="only-detected">Only detected</Label>
+                </div>
+                : null}
             <div className="flex gap-2">
                 {/* Panels Combobox */}
                 <Combobox<Panel>
@@ -152,6 +165,7 @@ export function PathogenSelector({
 
                 {/* Pathogens Combobox */}
                 <Combobox<Pathogen>
+                    selectAll={false}
                     items={filteredPathogens}
                     value={selectedPathogens}
                     onChange={(newSelection) => {

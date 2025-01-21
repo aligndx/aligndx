@@ -43,6 +43,7 @@ interface ComboboxProps<T> {
     description?: string;
     label?: string;
     searchPlaceholder?: string;
+    selectAll?: boolean
 }
 
 
@@ -57,6 +58,7 @@ export function Combobox<T extends { id: string; name: string }>({
     description = "",
     label = "",
     searchPlaceholder = "Search...",
+    selectAll = true,
 }: ComboboxProps<T>) {
     const [internalValue, setInternalValue] = React.useState<T[]>([]);
     const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -128,16 +130,17 @@ export function Combobox<T extends { id: string; name: string }>({
             >
                 {multiple ?
                     <div className="flex flex-row items-center justify-between p-2">
-                        <Button
-                            className="flex items-center gap-2"
-                            onClick={handleSelectAll}
-                            variant="ghost"
-                            size="sm"
-                            disabled={disabled}
-                        >
-                            <CheckBoxIcon />
-                            Select All
-                        </Button>
+                        {selectAll ?
+                            <Button
+                                className="flex items-center gap-2"
+                                onClick={handleSelectAll}
+                                variant="ghost"
+                                size="sm"
+                                disabled={disabled}
+                            >
+                                <CheckBoxIcon />
+                                Select All
+                            </Button> : null}
                         <Button
                             className="flex items-center gap-2"
                             onClick={handleClearAll}
