@@ -99,7 +99,7 @@ export default function Features() {
             <caption>
                 From pathogen detection all the way to visualization. Gain complex insights into your data, at your pace.    Designed with researchers in mind, AlignDx streamlines your detection workflows, empowering you to make faster, more informed decisions.
             </caption>
-            <div className="mx-auto grid text-center gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 px-10 py-5">
+            <div className="mx-auto grid text-center gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                 <FeatureCards />
             </div>
         </div>
