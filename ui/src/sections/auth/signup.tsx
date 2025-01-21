@@ -31,15 +31,16 @@ export default function SignUp() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email : "",
-      password : "",
-      passwordConfirm : "",
+      email: "",
+      password: "",
+      passwordConfirm: "",
     }
   })
 
   const { auth } = useApiService();
   const signup = auth.registerMutation;
   const router = useRouter();
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { email, password, passwordConfirm, ...rest } = values;
@@ -76,7 +77,7 @@ export default function SignUp() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="email@domain.com" {...field} />
+                  <Input autoComplete="email" placeholder="email@domain.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -90,7 +91,7 @@ export default function SignUp() {
                 <FormItem className="flex-1">
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <PasswordInput {...field} />
+                    <PasswordInput {...field} autoComplete="new-password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -103,7 +104,7 @@ export default function SignUp() {
                 <FormItem className="flex-1">
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <PasswordInput {...field} />
+                    <PasswordInput {...field} autoComplete="new-password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
