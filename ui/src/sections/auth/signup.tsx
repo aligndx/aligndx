@@ -11,6 +11,7 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { useApiService } from "@/services/api"
 import { toast } from "@/components/ui/sonner"
 import { routes, useRouter } from "@/routes"
+import Link from "next/link"
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -111,6 +112,13 @@ export default function SignUp() {
           </div>
         </div>
         <Button type="submit">Sign Up</Button>
+
+        <div className="mt-4 text-center text-sm">
+          Already have an account?{" "}
+          <Link href={routes.auth.signin} className="underline">
+            Sign in
+          </Link>
+        </div>
       </form>
     </Form>
   )
