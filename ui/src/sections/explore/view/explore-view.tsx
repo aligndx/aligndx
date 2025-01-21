@@ -188,7 +188,7 @@ export default function ExploreView() {
                 }
             </div>
             <div className="flex flex-col gap-2">
-                {data.length > 0 && !isMobile ?
+                {selectedSubs.length > 0 && !isMobile ?
                     <div className="flex flex-grow px-2">
                         <SummaryStatistics className="border-none  pb-0" selectedSubs={selectedSubs} />
                     </div>
