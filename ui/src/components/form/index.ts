@@ -1,0 +1,6 @@
+export { default as FormColorSelect } from './form-color-select'
+export { default as FormSelect } from './form-select'
+export { default as FormSwitch } from './form-switch'
+export { default as FormText } from './form-text'
+export { default as FormUpload } from './form-upload'
+export { default as FormSlider } from './form-slider'
