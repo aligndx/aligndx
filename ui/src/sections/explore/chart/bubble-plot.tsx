@@ -23,22 +23,22 @@ const generateBubblePlot = (data: any, formData: any, chartRef: React.RefObject<
     });
 };
 
+type FormDefaults = {
+    x: string;
+    y: string;
+    r: string;
+    fill: string;
+    tip: boolean;
+}
+
 interface BubblePlotProps extends React.HTMLProps<HTMLFormElement> {
     data: any;
+    formDefaults: FormDefaults;
     chartRef: React.RefObject<HTMLDivElement>
 }
 
-const BubblePlot: React.FC<BubblePlotProps> = ({ data, chartRef, className, ...props }) => {
+const BubblePlot: React.FC<BubblePlotProps> = ({ data, formDefaults,  chartRef, className, ...props }) => {
     const columnOptions = getColumnOptions(data);
-
-    // Bubble-specific form defaults
-    const formDefaults = {
-        x: columnOptions[0].value,
-        y: columnOptions[1].value,
-        r: columnOptions[2].value,
-        fill: getCssVariableValue("--primary"),
-        tip: true,
-    };
 
     const methods = useForm({
         mode: "onChange",

@@ -20,24 +20,26 @@ const barPlotSchema = z.object({
 const generateBarPlot = (data: any, formData: any, chartRef: React.RefObject<HTMLDivElement>) => {
     generateBasePlot(data, formData, chartRef, {
         marks: [Plot.barY(data, formData as Plot.BarYOptions)], // Bar-specific mark
+        color: { legend: true },
+
     });
 };
 
+type FormDefaults = {
+    x: string;
+    y: string;
+    fill: string;
+    tip: boolean;
+}
+
 interface BarPlotProps extends React.HTMLProps<HTMLFormElement> {
     data: any;
+    formDefaults: FormDefaults;
     chartRef: React.RefObject<HTMLDivElement>
 }
 
-const BarPlot: React.FC<BarPlotProps> = ({ data, chartRef, className, ...props }) => {
+const BarPlot: React.FC<BarPlotProps> = ({ data, formDefaults, chartRef, className, ...props }) => {
     const columnOptions = getColumnOptions(data);
-
-    // Bar-specific form defaults
-    const formDefaults = {
-        x: columnOptions[0].value,
-        y: columnOptions[1].value,
-        fill: getCssVariableValue("--primary"),
-        tip: true,
-    };
 
     const methods = useForm({
         mode: "onChange",
@@ -64,7 +66,8 @@ const BarPlot: React.FC<BarPlotProps> = ({ data, chartRef, className, ...props }
             <form className={cn("flex flex-col gap-4", className)} {...props}>
                 <FormSelect name="x" label="X Axis" options={columnOptions} placeholder="Select X axis" />
                 <FormSelect name="y" label="Y Axis" options={columnOptions} placeholder="Select Y axis" />
-                <FormColorSelect name="fill" label="Color (Fill)" />
+                <FormSelect name="fill" label="Color (Fill)" options={columnOptions} placeholder="Select Fill variable" />
+                {/* <FormColorSelect name="fill" label="Color (Fill)" /> */}
                 <FormSwitch name="tip" label="Tip" description="Enable or disable tooltips" />
             </form>
         </FormProvider>
