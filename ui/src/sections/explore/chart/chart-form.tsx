@@ -31,6 +31,7 @@ const bubbleDefaults = {
     y: "name",
     r: "abundance_frac",
     fill: getCssVariableValue("--primary"),
+    fillOpacity: 0.5,
     tip: true,
 };
 
