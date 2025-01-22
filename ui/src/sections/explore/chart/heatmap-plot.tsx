@@ -23,23 +23,23 @@ const generateHeatmapPlot = (data: any, formData: any, chartRef: React.RefObject
     });
 };
 
+type FormDefaults = {
+    x: string;
+    y: string;
+    fill: string;
+    tip: boolean;
+}
 
 interface HeatmapPlotProps extends React.HTMLProps<HTMLFormElement> {
     data: any;
+    formDefaults: FormDefaults;
     chartRef: React.RefObject<HTMLDivElement>
 }
 
-const HeatmapPlot: React.FC<HeatmapPlotProps> = ({ data, chartRef, className, ...props }) => {
+const HeatmapPlot: React.FC<HeatmapPlotProps> = ({ data, formDefaults, chartRef, className, ...props }) => {
     const columnOptions = getColumnOptions(data);
 
-    // Heatmap-specific form defaults
-    const formDefaults = {
-        x: columnOptions[0].value,
-        y: columnOptions[1].value,
-        fill: columnOptions[2].value,
-        tip: true,
-    };
-
+   
     const methods = useForm({
         mode: "onChange",
         resolver: zodResolver(heatmapPlotSchema),

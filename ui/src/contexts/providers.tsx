@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "./auth-context";
 import AuthGuard from "./auth-guard";
 import { domAnimation, LazyMotion } from "framer-motion";
+import DuckdbProvider from "./duckdb-context";
 
 interface ProvidersProps {
     children: ReactNode;
@@ -20,7 +21,9 @@ export default function Providers({ children }: ProvidersProps) {
                 <LazyMotion features={domAnimation}>
                     <AuthProvider>
                         <AuthGuard>
-                            {children}
+                            <DuckdbProvider>
+                                {children}
+                            </DuckdbProvider>
                         </AuthGuard>
                     </AuthProvider>
                 </LazyMotion>

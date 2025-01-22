@@ -1,13 +1,11 @@
 import { z } from "zod";
 import * as Plot from "@observablehq/plot";
 import { FormProvider, useForm } from "react-hook-form";
-import FormSelect from "@/components/form/form-select";
-import FormSwitch from "@/components/form/form-switch";
-import FormColorSelect from "@/components/form/form-color-select";
-import { cn, getCssVariableValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { generateBasePlot, getColumnOptions } from "./common";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { FormColorSelect, FormSelect, FormSlider, FormSwitch } from "@/components/form";
 
 const bubblePlotSchema = z.object({
     x: z.string().min(1, "X Axis is required"),
@@ -15,30 +13,32 @@ const bubblePlotSchema = z.object({
     r: z.string().min(1, "Radius is required"),
     fill: z.string().optional(),
     tip: z.boolean().optional(),
+    fillOpacity: z.number().min(0).max(1).optional(),
 });
 
 const generateBubblePlot = (data: any, formData: any, chartRef: React.RefObject<HTMLDivElement>) => {
     generateBasePlot(data, formData, chartRef, {
-        marks: [Plot.dot(data, formData as Plot.DotOptions)], // Bubble-specific mark
+        marks: [Plot.dot(data, formData as Plot.DotOptions)],
     });
 };
 
+type FormDefaults = {
+    x: string;
+    y: string;
+    r: string;
+    fill: string;
+    tip: boolean;
+    fillOpacity: number;
+}
+
 interface BubblePlotProps extends React.HTMLProps<HTMLFormElement> {
     data: any;
+    formDefaults: FormDefaults;
     chartRef: React.RefObject<HTMLDivElement>
 }
 
-const BubblePlot: React.FC<BubblePlotProps> = ({ data, chartRef, className, ...props }) => {
+const BubblePlot: React.FC<BubblePlotProps> = ({ data, formDefaults, chartRef, className, ...props }) => {
     const columnOptions = getColumnOptions(data);
-
-    // Bubble-specific form defaults
-    const formDefaults = {
-        x: columnOptions[0].value,
-        y: columnOptions[1].value,
-        r: columnOptions[2].value,
-        fill: getCssVariableValue("--primary"),
-        tip: true,
-    };
 
     const methods = useForm({
         mode: "onChange",
@@ -51,11 +51,11 @@ const BubblePlot: React.FC<BubblePlotProps> = ({ data, chartRef, className, ...p
     useEffect(() => {
         if (formState.isValid && !formState.isValidating) {
             generateBubblePlot(data, formData, chartRef);
-        } 
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData, formState]);
 
-    
+
     useEffect(() => {
         generateBubblePlot(data, formData, chartRef);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,6 +86,13 @@ const BubblePlot: React.FC<BubblePlotProps> = ({ data, chartRef, className, ...p
                 <FormColorSelect
                     name="fill"
                     label="Color (Fill)"
+                />
+                <FormSlider
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    name="fillOpacity"
+                    label="Fill opacity"
                 />
                 <FormSwitch
                     name="tip"

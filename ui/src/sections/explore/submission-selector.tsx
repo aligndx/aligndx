@@ -27,8 +27,8 @@ export function SubmissionSelector({
   // Parse submission IDs from the URL query string
   const searchParams = useSearchParams();
   const idsFromUrl = React.useMemo(() => {
-    const ids = searchParams.get("id");
-    return ids ? ids.split(",") : [];
+    const ids = searchParams.getAll("id");
+    return ids ? ids : [];
   }, [searchParams]);
 
   // Filter and only pass submissions that are completed

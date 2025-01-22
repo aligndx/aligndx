@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, getCssVariableValue } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import BarPlot from "./bar-plot";
@@ -19,6 +19,31 @@ const options = [
     { value: "heatmap", label: "Heatmap" },
 ]
 
+const barDefaults = {
+    x: "sample",
+    y: "abundance_frac",
+    fill: "name",
+    tip: true,
+}
+
+const bubbleDefaults = {
+    x: "sample",
+    y: "name",
+    r: "abundance_frac",
+    fill: getCssVariableValue("--primary"),
+    fillOpacity: 0.5,
+    tip: true,
+};
+
+const heatmapDefaults = {
+    x: "sample",
+    y: "name",
+    fill: "abundance_frac",
+    tip: true,
+}
+
+
+
 const ChartForm: React.FC<ChartFormProps> = ({ data, chartRef, ...props }) => {
     const [value, setValue] = useState<string>(options[0].value);
 
@@ -27,11 +52,11 @@ const ChartForm: React.FC<ChartFormProps> = ({ data, chartRef, ...props }) => {
     const renderChart = () => {
         switch (value) {
             case "bar":
-                return <BarPlot chartRef={chartRef} data={data} />;
+                return <BarPlot formDefaults={barDefaults} chartRef={chartRef} data={data} />;
             case "bubble":
-                return <BubblePlot chartRef={chartRef} data={data} />;
+                return <BubblePlot formDefaults={bubbleDefaults} chartRef={chartRef} data={data} />;
             case "heatmap":
-                return <HeatmapPlot chartRef={chartRef} data={data} />;
+                return <HeatmapPlot formDefaults={heatmapDefaults} chartRef={chartRef} data={data} />;
             default:
                 return null;
         }
