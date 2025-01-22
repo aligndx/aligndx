@@ -64,7 +64,7 @@ export default function TopTaxaStackedBarChart({
     records.forEach(record => {
       taxaTotals.set(
         record.name,
-        (taxaTotals.get(record.name) || 0n) + record.abundance_num
+        (taxaTotals.get(record.name) || BigInt(0)) + record.abundance_num
       );
     });
     const sortedTaxa = Array.from(taxaTotals.entries())
