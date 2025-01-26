@@ -47,7 +47,7 @@ export function PathogenSelector({
         column4 AS id, 
         trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')) AS name
     FROM read_csv_auto('${CONFIG.KRAKEN_INDEX}')
-    WHERE column3 IN ('S', 'S1', 'S2')
+    WHERE column3 IN ('S')
     ORDER BY LOWER(trim(replace(replace(replace(column5, '[', ''), ']', ''), '''', '')));
   `;
 
