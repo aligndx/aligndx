@@ -40,6 +40,10 @@ status:
 clean:
 	docker compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE) down -v
 
+# Watch: Watch containers
+watch:
+	docker compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE) up --watch
+
 build-ui:
 	./scripts/build-ui.sh
 
