@@ -84,7 +84,7 @@ func NewConfigManager() *ConfigManager {
 		ko: ko,
 		data: &Config{
 			API: APIConfig{
-				URL:                  pocketbase.New().Settings().Meta.AppUrl,
+				URL:                  pocketbase.New().Settings().Meta.AppURL,
 				DefaultAdminEmail:    "",
 				DefaultAdminPassword: "",
 			},
