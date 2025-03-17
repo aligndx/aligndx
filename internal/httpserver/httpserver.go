@@ -55,6 +55,7 @@ func createHttpServer(ctx context.Context, rootcmd *cobra.Command, cfg *config.C
 		}
 
 		workflowRecord := Workflow{}
+		var schemaStr string
 
 		query := e.App.DB().
 			Select("schema", "repository").
@@ -62,7 +63,13 @@ func createHttpServer(ctx context.Context, rootcmd *cobra.Command, cfg *config.C
 			Where(dbx.NewExp("id = {:id}", dbx.Params{"id": workflowRecordID}))
 
 		// Execute the query and populate the variables
-		err := query.One(&workflowRecord)
+		err := query.One(&struct {
+			SchemaStr  *string `db:"schema"`
+			Repository *string `db:"repository"`
+		}{
+			SchemaStr:  &schemaStr,
+			Repository: &workflowRecord.Repository,
+		})
 		if err != nil {
 			return err
 		}
