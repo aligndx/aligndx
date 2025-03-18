@@ -1,6 +1,9 @@
 package tools
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/aligndx/aligndx/internal/pb"
+	"github.com/spf13/cobra"
+)
 
 var ToolsCmd = &cobra.Command{
 	Use:   "tools",
@@ -8,5 +11,6 @@ var ToolsCmd = &cobra.Command{
 }
 
 func init() {
+	pb.CreatePbApp(ToolsCmd)
 	ToolsCmd.AddCommand(NewCustomServeCommand(), NATSCommand(), UIServeCommand(), WorkerCommand())
 }
