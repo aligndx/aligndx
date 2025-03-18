@@ -1,0 +1,30 @@
+{
+  "name": "Tax Profiler",
+  "repository": "https://github.com/aligndx/taxprofiler",
+  "description": "<h1 id=\"introduction\">Introduction</h1>\n<p><strong>This workflow</strong> is a bioinformatics best-practice analysis pipeline for taxonomic profiling of mNGS datasets.&nbsp;</p>\n<h2 id=\"pipeline-summary\">Pipeline summary</h2>\n<ol>\n<li>Taxonomic classification <a href=\"https://ccb.jhu.edu/software/kraken2/\">(Kraken2)</a></li>\n<li>Species relative abundance determination (<a href=\"https://ccb.jhu.edu/software/bracken/\" target=\"_blank\" rel=\"noopener\">Bracken</a>)</li>\n<li>Human filtered abundance re-estimation</li>\n<li>Generate interactive abundance plots (<a href=\"https://plotly.com/\" target=\"_blank\" rel=\"noopener\">Plotly</a>)</li>\n<li>Aggregate pipeline data into report (<a href=\"http://multiqc.info/\" target=\"_blank\" rel=\"noopener\">MultiQC</a>)</li>\n</ol>",
+  "schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "input": {
+        "type": "array",
+        "format": "file-path",
+        "minItems": 1,
+        "description": "DNA sequences in the Fastq or Fastq.gz file format."
+      },
+      "kraken_db": {
+        "type": "string",
+        "format": "url",
+        "default": "https://genome-idx.s3.amazonaws.com/kraken/k2_viral_20231009.tar.gz",
+        "minItems": 1,
+        "maxItems": 1,
+        "writeonly": true,
+        "description": "A kraken database for kraken2 and bracken."
+      }
+    },
+    "required": [
+      "input",
+      "kraken_db"
+    ]
+  }
+}
