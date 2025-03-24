@@ -11,6 +11,11 @@ var ToolsCmd = &cobra.Command{
 }
 
 func init() {
-	pb.CreatePbApp(ToolsCmd)
-	ToolsCmd.AddCommand(NewCustomServeCommand(), NATSCommand(), UIServeCommand(), WorkerCommand())
+	// Add default pocketbase commands
+	pb, err := pb.CreatePbApp(ToolsCmd)
+	if err != nil {
+	}
+
+	// Add aligndx commands
+	ToolsCmd.AddCommand(NewCustomServeCommand(pb), NATSCommand(), UIServeCommand(), WorkerCommand())
 }
