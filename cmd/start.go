@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/aligndx/aligndx/internal/httpserver"
 	"github.com/aligndx/aligndx/internal/jobs"
 	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/aligndx/aligndx/internal/nats"
+	"github.com/aligndx/aligndx/internal/pb"
 	"github.com/aligndx/aligndx/internal/uiserver"
 	"github.com/spf13/cobra"
 )
@@ -51,7 +51,12 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 				allowedOrigins := []string{"*"}
 				httpAddr := "0.0.0.0:8090" // Set your desired HTTP address here
 				httpsAddr := ""            // Set your desired HTTPS address here
-				if err := httpserver.StartHTTPServer(ctx, rootCmd, args, allowedOrigins, httpAddr, httpsAddr, false); err != nil {
+				pbApp, err := pb.CreatePbApp(rootCmd)
+				if err != nil {
+					log.Fatal("Worker exited with error: %v\n", map[string]interface{}{"error": err})
+				}
+
+				if err := pb.StartPBServer(ctx, pbApp, args, allowedOrigins, httpAddr, httpsAddr, false); err != nil {
 					log.Fatal("HTTP server exited with error: %v\n", map[string]interface{}{"error": err})
 				} else {
 					log.Info("HTTP server started successfully.")

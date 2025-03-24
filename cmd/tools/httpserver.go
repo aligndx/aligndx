@@ -3,11 +3,12 @@ package tools
 import (
 	"context"
 
-	"github.com/aligndx/aligndx/internal/httpserver"
+	"github.com/aligndx/aligndx/internal/pb"
+	"github.com/pocketbase/pocketbase"
 	"github.com/spf13/cobra"
 )
 
-func NewCustomServeCommand() *cobra.Command {
+func NewCustomServeCommand(pocketbase *pocketbase.PocketBase) *cobra.Command {
 	var allowedOrigins []string
 	var httpAddr string
 	var httpsAddr string
@@ -17,7 +18,7 @@ func NewCustomServeCommand() *cobra.Command {
 		Short: "Initialize aligndx server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
-			return httpserver.StartHTTPServer(ctx, ToolsCmd, args, allowedOrigins, httpAddr, httpsAddr, true)
+			return pb.StartPBServer(ctx, pocketbase, args, allowedOrigins, httpAddr, httpsAddr, true)
 		},
 	}
 
