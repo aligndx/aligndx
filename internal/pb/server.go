@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 
+	_ "github.com/aligndx/aligndx/internal/migrations"
+
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/jobs"
 	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"

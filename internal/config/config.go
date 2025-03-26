@@ -85,8 +85,8 @@ func NewConfigManager() *ConfigManager {
 		data: &Config{
 			API: APIConfig{
 				URL:                  pocketbase.New().Settings().Meta.AppURL,
-				DefaultAdminEmail:    "",
-				DefaultAdminPassword: "",
+				DefaultAdminEmail:    "aligndx@aligndx.com",
+				DefaultAdminPassword: "password",
 			},
 			MQ: MQConfig{
 				URL:    nats.DefaultURL,

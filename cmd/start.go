@@ -53,7 +53,7 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 				httpsAddr := ""            // Set your desired HTTPS address here
 				pbApp, err := pb.CreatePbApp(rootCmd)
 				if err != nil {
-					log.Fatal("Worker exited with error: %v\n", map[string]interface{}{"error": err})
+					log.Fatal("PB creation exited with error: %v\n", map[string]interface{}{"error": err})
 				}
 
 				if err := pb.StartPBServer(ctx, pbApp, args, allowedOrigins, httpAddr, httpsAddr, false); err != nil {
