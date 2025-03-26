@@ -1,12 +1,17 @@
 package migrations
 
 import (
+	"github.com/aligndx/aligndx/internal/config"
 	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
 )
 
 func init() {
+
+	configManager := config.NewConfigManager()
+	cfg := configManager.GetConfig()
 	m.Register(func(app core.App) error {
+
 		superusers, err := app.FindCollectionByNameOrId(core.CollectionNameSuperusers)
 		if err != nil {
 			return err
@@ -14,14 +19,12 @@ func init() {
 
 		record := core.NewRecord(superusers)
 
-		// note: the values can be eventually loaded via os.Getenv(key)
-		// or from a special local config file
-		record.Set("email", "demo@demo.com")
-		record.Set("password", "12345678")
+		record.Set("email", cfg.API.DefaultAdminEmail)
+		record.Set("password", cfg.API.DefaultAdminPassword)
 
 		return app.Save(record)
 	}, func(app core.App) error { // optional revert operation
-		record, _ := app.FindAuthRecordByEmail(core.CollectionNameSuperusers, "demo@demo.com")
+		record, _ := app.FindAuthRecordByEmail(core.CollectionNameSuperusers, cfg.API.DefaultAdminEmail)
 		if record == nil {
 			return nil // probably already deleted
 		}
