@@ -21,12 +21,12 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 			ctx := context.Background()
 			log := logger.NewLoggerWrapper("zerolog", ctx)
 
-			// Step 1: Start NATS server
-			log.Info("Starting NATS server...")
+			// Step 1: Start MQ
+			log.Info("Starting message queue...")
 			if err := nats.StartNATSServer(ctx, false); err != nil {
 				return err
 			}
-			log.Debug("NATS server started successfully.")
+			log.Debug("Message queue started successfully.")
 
 			// Step 2: Start worker and serve concurrently
 			var wg sync.WaitGroup
@@ -52,7 +52,7 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 				httpAddr := "0.0.0.0:8090" // Set your desired HTTP address here
 				httpsAddr := ""            // Set your desired HTTPS address here
 				port := "8090"
-				log.Info(fmt.Sprintf("Starting HTTP server on http://localhost:%s...", port))
+				log.Info(fmt.Sprintf("Starting HTTP server with admin UI on http://localhost:%s/_/...", port))
 				pbApp, err := pb.CreatePbApp(rootCmd)
 				if err != nil {
 					log.Fatal("PB creation exited with error: %v\n", map[string]interface{}{"error": err})
