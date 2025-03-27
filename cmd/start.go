@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/aligndx/aligndx/internal/jobs"
@@ -25,7 +26,7 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 			if err := nats.StartNATSServer(ctx, false); err != nil {
 				return err
 			}
-			log.Info("NATS server started successfully.")
+			log.Debug("NATS server started successfully.")
 
 			// Step 2: Start worker and serve concurrently
 			var wg sync.WaitGroup
@@ -40,17 +41,18 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 				if err := jobs.StartWorker(ctxWorker, cancelWorker); err != nil {
 					log.Fatal("Worker exited with error: %v\n", map[string]interface{}{"error": err})
 				} else {
-					log.Info("Worker started successfully.")
+					log.Debug("Worker started successfully.")
 				}
 			}()
 
 			// Start HTTP server
 			go func() {
 				defer wg.Done()
-				log.Info("Starting HTTP server...")
 				allowedOrigins := []string{"*"}
 				httpAddr := "0.0.0.0:8090" // Set your desired HTTP address here
 				httpsAddr := ""            // Set your desired HTTPS address here
+				port := "8090"
+				log.Info(fmt.Sprintf("Starting HTTP server on http://localhost:%s...", port))
 				pbApp, err := pb.CreatePbApp(rootCmd)
 				if err != nil {
 					log.Fatal("PB creation exited with error: %v\n", map[string]interface{}{"error": err})
@@ -66,8 +68,9 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 			// Start UI server
 			go func() {
 				defer wg.Done()
-				log.Info("Starting UI server...")
-				uiserver.StartUIServer("3000")
+				port := "3000"
+				log.Info(fmt.Sprintf("Starting UI server on http://localhost:%s...", port))
+				uiserver.StartUIServer(port)
 			}()
 
 			// Wait for worker and server to complete

@@ -26,7 +26,7 @@ func NewJetStreamMessageQueueService(ctx context.Context, url string, streamName
 		})
 		return nil, fmt.Errorf("failed to connect to NATS server: %w", err)
 	}
-	log.Info("Connected to NATS server", map[string]interface{}{
+	log.Debug("Connected to NATS server", map[string]interface{}{
 		"url": url,
 	})
 
@@ -38,7 +38,7 @@ func NewJetStreamMessageQueueService(ctx context.Context, url string, streamName
 		return nil, fmt.Errorf("failed to initialize JetStream: %w", err)
 	}
 
-	log.Info("JetStream initialized", nil)
+	log.Debug("JetStream initialized", nil)
 
 	cfg := jetstream.StreamConfig{
 		Name:      streamName,
@@ -60,13 +60,13 @@ func NewJetStreamMessageQueueService(ctx context.Context, url string, streamName
 			return nil, fmt.Errorf("failed to create stream (streamName: %s, subject: %s): %w", streamName, subject, err)
 		} else {
 			// If the stream already exists, log it and continue
-			log.Info("Stream already exists", map[string]interface{}{
+			log.Warn("Stream already exists", map[string]interface{}{
 				"streamName": streamName,
 				"subject":    subject,
 			})
 		}
 	} else {
-		log.Info("Stream created", map[string]interface{}{
+		log.Debug("Stream created", map[string]interface{}{
 			"streamName": streamName,
 			"subject":    subject,
 		})
@@ -114,7 +114,7 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject st
 	if err != nil {
 		return fmt.Errorf("failed to create or update consumer (streamName: %s): %w", s.streamName, err)
 	}
-	s.log.Info("Consumer created or updated", map[string]interface{}{
+	s.log.Debug("Consumer created or updated", map[string]interface{}{
 		"streamName":   s.streamName,
 		"consumerName": consumerName,
 	})
@@ -140,7 +140,7 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject st
 
 	go func() {
 		<-ctx.Done()
-		s.log.Info("Context cancelled, stopping consumer", nil)
+		s.log.Debug("Context cancelled, stopping consumer", nil)
 		consContext.Stop()
 	}()
 	return nil

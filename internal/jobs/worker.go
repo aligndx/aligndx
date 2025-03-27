@@ -68,7 +68,7 @@ func (w *Worker) Run(ctx context.Context, cancel context.CancelFunc) error { // 
 		cancel()
 	}()
 
-	w.log.Info("Starting worker to process jobs...")
+	w.log.Debug("Starting worker to process jobs...")
 
 	// Start processing jobs
 	wg.Add(1)
@@ -82,7 +82,7 @@ func (w *Worker) Run(ctx context.Context, cancel context.CancelFunc) error { // 
 	}()
 
 	<-ctx.Done()
-	w.log.Info("Worker has been shut down")
+	w.log.Debug("Worker has been shut down")
 	wg.Wait()
 	return nil
 }
