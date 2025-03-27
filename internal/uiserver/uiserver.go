@@ -1,21 +1,15 @@
 package uiserver
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"path"
 	"strings"
 
-	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/aligndx/aligndx/ui"
 )
 
 // Starts an HTTP server that serves the embedded UI files.
 func StartUIServer(port string) error {
-	ctx := context.Background()
-	log := logger.NewLoggerWrapper("zerolog", ctx)
-	log.Info(fmt.Sprintf("Starting UI server on port http://localhost:%s...", port))
 
 	fileSystem := http.FS(ui.OutDirFS)
 	fileServer := http.FileServer(fileSystem)

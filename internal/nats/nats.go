@@ -19,28 +19,28 @@ func StartNATSServer(ctx context.Context, blocking bool) error {
 
 	ns, err := server.NewServer(opts)
 	if err != nil {
-		log.Fatal("Failed to initialize NATS server", map[string]interface{}{"error": err})
+		log.Error("Failed to initialize NATS server", map[string]interface{}{"error": err})
 		return err
 	}
 
 	// Start the NATS server in a goroutine
 	go func() {
-		log.Info("Starting NATS server")
+		log.Debug("Starting NATS server")
 		ns.Start()
 	}()
 
 	// Wait for NATS to be ready for connections
 	if !ns.ReadyForConnections(4 * time.Second) {
-		log.Fatal("NATS server not ready for connections")
+		log.Error("NATS server not ready for connections")
 		return err
 	}
 
-	log.Info("NATS server ready for connections")
+	log.Debug("NATS server ready for connections")
 
 	if blocking {
 		// If blocking is true, block until the server is shut down
 		ns.WaitForShutdown()
-		log.Info("NATS server has shut down")
+		log.Debug("NATS server has shut down")
 	} else {
 		// If non-blocking, handle shutdown using context cancellation
 		go func() {

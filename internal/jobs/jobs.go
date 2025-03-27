@@ -132,7 +132,7 @@ func (s *JobService) QueueJob(ctx context.Context, jobID string, jobInputs inter
 		return fmt.Errorf("error updating job status: %w", err)
 	}
 
-	s.log.Info("Job queued", map[string]interface{}{"job_id": jobID})
+	s.log.Debug("Job queued", map[string]interface{}{"job_id": jobID})
 	return nil
 }
 
@@ -184,7 +184,7 @@ func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error 
 			if err := s.processJob(ctx, msgData); err != nil {
 				s.log.Error("Failed to process job", map[string]interface{}{"error": err.Error()})
 			} else {
-				s.log.Info("Job processed successfully")
+				s.log.Debug("Job processed successfully")
 			}
 		}()
 	})
@@ -192,7 +192,7 @@ func (s *JobService) ProcessJobs(ctx context.Context, maxConcurrency int) error 
 
 func (s *JobService) RegisterJobHandler(schema string, handler BaseJobHandler) {
 	s.handlers[schema] = handler
-	s.log.Info("Job handler registered", map[string]interface{}{"job_schema": schema})
+	s.log.Debug("Job handler registered", map[string]interface{}{"job_schema": schema})
 }
 
 func (s *JobService) SubscribeToJob(ctx context.Context, jobId string, emit func([]byte)) error {
