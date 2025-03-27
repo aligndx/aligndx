@@ -18,12 +18,17 @@ const envPrefix = "ALIGNDX_"
 
 // Config represents the top-level configuration structure
 type Config struct {
-	API  APIConfig  `koanf:"api"`
-	MQ   MQConfig   `koanf:"mq"`
-	DB   DbConfig   `koanf:"db"`
-	SMTP SMTPConfig `koanf:"smtp"`
-	S3   S3Config   `koanf:"s3"`
-	NXF  NXFConfig  `koanf:"nxf"`
+	Logging LoggingConfig `koanf:"logging"`
+	API     APIConfig     `koanf:"api"`
+	MQ      MQConfig      `koanf:"mq"`
+	DB      DbConfig      `koanf:"db"`
+	SMTP    SMTPConfig    `koanf:"smtp"`
+	S3      S3Config      `koanf:"s3"`
+	NXF     NXFConfig     `koanf:"nxf"`
+}
+
+type LoggingConfig struct {
+	Level string `koanf:"level"`
 }
 
 // APIConfig holds configuration for the API
@@ -114,6 +119,9 @@ func NewConfigManager() *ConfigManager {
 			NXF: NXFConfig{
 				DefaultDir:            "workflows",
 				PluginsTestRepository: "",
+			},
+			Logging: LoggingConfig{
+				Level: "info",
 			},
 		},
 	}
