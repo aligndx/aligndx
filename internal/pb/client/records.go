@@ -38,13 +38,22 @@ func (c *Client) ViewRecord(collection, id string, query url.Values) (map[string
 }
 
 // --- CREATE A RECORD ---
-func (c *Client) CreateRecord(collection string, data map[string]any, query url.Values) (map[string]any, error) {
+// If `files` is non-nil, it sends the request as multipart/form-data.
+func (c *Client) CreateRecord(collection string, data map[string]any, files map[string]string, query url.Values) (map[string]any, error) {
 	endpoint := fmt.Sprintf("/api/collections/%s/records", collection)
 	if len(query) > 0 {
 		endpoint += "?" + query.Encode()
 	}
 
-	req, err := c.newRequest(http.MethodPost, endpoint, data)
+	var req *http.Request
+	var err error
+
+	if len(files) > 0 {
+		req, err = c.newMultipartRequest(endpoint, data, files)
+	} else {
+		req, err = c.newRequest(http.MethodPost, endpoint, data)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -53,13 +62,22 @@ func (c *Client) CreateRecord(collection string, data map[string]any, query url.
 }
 
 // --- UPDATE A RECORD ---
-func (c *Client) UpdateRecord(collection, id string, data map[string]any, query url.Values) (map[string]any, error) {
-	endpoint := fmt.Sprintf("/api/collections/%s/records/%s", collection, id)
+// If `files` is non-nil, the request is sent as multipart/form-data.
+func (c *Client) UpdateRecord(collection, recordId string, data map[string]any, files map[string]string, query url.Values) (map[string]any, error) {
+	endpoint := fmt.Sprintf("/api/collections/%s/records/%s", collection, recordId)
 	if len(query) > 0 {
 		endpoint += "?" + query.Encode()
 	}
 
-	req, err := c.newRequest(http.MethodPatch, endpoint, data)
+	var req *http.Request
+	var err error
+
+	if len(files) > 0 {
+		req, err = c.newMultipartRequest(endpoint, data, files)
+	} else {
+		req, err = c.newRequest(http.MethodPatch, endpoint, data)
+	}
+
 	if err != nil {
 		return nil, err
 	}

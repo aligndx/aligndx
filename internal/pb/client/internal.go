@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 func (c *Client) newRequest(method, endpoint string, body any) (*http.Request, error) {
@@ -85,4 +88,42 @@ func (c *Client) doRequestRaw(req *http.Request) ([]byte, error) {
 	}
 
 	return io.ReadAll(resp.Body)
+}
+
+func (c *Client) newMultipartRequest(endpoint string, fields map[string]any, files map[string]string) (*http.Request, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Add fields
+	for key, value := range fields {
+		_ = writer.WriteField(key, fmt.Sprintf("%v", value))
+	}
+
+	// Add files
+	for fieldName, filePath := range files {
+		part, err := writer.CreateFormFile(fieldName, filepath.Base(filePath))
+		if err != nil {
+			return nil, err
+		}
+		f, err := os.Open(filePath)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		if _, err := io.Copy(part, f); err != nil {
+			return nil, err
+		}
+	}
+
+	writer.Close()
+
+	req, err := http.NewRequest(http.MethodPost, c.BaseURL+endpoint, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if c.AuthToken != "" {
+		req.Header.Set("Authorization", c.AuthToken)
+	}
+	return req, nil
 }
