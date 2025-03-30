@@ -93,7 +93,7 @@ func ConfigurePbApp(ctx context.Context, pb *pocketbase.PocketBase, cfg *config.
 			UserID:             userID,
 		}
 
-		queueErr := jobService.QueueJob(ctx, jobID, workflowInputs, "workflow")
+		queueErr := jobService.Queue(ctx, jobID, workflowInputs, "workflow")
 		if queueErr != nil {
 			return queueErr
 		}
