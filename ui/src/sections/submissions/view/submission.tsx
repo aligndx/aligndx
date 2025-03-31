@@ -101,10 +101,13 @@ export default function Submission() {
 
                     <Badge>Status | {capitalize(data?.status || "")}</Badge>
                 </div>
-                <Tracker data={generateTrackerData(submissionUpdates)} />
+                {submissionUpdates.length > 0 &&
+                    <Tracker data={generateTrackerData(submissionUpdates)} />
+                }
             </div>
-            <EventViewer events={submissionUpdates} />
-
+            {submissionUpdates.length > 0 &&
+                <EventViewer events={submissionUpdates} />
+            }
         </div>
     );
 }
