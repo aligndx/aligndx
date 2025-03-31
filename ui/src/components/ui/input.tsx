@@ -1,7 +1,7 @@
 import * as React from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useRadialHoverEffect } from "@/hooks/use-radial-hover-effect";
+import { motion } from "motion/react"
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 

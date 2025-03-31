@@ -78,22 +78,24 @@ export default function Submission() {
 
     return (
         <div className="flex flex-col gap-4 h-full flex-grow">
+
             <div className="flex flex-col gap-4 p-4">
+                <Button
+                    variant="secondary"
+                    disabled={data?.status != "completed"}
+                    onClick={() => {
+                        updateSearchParams({ "id": data?.id }, routes.dashboard.explore);
+                    }}
+                    className="flex items-center justify-center gap-2"
+                >
+                    <MagnifyingGlass />
+                    Explore Results
+                </Button>
                 <div className="flex justify-between items-center">
                     <h1 className="text-lg">
                         {data?.name}
                     </h1>
-                    <Button
-                        variant="secondary"
-                        disabled={data?.status != "completed"}
-                        onClick={() => {
-                            updateSearchParams({ "id": data?.id }, routes.dashboard.explore);
-                        }}
-                        className="flex items-center justify-center gap-2"
-                    >
-                        <MagnifyingGlass />
-                        Explore Results
-                    </Button>
+
                     <Badge>Status | {capitalize(data?.status || "")}</Badge>
                 </div>
                 <Tracker data={generateTrackerData(submissionUpdates)} />
