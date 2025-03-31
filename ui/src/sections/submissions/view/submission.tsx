@@ -15,33 +15,25 @@ import { Badge } from "@/components/ui/badge";
 import { MagnifyingGlass } from "@/components/icons";
 import { Status, type Submission } from "@/types/submission";
 import { RecordSubscription } from "pocketbase";
+import { useAutoScroll } from "@/hooks/use-autoscroll";
 
 export default function Submission() {
     const searchParams = useSearchParams();
     const submissionId = searchParams.get('id');
     const { submissions } = useApiService();
     const { subscribeToSubmission, subscribeToSubmissionEvents, useGetSubmission } = submissions;
-    
+
     const { data: initialData } = useGetSubmission(submissionId || "");
-    const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
+    const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>(events);
     const [data, setData] = useState<Submission | null>(null);
 
     const updateSearchParams = useUpdateSearchParams();
 
-    // State to manage the expanded rows
-    const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-
-    const toggleRowExpansion = (index: number) => {
-        setExpandedRows(prev => ({
-            ...prev,
-            [index]: !prev[index]
-        }));
-    };
 
     useEffect(() => {
         setData(initialData ?? null);
-      }, [initialData]);
-      
+    }, [initialData]);
+
     useEffect(() => {
         if (!submissionId) return; // Make sure the ID is valid
 
@@ -106,71 +98,12 @@ export default function Submission() {
                 </div>
                 <Tracker data={generateTrackerData(submissionUpdates)} />
             </div>
-            <div className="flex flex-grow h-full overflow-hidden">
-                <ScrollArea className="h-full w-full">
-                    <Table className="w-full">
-                        <TableHeader >
-                            <TableRow>
-                                <TableHead className="w-[150px]">Event Type</TableHead>
-                                <TableHead>Message</TableHead>
-                                <TableHead>Timestamp</TableHead>
-                                <TableHead className="w-[50px]" />
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {submissionUpdates.map((event, index) => (
-                                <>
-                                    <TableRow
-                                        className={cn("",
-                                            event.metadata ? "cursor-pointer" : null
-                                        )}
-                                        key={index}
-                                        onClick={() => toggleRowExpansion(index)}
-                                    >
-                                        <TableCell className="font-medium">{event.type}</TableCell>
-                                        <TableCell>{event.message}</TableCell>
-                                        <TableCell>{event.timestamp}</TableCell>
-                                        <TableCell>
-                                            {event.metadata ?
+            <EventViewer events={submissionUpdates} />
 
-                                                <Button
-                                                    variant="icon"
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        toggleRowExpansion(index);
-                                                    }}
-                                                >
-                                                    <ChevronDown className={`h-4 w-4 transform transition-transform duration-200 ${expandedRows[index] ? 'rotate-180' : 'rotate-0'}`} />
-                                                </Button>
-                                                : null}
-                                        </TableCell>
-                                    </TableRow>
-                                    {expandedRows[index] && event.metadata && (
-                                        <TableRow key={`${index}-expanded`}>
-                                            <TableCell colSpan={4} className="p-4 bg-muted">
-                                                {Object.entries(event.metadata).map(([key, value]) => (
-                                                    <div key={key}>
-                                                        <pre>
-                                                            <code>
-                                                                <strong>{key.charAt(0).toUpperCase() + key.slice(1)}</strong>: {value}
-                                                            </code>
-                                                        </pre>
-                                                    </div>
-                                                ))}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
-            </div>
         </div>
     );
 }
+
 
 function generateTrackerData(events: Event[]) {
     // Define a color map for different statuses
@@ -216,4 +149,87 @@ function generateTrackerData(events: Event[]) {
 
     // Convert the Map to an array for the tracker component
     return Array.from(taskMap.values());
+}
+
+
+function EventViewer({ events }: { events: Event[] }) {
+    const { containerRef, handleScroll, handleTouchStart } = useAutoScroll([events]);
+    // State to manage the expanded rows
+    const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+
+    const toggleRowExpansion = (index: number) => {
+        setExpandedRows(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }));
+    };
+
+    return (
+        <div
+            className="flex flex-col h-[40rem]"
+        >
+            <Table
+                viewportRef={containerRef}
+                onScroll={handleScroll}
+                onTouchStart={handleTouchStart}
+            >
+                <TableHeader >
+                    <TableRow>
+                        <TableHead className="w-[150px]">Event Type</TableHead>
+                        <TableHead>Message</TableHead>
+                        <TableHead>Timestamp</TableHead>
+                        <TableHead className="w-[50px]" />
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {events.map((event, index) => (
+                        <>
+                            <TableRow
+                                className={cn("",
+                                    event.metadata ? "cursor-pointer" : null
+                                )}
+                                key={index}
+                                onClick={() => toggleRowExpansion(index)}
+                            >
+                                <TableCell className="font-medium">{event.type}</TableCell>
+                                <TableCell>{event.message}</TableCell>
+                                <TableCell>{event.timestamp}</TableCell>
+                                <TableCell>
+                                    {event.metadata ?
+
+                                        <Button
+                                            variant="icon"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleRowExpansion(index);
+                                            }}
+                                        >
+                                            <ChevronDown className={`h-4 w-4 transform transition-transform duration-200 ${expandedRows[index] ? 'rotate-180' : 'rotate-0'}`} />
+                                        </Button>
+                                        : null}
+                                </TableCell>
+                            </TableRow>
+                            {expandedRows[index] && event.metadata && (
+                                <TableRow key={`${index}-expanded`}>
+                                    <TableCell colSpan={4} className="p-4 bg-muted">
+                                        {Object.entries(event.metadata).map(([key, value]) => (
+                                            <div key={key}>
+                                                <pre>
+                                                    <code>
+                                                        <strong>{key.charAt(0).toUpperCase() + key.slice(1)}</strong>: {value}
+                                                    </code>
+                                                </pre>
+                                            </div>
+                                        ))}
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
+    )
 }
