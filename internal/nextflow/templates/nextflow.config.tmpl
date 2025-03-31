@@ -1,7 +1,7 @@
 params {
 
-  outdir = params.outdir ?: 'results'
-  publish_dir_mode = params.publish_dir_mode ?: 'copy'
+  outdir = outdir ?: 'results'
+  publish_dir_mode = publish_dir_mode ?: 'copy'
   max_cpus   = {{.MaxCPUs}}
   max_memory = '{{.MaxMemory}}'
   max_time   = '1.h'
