@@ -1,14 +1,5 @@
-plugins {
-  id 'nf-nats'
-}
-
 params {
 
-  nats_enabled = {{.NatsEnabled}}
-  nats_url = '{{.NatsURL}}'
-  nats_subject = '{{.NatsSubject}}'
-  nats_events = [{{range $index, $element := .NatsEvents}}{{if $index}}, {{end}}'{{$element}}'{{end}}]
-  nats_jetstream_enabled = {{.NatsJetStreamEnabled}}
   outdir = params.outdir ?: 'results'
   publish_dir_mode = params.publish_dir_mode ?: 'copy'
   max_cpus   = {{.MaxCPUs}}
@@ -17,14 +8,7 @@ params {
 
 }
 
-nats {
-    enabled = params.nats_enabled
-    url = params.nats_url
-    subject = params.nats_subject
-    events = params.nats_events
-    jetstream = params.nats_jetstream_enabled
-}
-
 docker {
+    enabled = true
     runOptions = '-u $(id -u):$(id -g)' // Use current user's UID and GID
 }
