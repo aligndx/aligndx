@@ -31,14 +31,14 @@ func (le *LocalExecutor) Execute(ctx context.Context, config interface{}) (strin
 	localConfig, ok := config.(*LocalConfig)
 	if !ok {
 		err := fmt.Errorf("invalid configuration type: expected LocalConfig")
-		le.log.Error("Invalid configuration", map[string]interface{}{"error": err})
+		le.log.Error("Invalid configuration", map[string]interface{}{"error": err.Error()})
 		return "", err
 	}
 
 	// Ensure required fields are set
 	if len(localConfig.Command) == 0 {
 		err := fmt.Errorf("command must be specified")
-		le.log.Error("Missing command", map[string]interface{}{"error": err})
+		le.log.Error("Missing command", map[string]interface{}{"error": err.Error()})
 		return "", err
 	}
 
@@ -62,7 +62,7 @@ func (le *LocalExecutor) Execute(ctx context.Context, config interface{}) (strin
 	// Execute the command
 	if err := cmd.Run(); err != nil {
 		le.log.Error("Command execution failed", map[string]interface{}{
-			"error":   err,
+			"error":   err.Error(),
 			"command": strings.Join(localConfig.Command, " "),
 		})
 		return "", fmt.Errorf("command execution failed: %v", err)
