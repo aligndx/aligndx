@@ -44,7 +44,7 @@ func Run(ctx context.Context, client *pb.Client, log *logger.LoggerWrapper, cfg 
 	}
 	defer os.Remove(configPath)
 
-	inputsPath, err := prepareInputsJSON(client, cfg, inputs.Inputs, inputs.Schema, paths.JobDir)
+	inputsPath, err := prepareInputsJSON(client, inputs.Inputs, inputs.Schema, paths.JobDir)
 
 	if err != nil {
 		return fmt.Errorf("failed to prepare inputs: %w", err)
