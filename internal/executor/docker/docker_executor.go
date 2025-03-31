@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/aligndx/aligndx/internal/jobs/executor"
+	"github.com/aligndx/aligndx/internal/executor"
 	"github.com/aligndx/aligndx/internal/logger"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -43,12 +43,12 @@ func (d *DockerExecutor) Execute(ctx context.Context, config interface{}) (strin
 
 	// Ensure required fields are set
 	if dockerConfig.Image == "" {
-		err := fmt.Errorf("Docker image must be specified")
+		err := fmt.Errorf("docker image must be specified")
 		d.log.Error("Missing Docker image", map[string]interface{}{"error": err})
 		return "", err
 	}
 	if len(dockerConfig.Command) == 0 {
-		err := fmt.Errorf("Docker command must be specified")
+		err := fmt.Errorf("docker command must be specified")
 		d.log.Error("Missing Docker command", map[string]interface{}{"error": err})
 		return "", err
 	}
