@@ -2,6 +2,7 @@ package pb
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -43,6 +44,36 @@ func CreatePbApp(rootcmd *cobra.Command) (*pocketbase.PocketBase, error) {
 func ConfigurePbApp(ctx context.Context, pb *pocketbase.PocketBase, cfg *config.Config, jobService jobs.JobServiceInterface) error {
 	pb.OnRecordCreateRequest("submissions").BindFunc(func(e *core.RecordRequestEvent) error {
 		e.Record.Set("status", string(jobs.StatusCreated))
+		return e.Next()
+	})
+
+	pb.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		subject := "status.*"
+		consumerName := "job-status-updater"
+
+		err := jobService.Subscribe(ctx, subject, consumerName, func(msgData []byte) {
+			var event jobs.Event[jobs.StatusEventMetadata]
+			if err := json.Unmarshal(msgData, &event); err != nil {
+				pb.App.Logger().Error(err.Error())
+				return
+			}
+			record, err := e.App.FindRecordById("submissions", event.MetaData.JobID)
+			if err != nil {
+				pb.App.Logger().Error(err.Error())
+				return
+			}
+			record.Set("status", string(event.MetaData.Status))
+			err = e.App.Save(record)
+			if err != nil {
+				pb.App.Logger().Error(err.Error())
+				return
+			}
+		})
+
+		if err != nil {
+			return err
+		}
+
 		return e.Next()
 	})
 
@@ -121,7 +152,7 @@ func sseHandler(w http.ResponseWriter, r *http.Request, jobService jobs.JobServi
 	}
 
 	// Subscribe to job events; jobService.SubscribeToJob should invoke the callback with new messages.
-	err := jobService.SubscribeToJob(clientCtx, jobID, func(msgData []byte) {
+	err := jobService.Subscribe(clientCtx, jobID, "sse-subscriber", func(msgData []byte) {
 		// Write SSE data to the response in the required format
 		fmt.Fprintf(w, "data: %s\n\n", msgData)
 		// Flush the data immediately so it reaches the client

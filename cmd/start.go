@@ -59,7 +59,7 @@ func StartCommand(rootCmd *cobra.Command) *cobra.Command {
 				}
 
 				if err := pb.StartPBServer(ctx, pbApp, args, allowedOrigins, httpAddr, httpsAddr, false); err != nil {
-					log.Fatal("HTTP server exited with error: %v\n", map[string]interface{}{"error": err})
+					log.Fatal("HTTP server exited with error: %v\n", map[string]interface{}{"error": err.Error()})
 				} else {
 					log.Info("HTTP server started successfully.")
 				}

@@ -18,18 +18,18 @@ type Job struct {
 	Schema string      `json:"job_schema"`
 }
 
-type Event struct {
-	Type      string  `json:"type"`
-	Message   string  `json:"message"`
-	TimeStamp string  `json:"timestamp"`
-	MetaData  *string `json:"metadata,omitempty"`
+type Event[T any] struct {
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	TimeStamp string `json:"timestamp"`
+	MetaData  T      `json:"metadata,omitempty"`
 }
 
 type JobServiceInterface interface {
 	Queue(ctx context.Context, ID string, inputs interface{}, schema string) error
 	RegisterJobHandler(schema string, handler JobHandler)
 	Process(ctx context.Context, maxConcurrency int) error
-	SubscribeToJob(ctx context.Context, ID string, emit func([]byte)) error
+	Subscribe(ctx context.Context, subject string, consumerID string, emit func([]byte)) error
 }
 
 type MessageQueueService interface {
@@ -67,17 +67,26 @@ func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *confi
 	}
 }
 
-func (s *JobService) updateJobStatus(ctx context.Context, ID, status string) error {
-	event := Event{
+type StatusEventMetadata struct {
+	JobID  string    `json:"jobid"`
+	Status JobStatus `json:"status"`
+}
+
+func (s *JobService) updateJobStatus(ctx context.Context, ID string, status JobStatus) error {
+	event := Event[StatusEventMetadata]{
 		Type:      "job.status",
 		Message:   fmt.Sprintf("Job %s updated to %s", ID, status),
 		TimeStamp: time.Now().Format(time.RFC3339),
+		MetaData: StatusEventMetadata{
+			JobID:  ID,
+			Status: status,
+		},
 	}
 	data, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
-	subj := fmt.Sprintf("%s.%s.status", s.subjectPrefix, ID)
+	subj := fmt.Sprintf("%s.status.%s", s.subjectPrefix, ID)
 	return s.mq.Publish(ctx, subj, data)
 }
 
@@ -100,7 +109,7 @@ func (s *JobService) Queue(ctx context.Context, id string, inputs interface{}, s
 		return fmt.Errorf("error publishing job: %w", err)
 	}
 
-	err = s.updateJobStatus(ctx, job.ID, string(StatusQueued))
+	err = s.updateJobStatus(ctx, job.ID, StatusQueued)
 	if err != nil {
 		return fmt.Errorf("error updating job status: %w", err)
 	}
@@ -117,21 +126,21 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 
 	handler, exists := s.handlers[job.Schema]
 	if !exists {
-		s.updateJobStatus(ctx, job.ID, string(StatusError))
+		s.updateJobStatus(ctx, job.ID, StatusError)
 		return fmt.Errorf("no handler registered for schema: %s", job.Schema)
 	}
 
-	if err := s.updateJobStatus(ctx, job.ID, string(StatusProcessing)); err != nil {
+	if err := s.updateJobStatus(ctx, job.ID, StatusProcessing); err != nil {
 		return err
 	}
 
 	// Directly pass the deserialized byte data to handler
 	if err := handler(ctx, job.Inputs); err != nil {
-		s.updateJobStatus(ctx, job.ID, string(StatusError))
+		s.updateJobStatus(ctx, job.ID, StatusError)
 		return fmt.Errorf("error processing job (job_id: %s): %w", job.ID, err)
 	}
 
-	if err := s.updateJobStatus(ctx, job.ID, string(StatusCompleted)); err != nil {
+	if err := s.updateJobStatus(ctx, job.ID, StatusCompleted); err != nil {
 		return err
 	}
 
@@ -168,10 +177,10 @@ func (s *JobService) RegisterJobHandler(schema string, handler JobHandler) {
 	s.log.Debug("Job handler registered", map[string]interface{}{"job_schema": schema})
 }
 
-func (s *JobService) SubscribeToJob(ctx context.Context, ID string, emit func([]byte)) error {
-	subject := fmt.Sprintf("%s.%s.>", s.subjectPrefix, ID)
+func (s *JobService) Subscribe(ctx context.Context, subject string, consumerID string, emit func([]byte)) error {
+	finalSubject := fmt.Sprintf("%s.%s", s.subjectPrefix, subject)
 
-	return s.mq.Subscribe(ctx, subject, ID, func(msgData []byte) {
+	return s.mq.Subscribe(ctx, finalSubject, consumerID, func(msgData []byte) {
 		emit(msgData)
 	})
 }
