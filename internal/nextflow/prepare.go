@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/aligndx/aligndx/internal/config"
+	"github.com/aligndx/aligndx/internal/executor/local"
 	pb "github.com/aligndx/aligndx/internal/pb/client"
 )
 
@@ -91,4 +93,58 @@ func isFileInput(key string, schema map[string]interface{}) bool {
 
 func sanitizeFileName(fileName string) string {
 	return strings.ReplaceAll(fileName, " ", "_")
+}
+
+func prepareWorkingDirectories(jobID, name string) (*WorkflowPaths, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	baseDir := filepath.Join(cwd, "pb_data", "workflows")
+	jobDir := filepath.Join(baseDir, jobID)
+	inputsDir := filepath.Join(jobDir, "inputs")
+	nxfDir := filepath.Join(jobDir, "nxf")
+	logPath := filepath.Join(baseDir, "logs", fmt.Sprintf("%s.nextflow.log", jobID))
+	resultsDir := filepath.Join(jobDir, fmt.Sprintf("%s_results", name))
+
+	dirs := []string{baseDir, jobDir, inputsDir}
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0777); err != nil {
+			return nil, fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+	}
+
+	return &WorkflowPaths{
+		BaseDir:    baseDir,
+		JobDir:     jobDir,
+		InputsDir:  inputsDir,
+		NXFDir:     nxfDir,
+		LogPath:    logPath,
+		ResultsDir: resultsDir,
+	}, nil
+}
+
+func prepareNXFEnv(cfg *config.Config, paths *WorkflowPaths, configPath, inputsPath string, inputs NextflowInputs) *local.LocalConfig {
+	return local.NewLocalConfig(
+		[]string{
+			fmt.Sprintf("%s/nextflow", paths.BaseDir),
+			"-log", paths.LogPath,
+			"run", inputs.Repository,
+			"-latest",
+			"-c", configPath,
+			"-params-file", inputsPath,
+			"--outdir", paths.ResultsDir,
+		},
+		local.WithWorkingDir(paths.BaseDir),
+		local.WithEnv([]string{
+			"NXF_HOME=" + paths.NXFDir,
+			"NXF_ASSETS=" + filepath.Join(paths.BaseDir, "assets"),
+			"NXF_PLUGINS_DIR=" + filepath.Join(paths.BaseDir, "plugins"),
+			"NXF_WORK=" + filepath.Join(paths.NXFDir, "work"),
+			"NXF_TEMP=" + filepath.Join(paths.NXFDir, "tmp"),
+			"NXF_CACHE_DIR=" + filepath.Join(paths.NXFDir, "cache"),
+			"NXF_PLUGINS_TEST_REPOSITORY=" + cfg.NXF.PluginsTestRepository,
+		}),
+	)
 }
