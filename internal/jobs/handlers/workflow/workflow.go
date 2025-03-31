@@ -27,9 +27,12 @@ func WorkflowHandler(ctx context.Context, inputs interface{}) error {
 		return fmt.Errorf("failed to unmarshal inputs to WorkflowInputs: %w", err)
 	}
 
+	log.Debug("Starting nextflow.Run")
 	err = nextflow.Run(ctx, client, log, cfg, workflowInputs)
 	if err != nil {
 		return fmt.Errorf("failed to execute job: %w", err)
 	}
+	log.Debug("Finished nextflow.Run")
+
 	return nil
 }
