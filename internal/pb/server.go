@@ -15,7 +15,6 @@ import (
 	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"
 	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
-	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/cmd"
@@ -47,47 +46,30 @@ func ConfigurePbApp(ctx context.Context, pb *pocketbase.PocketBase, cfg *config.
 		return e.Next()
 	})
 
-	pb.OnRecordCreateRequest("submissions").BindFunc(func(e *core.RecordRequestEvent) error {
+	pb.OnRecordAfterCreateSuccess("submissions").BindFunc(func(e *core.RecordEvent) error {
 		record := e.Record
 		jobID := e.Record.Id
-		userID := e.Auth.Id
+		userID := record.GetString("user")
 
 		result := map[string]interface{}{}
 		record.UnmarshalJSONField("params", &result)
 		workflowRecordID := record.GetString("workflow")
 
-		type Workflow struct {
-			Id         string                 `db:"id" json:"id"`
-			Name       string                 `db:"name" json:"name"`
-			Repository string                 `db:"repostiory" json:"repository"`
-			Schema     map[string]interface{} `db:"schema" json:"schema"`
-		}
+		workflowRecord, err := e.App.FindRecordById("workflows", workflowRecordID)
 
-		workflowRecord := Workflow{}
-		var schemaStr string
-
-		query := e.App.DB().
-			Select("schema", "repository").
-			From("workflows").
-			Where(dbx.NewExp("id = {:id}", dbx.Params{"id": workflowRecordID}))
-
-		// Execute the query and populate the variables
-		err := query.One(&struct {
-			SchemaStr  *string `db:"schema"`
-			Repository *string `db:"repository"`
-		}{
-			SchemaStr:  &schemaStr,
-			Repository: &workflowRecord.Repository,
-		})
 		if err != nil {
 			return err
 		}
 
+		var schema map[string]interface{}
+		if err := workflowRecord.UnmarshalJSONField("schema", &schema); err != nil {
+			return err
+		}
 		// Use the retrieved data to create a WorkflowInputs object
 		workflowInputs := workflow.WorkflowInputs{
 			Name:       record.GetString("name"),
-			Repository: workflowRecord.Repository,
-			Schema:     workflowRecord.Schema,
+			Repository: workflowRecord.GetString("repository"),
+			Schema:     schema,
 			Inputs:     result,
 			JobID:      jobID,
 			UserID:     userID,
