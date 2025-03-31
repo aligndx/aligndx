@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aligndx/aligndx/internal/config"
 	pb "github.com/aligndx/aligndx/internal/pb/client"
 )
 
-func prepareInputsJSON(client *pb.Client, cfg *config.Config, inputs map[string]interface{}, schema map[string]interface{}, jobDir string) (string, error) {
+func prepareInputsJSON(client *pb.Client, inputs map[string]interface{}, schema map[string]interface{}, jobDir string) (string, error) {
 	for key, input := range inputs {
 		if !isFileInput(key, schema) {
 			continue
