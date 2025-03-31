@@ -100,10 +100,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the current state of the program for display.
 func (m model) View() string {
 	var s string
+	hasError := false
 	for i, step := range m.steps {
 		if i < m.currentStep {
 			// Display completed tasks with a checkmark or error.
 			if m.results[i].err != nil {
+				hasError = true
 				s += fmt.Sprintf("❌ %s\n", step.desc)
 			} else {
 				s += fmt.Sprintf("✔️ %s\n", step.desc)
@@ -118,8 +120,11 @@ func (m model) View() string {
 	}
 
 	if m.quitting {
-		// Display a completion message when exiting.
-		s += "\nSetup complete!\n"
+		if hasError {
+			s += "\nSetup failed!\n"
+		} else {
+			s += "\nSetup complete!\n"
+		}
 	}
 
 	return mainStyle.Render(s)
@@ -178,8 +183,47 @@ func runTask(step struct {
 	}
 }
 
-// Setup defines the list of setup steps and runs the program.
+// isSetupComplete checks if all setup steps have passed.
+func isSetupComplete() bool {
+	// Get current working directory.
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return false
+	}
+	workflowDir := filepath.Join(currentDir, "pb_data", workflowsDir)
+
+	// Check if workflow folder exists.
+	if _, err := os.Stat(workflowDir); os.IsNotExist(err) {
+		return false
+	}
+
+	// Check if Java is available.
+	if err := checkJava(); err != nil {
+		return false
+	}
+
+	// Check if Docker is running.
+	if err := checkDocker(); err != nil {
+		return false
+	}
+
+	// Check if Nextflow is installed.
+	nextflowPath := filepath.Join(workflowDir, "nextflow")
+	if _, err := os.Stat(nextflowPath); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
+// Setup runs the setup tasks if they haven't been completed.
+// Setup runs the setup tasks if they haven't been completed.
 func Setup() error {
+	if isSetupComplete() {
+		fmt.Println("All setup steps have already been completed, skipping setup.")
+		return nil
+	}
+
 	steps := []struct {
 		desc string
 		task func() error
@@ -190,13 +234,26 @@ func Setup() error {
 		{"Installing Nextflow", installNextflow},
 	}
 
-	// Initialize the program model with steps.
 	m := newModel(steps)
 	program := tea.NewProgram(m)
 
-	// Run the program and handle any errors.
-	if _, err := program.Run(); err != nil {
+	// Run the program.
+	finalModel, err := program.Run()
+	if err != nil {
 		return err
+	}
+
+	// Type assert the final model to our model type.
+	final, ok := finalModel.(model)
+	if !ok {
+		return fmt.Errorf("unexpected final model type")
+	}
+
+	// Check each task's result; if any failed, return an error.
+	for _, result := range final.results {
+		if result.err != nil {
+			return fmt.Errorf("setup step '%s' failed: %v", result.description, result.err)
+		}
 	}
 
 	return nil
