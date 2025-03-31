@@ -13,15 +13,19 @@ import { Event } from "@/types/event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { MagnifyingGlass } from "@/components/icons";
+import { Status, type Submission } from "@/types/submission";
+import { RecordSubscription } from "pocketbase";
 
 export default function Submission() {
-    const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
     const searchParams = useSearchParams();
     const submissionId = searchParams.get('id');
     const { submissions } = useApiService();
-    const { subscribeToSubmission, useGetSubmission } = submissions;
+    const { subscribeToSubmission, subscribeToSubmissionEvents, useGetSubmission } = submissions;
+    
+    const { data: initialData } = useGetSubmission(submissionId || "");
+    const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
+    const [data, setData] = useState<Submission | null>(null);
 
-    const { data } = useGetSubmission(submissionId || "");
     const updateSearchParams = useUpdateSearchParams();
 
     // State to manage the expanded rows
@@ -35,19 +39,50 @@ export default function Submission() {
     };
 
     useEffect(() => {
-        if (!submissionId) return; // Ensure submissionId is valid
-        const handleSubmissionUpdate = (event: MessageEvent) => {
-            const parsedData = JSON.parse(event.data);
-            setSubmissionUpdates(prevUpdates => [...prevUpdates, parsedData]);
+        setData(initialData ?? null);
+      }, [initialData]);
+      
+    useEffect(() => {
+        if (!submissionId) return; // Make sure the ID is valid
+
+        // Define the callback to handle subscription updates
+        const handleSubmissionUpdate = (data: RecordSubscription<Submission>) => {
+            console.log("Received submission update:", data.record);
+            // For example, update state or merge with existing data:
+            setData(data.record);
         };
 
+        // Subscribe to submission updates
         const unsubscribe = subscribeToSubmission(submissionId, handleSubmissionUpdate);
 
+        // Clean up subscription on unmount
         return () => {
             unsubscribe();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [submissionId]);
+
+    // useEffect(() => {
+    //     if (!submissionId) return; // Ensure submissionId is valid
+    //     const handleSubmissionUpdate = (event: MessageEvent) => {
+    //         const parsedData = JSON.parse(event.data);
+    //         setSubmissionUpdates(prevUpdates => [...prevUpdates, parsedData]);
+    //     };
+
+    //     const unsubscribe = subscribeToSubmissionEvents(submissionId, handleSubmissionUpdate);
+
+    //     return () => {
+    //         unsubscribe();
+    //     };
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [submissionId]);
+
+
+    // useEffect(() => {
+    //     if (data && data.status === Status.Completed) {
+    //         updateSearchParams({ "id": data?.id }, routes.dashboard.explore);
+    //     }
+    // }, [data, updateSearchParams])
 
     return (
         <div className="flex flex-col gap-4 h-full flex-grow">
@@ -67,7 +102,7 @@ export default function Submission() {
                         <MagnifyingGlass />
                         Explore Results
                     </Button>
-                    {/* <Badge>Status | {capitalize(data?.status || "")}</Badge> */}
+                    <Badge>Status | {capitalize(data?.status || "")}</Badge>
                 </div>
                 <Tracker data={generateTrackerData(submissionUpdates)} />
             </div>
