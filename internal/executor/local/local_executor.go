@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/aligndx/aligndx/internal/jobs/executor"
+	"github.com/aligndx/aligndx/internal/executor"
 	"github.com/aligndx/aligndx/internal/logger"
 )
 
