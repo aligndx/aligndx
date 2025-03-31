@@ -32,32 +32,41 @@ type WorkflowPaths struct {
 }
 
 func Run(ctx context.Context, client *pb.Client, log *logger.LoggerWrapper, cfg *config.Config, inputs NextflowInputs) error {
+	log.Debug("Preparing working directories")
 	paths, err := prepareWorkingDirectories(inputs.JobID, inputs.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to generate directories: %w", err)
 	}
 	defer os.RemoveAll(paths.JobDir)
 
+	log.Debug("Generating config")
 	configPath, err := generateNXFConfig()
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
 	defer os.Remove(configPath)
 
+	log.Debug("Preparing inputs")
 	inputsPath, err := prepareInputsJSON(client, inputs.Inputs, inputs.Schema, paths.JobDir)
-
 	if err != nil {
 		return fmt.Errorf("failed to prepare inputs: %w", err)
 	}
+
 	defer os.Remove(inputsPath)
 
+	log.Debug("Preparing NXF env")
+
 	execCfg := prepareNXFEnv(cfg, paths, configPath, inputsPath, inputs)
+
+	log.Debug("Executing NXF")
 
 	localExec := local.NewLocalExecutor(log)
 	es := executor.NewExecutorService(localExec)
 	if _, err := es.Execute(ctx, execCfg); err != nil {
 		return fmt.Errorf("workflow execution failed: %w", err)
 	}
+
+	log.Debug("Storing Results")
 	StoreResults(client, cfg, inputs.UserID, inputs.JobID, paths.ResultsDir)
 	return nil
 }
@@ -95,7 +104,7 @@ func prepareWorkingDirectories(jobID, name string) (*WorkflowPaths, error) {
 func prepareNXFEnv(cfg *config.Config, paths *WorkflowPaths, configPath, inputsPath string, inputs NextflowInputs) *local.LocalConfig {
 	return local.NewLocalConfig(
 		[]string{
-			"nextflow",
+			fmt.Sprintf("%s/nextflow", paths.BaseDir),
 			"-log", paths.LogPath,
 			"run", inputs.Repository,
 			"-latest",
