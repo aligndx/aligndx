@@ -9,7 +9,7 @@ import (
 )
 
 type HealthResponse struct {
-	Status  int                    `json:"status"`
+	Code    int                    `json:"code"`
 	Message string                 `json:"message"`
 	Data    map[string]interface{} `json:"data"`
 }
@@ -48,7 +48,7 @@ func (c *Client) checkInitialHealth() error {
 	for i := 0; i < c.HealthRetryCount; i++ {
 		var health *HealthResponse
 		health, err = c.HealthCheck("")
-		if err == nil && health.Status == 200 {
+		if err == nil && health.Code == 200 {
 			fmt.Println("✅ Server is healthy:", health.Message)
 			return nil
 		}

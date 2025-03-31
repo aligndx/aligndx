@@ -47,10 +47,10 @@ func (c *Client) doRequest(req *http.Request) (map[string]any, error) {
 
 func (c *Client) doRequestRaw(req *http.Request) ([]byte, error) {
 	if !c.hasCheckedHealth {
+		c.hasCheckedHealth = true
 		if err := c.checkInitialHealth(); err != nil {
 			return nil, fmt.Errorf("❌ server health check failed: %w", err)
 		}
-		c.hasCheckedHealth = true
 	}
 
 	resp, err := c.HTTPClient.Do(req)
@@ -59,33 +59,33 @@ func (c *Client) doRequestRaw(req *http.Request) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	// If unauthorized, try refreshing auth
-	if resp.StatusCode == 401 {
-		fmt.Println("🔁 Token expired. Attempting refresh...")
-		if err := c.tryRefreshOrReauth(); err != nil {
-			return nil, err
-		}
-		// Retry the request with new token
-		req2 := req.Clone(req.Context())
-		req2.Header.Set("Authorization", c.AuthToken)
+	// // If unauthorized, try refreshing auth
+	// if resp.StatusCode == 401 {
+	// 	fmt.Println("🔁 Token expired. Attempting refresh...")
+	// 	if err := c.tryRefreshOrReauth(); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	// Retry the request with new token
+	// 	req2 := req.Clone(req.Context())
+	// 	req2.Header.Set("Authorization", c.AuthToken)
 
-		resp2, err := c.HTTPClient.Do(req2)
-		if err != nil {
-			return nil, err
-		}
-		defer resp2.Body.Close()
+	// 	resp2, err := c.HTTPClient.Do(req2)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	defer resp2.Body.Close()
 
-		if resp2.StatusCode >= 400 {
-			body, _ := io.ReadAll(resp2.Body)
-			return nil, fmt.Errorf("HTTP %d: %s", resp2.StatusCode, body)
-		}
-		return io.ReadAll(resp2.Body)
-	}
+	// 	if resp2.StatusCode >= 400 {
+	// 		body, _ := io.ReadAll(resp2.Body)
+	// 		return nil, fmt.Errorf("HTTP %d: %s", resp2.StatusCode, body)
+	// 	}
+	// 	return io.ReadAll(resp2.Body)
+	// }
 
-	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, body)
-	}
+	// if resp.StatusCode >= 400 {
+	// 	body, _ := io.ReadAll(resp.Body)
+	// 	return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, body)
+	// }
 
 	return io.ReadAll(resp.Body)
 }
