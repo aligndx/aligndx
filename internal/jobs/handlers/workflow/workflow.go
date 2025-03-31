@@ -40,3 +40,40 @@ func WorkflowHandler(ctx context.Context, inputs interface{}) error {
 
 	return nil
 }
+
+func WorkflowHandlerWithLogs(ctx context.Context, inputs interface{}) error {
+	log := logger.NewLoggerWrapper("zerolog", ctx)
+	configManager := config.NewConfigManager()
+	cfg := configManager.GetConfig()
+	client := pb.NewClient(cfg.API.URL, "")
+	client.SetAuthCredentials("users", cfg.API.DefaultAdminEmail, cfg.API.DefaultAdminPassword)
+
+	_, err := client.AuthWithPassword("users", cfg.API.DefaultAdminEmail, cfg.API.DefaultAdminPassword)
+	if err != nil {
+		return fmt.Errorf("failed to authenticate: %w", err)
+	}
+	var workflowInputs nextflow.NextflowInputs
+	inputBytes, err := json.Marshal(inputs) // Marshal interface to JSON first
+	if err != nil {
+		return fmt.Errorf("failed to marshal inputs: %w", err)
+	}
+	if err := json.Unmarshal(inputBytes, &workflowInputs); err != nil {
+		return fmt.Errorf("failed to unmarshal inputs to WorkflowInputs: %w", err)
+	}
+
+	log.Debug("Starting nextflow.Run")
+	logChan, err := nextflow.RunWithLogs(ctx, client, log, cfg, workflowInputs)
+	if err != nil {
+		return fmt.Errorf("failed to execute job: %w", err)
+	}
+
+	// Wait for the log stream to finish by iterating over logChan.
+	for logLine := range logChan {
+		// Process each log line, for instance, by logging or forwarding it.
+		log.Debug("NXF log: " + logLine)
+	}
+	log.Debug("Finished nextflow.Run log streaming")
+
+	log.Debug("Finished nextflow.Run")
+	return nil
+}
