@@ -1,4 +1,4 @@
-import PocketBase, { RecordModel } from 'pocketbase';
+import PocketBase, { RecordModel, RecordSubscription } from 'pocketbase';
 import { useMutation, useQuery, useQueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { Submission } from '@/types/submission';
 
@@ -10,7 +10,7 @@ export const mapRecordToSubmission = (record: RecordModel): Submission => {
     user: record.user,
     outputs: record.expand?.outputs || record.outputs,  // Use expanded data if available
     workflow: record.expand?.workflow || record.workflow,
-    status: record.status, 
+    status: record.status,
     created: new Date(record.created),
     updated: new Date(record.updated)
   };
@@ -43,12 +43,22 @@ export const deleteSubmission = async (pb: PocketBase, id: string): Promise<void
   await pb.collection('submissions').delete(id);
 };
 
-export const _subscribeToSubmission = (pb: PocketBase, id: string, onMessage: (event: MessageEvent) => void) => {
+export const _subscribeToSubmission = (
+  pb: PocketBase,
+  id: string,
+  emitter: (data: RecordSubscription<Submission>) => void
+) => {
+  pb.collection('submissions').subscribe(id, emitter);
+  // Return the unsubscribe function
+  return () => pb.collection('submissions').unsubscribe(id);
+};
+
+export const _subscribeToSubmissionEvents = (pb: PocketBase, id: string, onMessage: (event: MessageEvent) => void) => {
   // Initialize EventSource with the PocketBase SSE endpoint
   const evtSource = new EventSource(`${pb.baseUrl}/jobs/subscribe/${id}`);
 
   // Handle incoming messages from the SSE stream
-  evtSource.onmessage = (event : MessageEvent) => {
+  evtSource.onmessage = (event: MessageEvent) => {
     onMessage(event)
   };
 
@@ -112,12 +122,22 @@ const useSubmissionService = (pb: PocketBase) => {
     }
   );
 
-  const subscribeToSubmission = (id: string, onMessage: (event: MessageEvent) => void)  => {
-    return _subscribeToSubmission(pb, id, onMessage)
+  const subscribeToSubmissionEvents = (id: string, onMessage: (event: MessageEvent) => void) => {
+    return _subscribeToSubmissionEvents(pb, id, onMessage)
   }
+
+
+  const subscribeToSubmission = (
+    id: string,
+    onMessage: (data: RecordSubscription<Submission>) => void
+  ) => {
+    return _subscribeToSubmission(pb, id, onMessage);
+  };
+  
 
   return {
     subscribeToSubmission,
+    subscribeToSubmissionEvents,
     useGetSubmission,
     getSubmissionsQuery,
     createSubmissionMutation,
