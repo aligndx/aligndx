@@ -17,6 +17,7 @@ import { Status, type Submission } from "@/types/submission";
 import { RecordSubscription } from "pocketbase";
 import { useAutoScroll } from "@/hooks/use-autoscroll";
 import { TextAnimate } from "@/components/ui/text-animate";
+import { toast } from "sonner";
 
 export default function Submission() {
     const searchParams = useSearchParams();
@@ -25,7 +26,7 @@ export default function Submission() {
     const { subscribeToSubmission, subscribeToSubmissionEvents, useGetSubmission } = submissions;
 
     const { data: initialData } = useGetSubmission(submissionId || "");
-    const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>(events);
+    const [submissionUpdates, setSubmissionUpdates] = useState<Event[]>([]);
     const [data, setData] = useState<Submission | null>(null);
 
     const updateSearchParams = useUpdateSearchParams();
@@ -40,8 +41,6 @@ export default function Submission() {
 
         // Define the callback to handle subscription updates
         const handleSubmissionUpdate = (data: RecordSubscription<Submission>) => {
-            console.log("Received submission update:", data.record);
-            // For example, update state or merge with existing data:
             setData(data.record);
         };
 
@@ -55,27 +54,28 @@ export default function Submission() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [submissionId]);
 
-    // useEffect(() => {
-    //     if (!submissionId) return; // Ensure submissionId is valid
-    //     const handleSubmissionUpdate = (event: MessageEvent) => {
-    //         const parsedData = JSON.parse(event.data);
-    //         setSubmissionUpdates(prevUpdates => [...prevUpdates, parsedData]);
-    //     };
+    useEffect(() => {
+        if (!submissionId) return; // Ensure submissionId is valid
+        const handleSubmissionUpdate = (event: MessageEvent) => {
+            const parsedData = JSON.parse(event.data);
+            setSubmissionUpdates(prevUpdates => [...prevUpdates, parsedData]);
+        };
 
-    //     const unsubscribe = subscribeToSubmissionEvents(submissionId, handleSubmissionUpdate);
+        const unsubscribe = subscribeToSubmissionEvents(submissionId, handleSubmissionUpdate);
 
-    //     return () => {
-    //         unsubscribe();
-    //     };
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [submissionId]);
+        return () => {
+            unsubscribe();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [submissionId]);
 
 
-    // useEffect(() => {
-    //     if (data && data.status === Status.Completed) {
-    //         updateSearchParams({ "id": data?.id }, routes.dashboard.explore);
-    //     }
-    // }, [data, updateSearchParams])
+    useEffect(() => {
+        if (data && data.status === Status.Completed) {
+            toast.success("Your results are ready!")
+            // updateSearchParams({ "id": data?.id }, routes.dashboard.explore);
+        }
+    }, [data, updateSearchParams])
 
     return (
         <div className="flex flex-col gap-4 h-full flex-grow">
@@ -179,7 +179,7 @@ function EventViewer({ events }: { events: Event[] }) {
                 onTouchStart={handleTouchStart}
             >
                 <TableHeader
-                className="sticky top-0 z-10 bg-background h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                    className="sticky top-0 z-10 bg-background h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
                     <TableRow>
                         <TableHead className="w-[150px]">Event Type</TableHead>
                         <TableHead>Message</TableHead>
