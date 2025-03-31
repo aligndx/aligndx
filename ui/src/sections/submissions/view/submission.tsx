@@ -16,6 +16,7 @@ import { MagnifyingGlass } from "@/components/icons";
 import { Status, type Submission } from "@/types/submission";
 import { RecordSubscription } from "pocketbase";
 import { useAutoScroll } from "@/hooks/use-autoscroll";
+import { TextAnimate } from "@/components/ui/text-animate";
 
 export default function Submission() {
     const searchParams = useSearchParams();
@@ -93,7 +94,9 @@ export default function Submission() {
                 </Button>
                 <div className="flex justify-between items-center">
                     <h1 className="text-lg">
-                        {data?.name}
+                        <TextAnimate animation="slideLeft" by="character">
+                            {data?.name || ""}
+                        </TextAnimate>
                     </h1>
 
                     <Badge>Status | {capitalize(data?.status || "")}</Badge>
@@ -175,7 +178,8 @@ function EventViewer({ events }: { events: Event[] }) {
                 onScroll={handleScroll}
                 onTouchStart={handleTouchStart}
             >
-                <TableHeader >
+                <TableHeader
+                className="sticky top-0 z-10 bg-background h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
                     <TableRow>
                         <TableHead className="w-[150px]">Event Type</TableHead>
                         <TableHead>Message</TableHead>
