@@ -50,36 +50,20 @@ func Run(ctx context.Context, client *pb.Client, log *logger.LoggerWrapper, cfg 
 	if err != nil {
 		return fmt.Errorf("failed to prepare inputs: %w", err)
 	}
+
 	defer os.Remove(inputsPath)
 
 	log.Debug("Preparing NXF env")
+
 	execCfg := prepareNXFEnv(cfg, paths, configPath, inputsPath, inputs)
 
-	log.Debug("Executing NXF with logs")
+	log.Debug("Executing NXF")
 
 	localExec := local.NewLocalExecutor(log)
 	es := executor.NewExecutorService(localExec)
-
-	// Use ExecuteWithLogs to obtain a log channel.
-	logChan, err := es.ExecuteWithLogs(ctx, execCfg)
-	if err != nil {
-		return fmt.Errorf("workflow execution with logs failed: %w", err)
+	if _, err := es.Execute(ctx, execCfg); err != nil {
+		return fmt.Errorf("workflow execution failed: %w", err)
 	}
-
-	// Pass the log channel off to the parent by, for example,
-	// sending it over a higher-level channel, or by calling a callback.
-	// For demonstration, we'll simply spawn a goroutine to process the logs.
-	go func() {
-		for logLine := range logChan {
-			// Here the parent can process the log line,
-			// such as forwarding it to NATS or printing it to a UI.
-			log.Debug("NXF log: " + logLine)
-		}
-	}()
-
-	// Optionally, if you need to wait for the command to finish,
-	// you could block until the log channel is closed.
-	// For now, we'll assume the parent handles that.
 
 	log.Debug("Storing Results")
 	StoreResults(client, cfg, inputs.UserID, inputs.JobID, paths.ResultsDir)
