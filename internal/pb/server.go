@@ -85,12 +85,12 @@ func ConfigurePbApp(ctx context.Context, pb *pocketbase.PocketBase, cfg *config.
 
 		// Use the retrieved data to create a WorkflowInputs object
 		workflowInputs := workflow.WorkflowInputs{
-			Name:               record.GetString("name"),
-			WorkflowRepository: workflowRecord.Repository,
-			WorkflowSchema:     workflowRecord.Schema,
-			Inputs:             result,
-			JobID:              jobID,
-			UserID:             userID,
+			Name:       record.GetString("name"),
+			Repository: workflowRecord.Repository,
+			Schema:     workflowRecord.Schema,
+			Inputs:     result,
+			JobID:      jobID,
+			UserID:     userID,
 		}
 
 		queueErr := jobService.Queue(ctx, jobID, workflowInputs, "workflow")
