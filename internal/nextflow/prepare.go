@@ -36,6 +36,7 @@ func prepareInputsJSON(client *pb.Client, inputs map[string]interface{}, schema 
 			if err != nil {
 				return "", fmt.Errorf("failed to fetch record %s: %w", fileID, err)
 			}
+			fmt.Println(record)
 
 			fileName, ok := record["file"].(string)
 			if !ok || fileName == "" {
