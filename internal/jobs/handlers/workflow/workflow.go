@@ -18,6 +18,10 @@ func WorkflowHandler(ctx context.Context, inputs interface{}) error {
 	client := pb.NewClient(cfg.API.URL, "")
 	client.SetAuthCredentials("users", cfg.API.DefaultAdminEmail, cfg.API.DefaultAdminPassword)
 
+	_, err := client.AuthWithPassword("users", cfg.API.DefaultAdminEmail, cfg.API.DefaultAdminPassword)
+	if err != nil {
+		return fmt.Errorf("failed to authenticate: %w", err)
+	}
 	var workflowInputs nextflow.NextflowInputs
 	inputBytes, err := json.Marshal(inputs) // Marshal interface to JSON first
 	if err != nil {
