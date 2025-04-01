@@ -87,6 +87,7 @@ func NewJobService(ctx context.Context, log *logger.LoggerWrapper, cfg *config.C
 		Retention: jetstream.LimitsPolicy,    // Replayable retention for job events
 		Subjects:  []string{"jobs.events.>"}, // Catch-all for all events
 		Storage:   jetstream.FileStorage,
+		MaxAge:    cfg.MQ.MaxAge,
 	}
 	eventMQ, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, eventStreamConfig, log)
 	if err != nil {

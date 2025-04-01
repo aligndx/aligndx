@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/knadh/koanf/providers/env"
@@ -40,7 +41,8 @@ type APIConfig struct {
 
 // MQConfig holds configuration for the message queue
 type MQConfig struct {
-	URL string `koanf:"url"`
+	URL    string        `koanf:"url"`
+	MaxAge time.Duration `koanf:"maxage"`
 }
 
 // DbConfig holds database-related configuration
@@ -93,7 +95,8 @@ func NewConfigManager() *ConfigManager {
 				DefaultAdminPassword: "password",
 			},
 			MQ: MQConfig{
-				URL: nats.DefaultURL,
+				URL:    nats.DefaultURL,
+				MaxAge: 0, // Retain messages for 30 days
 			},
 			DB: DbConfig{
 				MigrationsDir: "internal/migrations",
