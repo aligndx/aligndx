@@ -77,13 +77,6 @@ export default function Submission() {
     }, [submissionId]);
 
 
-    useEffect(() => {
-        if (data && data.status === Status.Completed) {
-            toast.success("Your results are ready!")
-            // updateSearchParams({ "id": data?.id }, routes.dashboard.explore);
-        }
-    }, [data, updateSearchParams])
-
     return (
         <div className="flex flex-col gap-4 h-full flex-grow">
 

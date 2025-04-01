@@ -17,6 +17,7 @@ export default function ExploreView() {
     const [selectedSubs, setSelectedSubs] = useState<Submission[]>([]);
     const [data, setData] = useState<any>([]);
     const [pathogens, setPathogens] = useState<Pathogen[]>([]);
+    const [threshold, setThreshold] = useState<number>(0.01);
     const [sourcesData, setSourcesData] = useState<any[]>([]);
 
     const onSubChange = (subs: Submission[]) => {
@@ -169,12 +170,13 @@ export default function ExploreView() {
                     arrayData = arrayData.filter((row: any) => selectedPathogenIds.has(row.taxonomy_id));
                 }
             }
+            arrayData = arrayData.filter((row) => row.abundance_frac >= threshold);
 
             setData(arrayData);
         } else if (error) {
             console.error("DuckDB query error:", error);
         }
-    }, [arrow, error, pathogens, selectedSubs, showOnlyDetected]);
+    }, [arrow, error, pathogens, selectedSubs, showOnlyDetected, threshold]);
 
     const columns = useColumns()
     const isMobile = useMediaQuery("sm", "down");
@@ -183,7 +185,7 @@ export default function ExploreView() {
             <div className={cn("flex p-6", isMobile ? "flex-col justify-center gap-6" : "flex-row justify-between gap-2")}>
                 <SubmissionSelector value={selectedSubs} onChange={onSubChange} />
                 {selectedSubs.length > 0 ?
-                    <PathogenSelector className={"flex flex-col gap-2"} pathogens={pathogens} onPathogensChange={onPathogensChange} toggleShowOnlyDetected={toggleShowOnlyDetected} showOnlyDetected={showOnlyDetected} />
+                    <PathogenSelector className={"flex flex-col gap-2"} pathogens={pathogens} onPathogensChange={onPathogensChange} toggleShowOnlyDetected={toggleShowOnlyDetected} showOnlyDetected={showOnlyDetected} threshold={threshold} onThresholdChange={setThreshold}/>
                     : null
                 }
             </div>

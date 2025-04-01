@@ -6,12 +6,15 @@ import { CONFIG } from "@/config-global";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useBoolean } from "@/hooks/use-boolean";
+import { Input } from "@/components/ui/input";
 
 interface PathogenSelectorProps extends React.HTMLProps<HTMLDivElement> {
     pathogens: Pathogen[]; // now expects an array of Pathogen objects
     onPathogensChange: (pathogens: Pathogen[]) => void;
     showOnlyDetected: boolean;
     toggleShowOnlyDetected: () => void;
+    threshold: number;
+    onThresholdChange: (threshold: number) => void;
 }
 
 export interface Pathogen {
@@ -30,6 +33,8 @@ export function PathogenSelector({
     onPathogensChange,
     showOnlyDetected,
     toggleShowOnlyDetected,
+    threshold,
+    onThresholdChange,
     ...props
 }: PathogenSelectorProps) {
     const [allPathogens, setAllPathogens] = React.useState<Map<string, Pathogen>>(new Map());
@@ -176,6 +181,14 @@ export function PathogenSelector({
                     itemToString={(pathogen) => pathogen.name}
                     searchPlaceholder="Search pathogens..."
                 />
+            </div>
+            <div className="flex gap-2 mt-2">
+                <div className="flex flex-col gap-2">
+                    <Label>Minimum Abundance Threshold</Label>
+                    <Input type="number" max={1} min={0} step={0.01} value={threshold}
+                        onChange={(e) => onThresholdChange(Number(e.target.value))}
+                    />
+                </div>
             </div>
         </div>
     );
