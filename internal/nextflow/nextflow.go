@@ -66,7 +66,7 @@ func Run(ctx context.Context, client *pb.Client, log *logger.LoggerWrapper, cfg 
 	}
 
 	log.Debug("Storing Results")
-	StoreResults(client, cfg, inputs.UserID, inputs.JobID, paths.ResultsDir)
+	StoreResults(client, inputs.UserID, inputs.JobID, paths.ResultsDir)
 	return nil
 }
 
@@ -106,7 +106,7 @@ func RunWithLogs(ctx context.Context, client *pb.Client, log *logger.LoggerWrapp
 			// Simply drain the channel if no processing is needed here.
 		}
 		log.Debug("Storing Results")
-		StoreResults(client, cfg, inputs.UserID, inputs.JobID, paths.ResultsDir)
+		StoreResults(client, inputs.UserID, inputs.JobID, paths.ResultsDir)
 
 		log.Debug("Removing paths")
 		os.Remove(inputsPath)
