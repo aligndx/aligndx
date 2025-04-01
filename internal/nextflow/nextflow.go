@@ -105,11 +105,13 @@ func RunWithLogs(ctx context.Context, client *pb.Client, log *logger.LoggerWrapp
 		for range logChan {
 			// Simply drain the channel if no processing is needed here.
 		}
+		log.Debug("Storing Results")
+		StoreResults(client, cfg, inputs.UserID, inputs.JobID, paths.ResultsDir)
+
+		log.Debug("Removing paths")
 		os.Remove(inputsPath)
 		os.Remove(configPath)
 		os.RemoveAll(paths.JobDir)
-		log.Debug("Storing Results")
-		StoreResults(client, cfg, inputs.UserID, inputs.JobID, paths.ResultsDir)
 	}()
 
 	return logChan, nil
