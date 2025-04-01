@@ -2,15 +2,13 @@
 
 import { useApiService } from "@/services/api";
 import { routes, useSearchParams, useUpdateSearchParams } from "@/routes";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Tracker } from "@/components/ui/tracker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { events } from "./mock";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { capitalize, cn } from "@/lib/utils";
 import { Event } from "@/types/event";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { MagnifyingGlass } from "@/components/icons";
 import { Status, type Submission } from "@/types/submission";
@@ -18,6 +16,15 @@ import { RecordSubscription } from "pocketbase";
 import { useAutoScroll } from "@/hooks/use-autoscroll";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { toast } from "sonner";
+
+const MemoizedTextAnimate = memo(function MemoizedTextAnimate({ text }: { text: string }) {
+    return (
+        <TextAnimate animation="slideLeft" by="character">
+            {text}
+        </TextAnimate>
+    );
+});
+
 
 export default function Submission() {
     const searchParams = useSearchParams();
@@ -94,9 +101,7 @@ export default function Submission() {
                 </Button>
                 <div className="flex justify-between items-center">
                     <h1 className="text-lg">
-                        <TextAnimate animation="slideLeft" by="character">
-                            {data?.name || ""}
-                        </TextAnimate>
+                        <MemoizedTextAnimate text={data?.name || ""} />
                     </h1>
 
                     <Badge>Status | {capitalize(data?.status || "")}</Badge>
