@@ -7,11 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aligndx/aligndx/internal/config"
 	pb "github.com/aligndx/aligndx/internal/pb/client"
 )
 
-func StoreResults(client *pb.Client, cfg *config.Config, userId, submissionID, resultsDir string) error {
+func StoreResults(client *pb.Client, userId, submissionID, resultsDir string) error {
 	// Create ZIP archive from results
 	zipPath := filepath.Join(os.TempDir(), fmt.Sprintf("results_%s.zip", submissionID))
 	if err := zipDirectory(resultsDir, zipPath); err != nil {
