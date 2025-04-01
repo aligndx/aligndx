@@ -9,6 +9,7 @@ import { Status, Submission } from "@/types/submission"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { TbLogs } from "react-icons/tb"
 
 export const useColumns = () => {
   const updateSearchParams = useUpdateSearchParams();
@@ -23,7 +24,7 @@ export const useColumns = () => {
               table.getIsAllPageRowsSelected() ||
               (table.getIsSomePageRowsSelected() && "indeterminate")
             }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value : boolean) => table.toggleAllPageRowsSelected(!!value)}
             aria-label="Select all"
           />
         </div>
@@ -32,7 +33,7 @@ export const useColumns = () => {
         <div className="flex items-center justify-center">
           <Checkbox
             checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            onCheckedChange={(value : boolean) => row.toggleSelected(!!value)}
             aria-label="Select row"
           />
         </div>
@@ -110,6 +111,18 @@ export const useColumns = () => {
                     }}> <MagnifyingGlass /> </Button></TooltipTrigger>
                   <TooltipContent>
                     <p>Explore</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button disabled={disabled} variant={"icon"} onClick={(e) => {
+                      e.stopPropagation();
+                      updateSearchParams({ "id": submissionId }, routes.dashboard.submissions.submission);
+                    }}> <TbLogs /> </Button></TooltipTrigger>
+                  <TooltipContent>
+                    <p>Events</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
