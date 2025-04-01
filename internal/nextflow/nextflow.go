@@ -39,7 +39,7 @@ func Run(ctx context.Context, client *pb.Client, log *logger.LoggerWrapper, cfg 
 	defer os.RemoveAll(paths.JobDir)
 
 	log.Debug("Generating config")
-	configPath, err := generateNXFConfig()
+	configPath, err := generateNXFConfig(cfg.MQ.URL, fmt.Sprintf("jobs.events.%s", inputs.JobID))
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
@@ -78,7 +78,7 @@ func RunWithLogs(ctx context.Context, client *pb.Client, log *logger.LoggerWrapp
 	}
 
 	log.Debug("Generating config")
-	configPath, err := generateNXFConfig()
+	configPath, err := generateNXFConfig(cfg.MQ.URL, fmt.Sprintf("jobs.events.%s", inputs.JobID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate config: %w", err)
 	}

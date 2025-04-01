@@ -7,17 +7,22 @@ import (
 	"time"
 
 	"github.com/aligndx/aligndx/internal/config"
+	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
+// JobHandler is a function that processes a job.
 type JobHandler func(ctx context.Context, inputs interface{}) error
 
+// Job represents a job that can be queued and processed.
 type Job struct {
 	ID     string      `json:"job_id"`
 	Inputs interface{} `json:"job_inputs"`
 	Schema string      `json:"job_schema"`
 }
 
+// Event is a generic event type.
 type Event[T any] struct {
 	Type      string `json:"type"`
 	Message   string `json:"message"`
@@ -25,27 +30,32 @@ type Event[T any] struct {
 	MetaData  T      `json:"metadata,omitempty"`
 }
 
+// JobServiceInterface defines the methods of our job service.
 type JobServiceInterface interface {
-	Queue(ctx context.Context, ID string, inputs interface{}, schema string) error
+	Queue(ctx context.Context, id string, inputs interface{}, schema string) error
 	RegisterJobHandler(schema string, handler JobHandler)
 	Process(ctx context.Context, maxConcurrency int) error
-	Subscribe(ctx context.Context, subject string, consumerID string, emit func([]byte)) error
+	Subscribe(ctx context.Context, subject string, consumerName string, handler func(jetstream.Msg)) error
+	ReplaySubscribe(ctx context.Context, subject string, handler func(jetstream.Msg)) error
 }
 
+// MessageQueueService is used by the job service.
 type MessageQueueService interface {
 	Publish(ctx context.Context, subject string, data []byte) error
-	Subscribe(ctx context.Context, subject string, consumerName string, handler func([]byte)) error
+	Subscribe(ctx context.Context, subject string, consumerName string, handler func(jetstream.Msg)) error
 }
 
+// JobService implements JobServiceInterface and encapsulates its own MQ and config setup.
 type JobService struct {
-	mq            MessageQueueService
+	workQueueMQ   MessageQueueService
+	eventMQ       MessageQueueService
 	log           *logger.LoggerWrapper
 	cfg           *config.Config
 	handlers      map[string]JobHandler
-	stream        string
 	subjectPrefix string
 }
 
+// JobStatus represents the state of a job.
 type JobStatus string
 
 const (
@@ -56,22 +66,51 @@ const (
 	StatusError      JobStatus = "error"
 )
 
-func NewJobService(mq MessageQueueService, log *logger.LoggerWrapper, cfg *config.Config, stream string, subjectPrefix string) JobServiceInterface {
+// NewJobService returns a new instance of JobService.
+func NewJobService(ctx context.Context, log *logger.LoggerWrapper, cfg *config.Config) (JobServiceInterface, error) {
+	// Setup the work queue stream configuration using WorkQueuePolicy.
+	workQueueConfig := jetstream.StreamConfig{
+		Name:      "QUEUE",
+		Retention: jetstream.WorkQueuePolicy, // Work queue retention policy
+		Subjects:  []string{"jobs.request"},
+		Storage:   jetstream.FileStorage,
+	}
+	workQueueMQ, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, workQueueConfig, log)
+	if err != nil {
+		log.Error("Failed to initialize work queue MQ service", map[string]interface{}{"error": err.Error()})
+		return nil, fmt.Errorf("failed to initialize work queue mq: %w", err)
+	}
+
+	// Setup the event stream configuration using a replayable retention policy (LimitsPolicy).
+	eventStreamConfig := jetstream.StreamConfig{
+		Name:      "EVENTS",
+		Retention: jetstream.LimitsPolicy,    // Replayable retention for job events
+		Subjects:  []string{"jobs.events.>"}, // Catch-all for all events
+		Storage:   jetstream.FileStorage,
+	}
+	eventMQ, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, eventStreamConfig, log)
+	if err != nil {
+		log.Error("Failed to initialize event MQ service", map[string]interface{}{"error": err.Error()})
+		return nil, fmt.Errorf("failed to initialize event mq: %w", err)
+	}
+
 	return &JobService{
-		mq:            mq,
+		workQueueMQ:   workQueueMQ,
+		eventMQ:       eventMQ,
 		log:           log,
 		cfg:           cfg,
 		handlers:      make(map[string]JobHandler),
-		stream:        stream,
-		subjectPrefix: subjectPrefix,
-	}
+		subjectPrefix: "jobs",
+	}, nil
 }
 
+// StatusEventMetadata defines metadata for job status events.
 type StatusEventMetadata struct {
 	JobID  string    `json:"jobid"`
 	Status JobStatus `json:"status"`
 }
 
+// updateJobStatus publishes an event to update a job’s status.
 func (s *JobService) updateJobStatus(ctx context.Context, ID string, status JobStatus) error {
 	event := Event[StatusEventMetadata]{
 		Type:      "job.status",
@@ -86,10 +125,11 @@ func (s *JobService) updateJobStatus(ctx context.Context, ID string, status JobS
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
-	subj := fmt.Sprintf("%s.status.%s", s.subjectPrefix, ID)
-	return s.mq.Publish(ctx, subj, data)
+	subj := fmt.Sprintf("%s.events.status.%s", s.subjectPrefix, ID)
+	return s.eventMQ.Publish(ctx, subj, data)
 }
 
+// Queue creates a job and publishes it to the job queue.
 func (s *JobService) Queue(ctx context.Context, id string, inputs interface{}, schema string) error {
 	job := Job{
 		ID:     id,
@@ -97,27 +137,21 @@ func (s *JobService) Queue(ctx context.Context, id string, inputs interface{}, s
 		Schema: schema,
 	}
 
-	// Marshal the Job struct to JSON
 	jobData, err := json.Marshal(job)
 	if err != nil {
 		return fmt.Errorf("error marshaling job data: %w", err)
 	}
 
-	// Publish to the queue
-	err = s.mq.Publish(ctx, fmt.Sprintf("%s.request", s.subjectPrefix), jobData)
-	if err != nil {
+	// Publish the job to the work queue.
+	if err := s.workQueueMQ.Publish(ctx, fmt.Sprintf("%s.request", s.subjectPrefix), jobData); err != nil {
 		return fmt.Errorf("error publishing job: %w", err)
-	}
-
-	err = s.updateJobStatus(ctx, job.ID, StatusQueued)
-	if err != nil {
-		return fmt.Errorf("error updating job status: %w", err)
 	}
 
 	s.log.Debug("Job queued", map[string]interface{}{"job_id": id})
 	return nil
 }
 
+// processJob unmarshals the job data and executes the registered handler.
 func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 	var job Job
 	if err := json.Unmarshal(msgData, &job); err != nil {
@@ -134,53 +168,57 @@ func (s *JobService) processJob(ctx context.Context, msgData []byte) error {
 		return err
 	}
 
-	// Directly pass the deserialized byte data to handler
 	if err := handler(ctx, job.Inputs); err != nil {
 		s.updateJobStatus(ctx, job.ID, StatusError)
 		return fmt.Errorf("error processing job (job_id: %s): %w", job.ID, err)
 	}
 
-	if err := s.updateJobStatus(ctx, job.ID, StatusCompleted); err != nil {
-		return err
-	}
-
-	return nil
+	return s.updateJobStatus(ctx, job.ID, StatusCompleted)
 }
 
+// Process subscribes to job requests and processes them concurrently up to maxConcurrency.
 func (s *JobService) Process(ctx context.Context, maxConcurrency int) error {
-	// Create a buffered channel (semaphore) with maxConcurrency slots
 	semaphore := make(chan struct{}, maxConcurrency)
-	expectedSubject := fmt.Sprintf("%s.request", s.subjectPrefix)
+	subject := fmt.Sprintf("%s.request", s.subjectPrefix)
 	consumerName := "request-worker"
-	return s.mq.Subscribe(ctx, expectedSubject, consumerName, func(msgData []byte) {
-		// Acquire a slot in the semaphore
+
+	return s.workQueueMQ.Subscribe(ctx, subject, consumerName, func(msg jetstream.Msg) {
 		semaphore <- struct{}{}
-
-		// Process the job in a separate goroutine
 		go func() {
-			defer func() {
-				// Release the slot in the semaphore after the job is done
-				<-semaphore
-			}()
-
-			if err := s.processJob(ctx, msgData); err != nil {
+			defer func() { <-semaphore }()
+			if err := s.processJob(ctx, msg.Data()); err != nil {
 				s.log.Error("Failed to process job", map[string]interface{}{"error": err.Error()})
 			} else {
-				s.log.Debug("Job processed successfully")
+				s.log.Debug("Job processed successfully", nil)
 			}
 		}()
 	})
 }
 
+// RegisterJobHandler registers a handler for jobs with the specified schema.
 func (s *JobService) RegisterJobHandler(schema string, handler JobHandler) {
 	s.handlers[schema] = handler
 	s.log.Debug("Job handler registered", map[string]interface{}{"job_schema": schema})
 }
 
-func (s *JobService) Subscribe(ctx context.Context, subject string, consumerID string, emit func([]byte)) error {
-	finalSubject := fmt.Sprintf("%s.%s", s.subjectPrefix, subject)
+// Subscribe subscribes to job status events.
+func (s *JobService) Subscribe(ctx context.Context, subject string, consumerName string, handler func(jetstream.Msg)) error {
+	finalSubject := fmt.Sprintf("%s.events.%s", s.subjectPrefix, subject)
+	return s.eventMQ.Subscribe(ctx, finalSubject, consumerName, handler)
+}
 
-	return s.mq.Subscribe(ctx, finalSubject, consumerID, func(msgData []byte) {
-		emit(msgData)
-	})
+// ReplaySubscribe creates an ephemeral subscription that replays all matching events.
+func (s *JobService) ReplaySubscribe(ctx context.Context, subject string, handler func(jetstream.Msg)) error {
+	finalSubject := fmt.Sprintf("%s.events.%s", s.subjectPrefix, subject)
+	// Create an ephemeral consumer configuration by not setting Durable.
+	consumerConfig := jetstream.ConsumerConfig{
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		DeliverPolicy: jetstream.DeliverAllPolicy,
+		FilterSubject: finalSubject,
+	}
+	jsMQ, ok := s.eventMQ.(*mq.JetStreamMessageQueueService)
+	if !ok {
+		return fmt.Errorf("unable to type assert eventMQ to *mq.JetStreamMessageQueueService")
+	}
+	return jsMQ.SubscribeWithConfig(ctx, consumerConfig, handler)
 }
