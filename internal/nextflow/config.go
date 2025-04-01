@@ -14,8 +14,13 @@ import (
 var nextflowConfigTemplate string
 
 type NFConfigParams struct {
-	MaxCPUs   int
-	MaxMemory string
+	NatsEnabled          bool
+	NatsURL              string
+	NatsSubject          string
+	NatsEvents           []string
+	NatsJetStreamEnabled bool
+	MaxCPUs              int
+	MaxMemory            string
 }
 
 func getSystemResources() (int, string, error) {
@@ -32,7 +37,7 @@ func getSystemResources() (int, string, error) {
 	return numCPUs, fmt.Sprintf("%d.GB", availableMemoryGB), nil
 }
 
-func generateNXFConfig() (string, error) {
+func generateNXFConfig(nats_url string, nats_subject string) (string, error) {
 	numCPUs, availableMemory, err := getSystemResources()
 	if err != nil {
 		return "", err
@@ -40,8 +45,13 @@ func generateNXFConfig() (string, error) {
 
 	// Set up the variables for the template
 	params := NFConfigParams{
-		MaxCPUs:   numCPUs,
-		MaxMemory: availableMemory,
+		NatsEnabled:          true,
+		NatsURL:              nats_url,
+		NatsSubject:          nats_subject,
+		NatsEvents:           []string{"workflow.start", "workflow.error", "workflow.complete", "process.start", "process.complete"},
+		NatsJetStreamEnabled: false,
+		MaxCPUs:              numCPUs,
+		MaxMemory:            availableMemory,
 	}
 
 	// Parse the embedded template

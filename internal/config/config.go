@@ -40,8 +40,7 @@ type APIConfig struct {
 
 // MQConfig holds configuration for the message queue
 type MQConfig struct {
-	URL    string `koanf:"url"`
-	Stream string `koanf:"stream"`
+	URL string `koanf:"url"`
 }
 
 // DbConfig holds database-related configuration
@@ -94,8 +93,7 @@ func NewConfigManager() *ConfigManager {
 				DefaultAdminPassword: "password",
 			},
 			MQ: MQConfig{
-				URL:    nats.DefaultURL,
-				Stream: "JOBS",
+				URL: nats.DefaultURL,
 			},
 			DB: DbConfig{
 				MigrationsDir: "internal/migrations",
@@ -118,7 +116,7 @@ func NewConfigManager() *ConfigManager {
 			},
 			NXF: NXFConfig{
 				DefaultDir:            "workflows",
-				PluginsTestRepository: "",
+				PluginsTestRepository: "https://github.com/aligndx/nf-nats/releases/download/1.0.0/nf-nats-1.0.0-meta.json",
 			},
 			Logging: LoggingConfig{
 				Level: "info",

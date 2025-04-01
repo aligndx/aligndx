@@ -16,8 +16,8 @@ type JetStreamMessageQueueService struct {
 	log        *logger.LoggerWrapper
 }
 
-func NewJetStreamMessageQueueService(ctx context.Context, url string, streamName string, subject string, log *logger.LoggerWrapper) (*JetStreamMessageQueueService, error) {
-
+// NewJetStreamMessageQueueService creates a new JetStream message queue service using a full stream configuration.
+func NewJetStreamMessageQueueService(ctx context.Context, url string, streamConfig jetstream.StreamConfig, log *logger.LoggerWrapper) (*JetStreamMessageQueueService, error) {
 	nc, err := nats.Connect(url)
 	if err != nil {
 		log.Error("Failed to connect to NATS server", map[string]interface{}{
@@ -40,95 +40,68 @@ func NewJetStreamMessageQueueService(ctx context.Context, url string, streamName
 
 	log.Debug("JetStream initialized", nil)
 
-	cfg := jetstream.StreamConfig{
-		Name:      streamName,
-		Retention: jetstream.WorkQueuePolicy,
-		Subjects:  []string{subject},
-		Storage:   jetstream.FileStorage,
-	}
-
-	_, err = js.CreateStream(ctx, cfg)
+	_, err = js.CreateStream(ctx, streamConfig)
 	if err != nil {
-		// Check if the error is due to the stream already existing
 		if !errors.Is(err, jetstream.ErrStreamNameAlreadyInUse) {
-			// If it's a different error, log it and return
 			log.Error("Failed to create stream", map[string]interface{}{
-				"streamName": streamName,
-				"subject":    subject,
-				"error":      err,
+				"streamName": streamConfig.Name,
+				"subjects":   streamConfig.Subjects,
+				"error":      err.Error(),
 			})
-			return nil, fmt.Errorf("failed to create stream (streamName: %s, subject: %s): %w", streamName, subject, err)
+			return nil, fmt.Errorf("failed to create stream (streamName: %s, subjects: %v): %w", streamConfig.Name, streamConfig.Subjects, err)
 		} else {
-			// If the stream already exists, log it and continue
 			log.Warn("Stream already exists", map[string]interface{}{
-				"streamName": streamName,
-				"subject":    subject,
+				"streamName": streamConfig.Name,
+				"subjects":   streamConfig.Subjects,
 			})
 		}
 	} else {
 		log.Debug("Stream created", map[string]interface{}{
-			"streamName": streamName,
-			"subject":    subject,
+			"streamName": streamConfig.Name,
+			"subjects":   streamConfig.Subjects,
 		})
 	}
 
 	return &JetStreamMessageQueueService{
 		js:         js,
-		streamName: streamName,
+		streamName: streamConfig.Name,
 		log:        log,
 	}, nil
 }
 
+// Publish sends a message to the given subject.
 func (s *JetStreamMessageQueueService) Publish(ctx context.Context, subject string, data []byte) error {
 	_, err := s.js.Publish(ctx, subject, data)
 	if err != nil {
 		return fmt.Errorf("failed to publish message (subject: %s): %w", subject, err)
 	}
-
 	s.log.Debug("Message published", map[string]interface{}{
 		"subject": subject,
 	})
 	return nil
 }
 
-func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject string, consumerName string, handler func([]byte)) error {
-	if s.log == nil {
-		return errors.New("logger is not initialized")
-	}
-
-	if s.js == nil {
-		return errors.New("JetStream client is not initialized")
-	}
-
-	consumerConfig := jetstream.ConsumerConfig{
-		Durable:       consumerName,
-		AckPolicy:     jetstream.AckExplicitPolicy,
-		DeliverPolicy: jetstream.DeliverAllPolicy,
-	}
-
-	if subject != "" {
-		consumerConfig.FilterSubject = subject
-	}
-
+// SubscribeWithConfig subscribes using a provided consumer configuration.
+func (s *JetStreamMessageQueueService) SubscribeWithConfig(ctx context.Context, consumerConfig jetstream.ConsumerConfig, handler func(jetstream.Msg)) error {
 	cons, err := s.js.CreateOrUpdateConsumer(ctx, s.streamName, consumerConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create or update consumer (streamName: %s): %w", s.streamName, err)
 	}
 	s.log.Debug("Consumer created or updated", map[string]interface{}{
 		"streamName":   s.streamName,
-		"consumerName": consumerName,
+		"consumerName": consumerConfig.Durable,
 	})
 
 	consContext, err := cons.Consume(func(msg jetstream.Msg) {
-		s.log.Debug("Message received on", map[string]interface{}{
+		s.log.Debug("Message received", map[string]interface{}{
 			"streamName": s.streamName,
 			"subject":    msg.Subject(),
-			"data":       string(msg.Data()), // Log the message data for debugging
+			"data":       string(msg.Data()),
 		})
-		handler(msg.Data())
-		if err := msg.Ack(); err != nil {
+		handler(msg)
+		if ackErr := msg.Ack(); ackErr != nil {
 			s.log.Error("Failed to acknowledge message", map[string]interface{}{
-				"error": err.Error(),
+				"error": ackErr.Error(),
 			})
 		} else {
 			s.log.Debug("Message acknowledged", nil)
@@ -144,4 +117,16 @@ func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject st
 		consContext.Stop()
 	}()
 	return nil
+}
+
+// Subscribe implements the MessageQueueService interface.
+// It constructs a consumer config from the given subject and consumerName and then calls SubscribeWithConfig.
+func (s *JetStreamMessageQueueService) Subscribe(ctx context.Context, subject string, consumerName string, handler func(jetstream.Msg)) error {
+	consumerConfig := jetstream.ConsumerConfig{
+		Durable:       consumerName,
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		DeliverPolicy: jetstream.DeliverAllPolicy,
+		FilterSubject: subject,
+	}
+	return s.SubscribeWithConfig(ctx, consumerConfig, handler)
 }

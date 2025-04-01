@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -11,33 +10,30 @@ import (
 
 	"github.com/aligndx/aligndx/internal/config"
 	"github.com/aligndx/aligndx/internal/jobs/handlers/workflow"
-	"github.com/aligndx/aligndx/internal/jobs/mq"
 	"github.com/aligndx/aligndx/internal/logger"
 )
 
 // Start initializes the worker's dependencies and starts the job processing.
 func StartWorker(ctx context.Context, cancel context.CancelFunc) error {
-
 	// Initialize logger
 	log := logger.NewLoggerWrapper("zerolog", ctx)
+
 	configManager := config.NewConfigManager()
 	cfg := configManager.GetConfig()
 
-	// Setup message queue
-	mqService, err := mq.NewJetStreamMessageQueueService(ctx, cfg.MQ.URL, cfg.MQ.Stream, "jobs.>", log)
+	// Initialize job service
+	jobService, err := NewJobService(ctx, log, cfg)
 	if err != nil {
-		return fmt.Errorf("failed to initialize message queue service: %w", err)
+		log.Fatal("Failed to setup job service", map[string]interface{}{"error": err})
+		return err
 	}
 
-	// Initialize job service
-	jobService := NewJobService(mqService, log, cfg, cfg.MQ.Stream, "jobs")
-
-	// Register job handlers
+	// Register job handlers.
 	jobService.RegisterJobHandler("workflow", workflow.WorkflowHandler)
 
-	// Create a worker instance and run it
+	// Create a worker instance and run it.
 	worker := NewWorker(jobService, log, cfg)
-	return worker.Run(ctx, cancel) // Changed from Start to Run for clarity
+	return worker.Run(ctx, cancel) // Changed from Start to Run for clarity.
 }
 
 // Worker struct manages the job processing.
