@@ -18,6 +18,20 @@ type NFConfigParams struct {
 	MaxMemory string
 }
 
+func getSystemResources() (int, string, error) {
+	// Get total logical CPUs
+	numCPUs := runtime.NumCPU()
+
+	// Get available memory in GB
+	memStats, err := mem.VirtualMemory()
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to get memory stats: %w", err)
+	}
+	availableMemoryGB := memStats.Available / (1024 * 1024 * 1024) // Convert to GB
+
+	return numCPUs, fmt.Sprintf("%d.GB", availableMemoryGB), nil
+}
+
 func generateNXFConfig() (string, error) {
 	numCPUs, availableMemory, err := getSystemResources()
 	if err != nil {
@@ -59,18 +73,4 @@ func generateNXFConfig() (string, error) {
 
 	return tempFile.Name(), nil
 
-}
-
-func getSystemResources() (int, string, error) {
-	// Get total logical CPUs
-	numCPUs := runtime.NumCPU()
-
-	// Get available memory in GB
-	memStats, err := mem.VirtualMemory()
-	if err != nil {
-		return 0, "", fmt.Errorf("failed to get memory stats: %w", err)
-	}
-	availableMemoryGB := memStats.Available / (1024 * 1024 * 1024) // Convert to GB
-
-	return numCPUs, fmt.Sprintf("%d.GB", availableMemoryGB), nil
 }
